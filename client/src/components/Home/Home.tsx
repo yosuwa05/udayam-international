@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import DestinationsSection from "../Destinationscarousel"
-import TravelCards from "../TravelCards"
+import TravelCards from "./TravelCards"
 import { useNavigate } from "react-router-dom"
 import {
   heroSlides,
-  services,
   catPills,
   footerServices,
   stats,
@@ -12,8 +11,10 @@ import {
   whyUs,
 } from "@/lib/homeData"
 import type { Page } from "@/lib/navData"
+import Services from "./Services"
+import NewsLetter from "../NewsLetter"
 
-const SectionTitle: React.FC<{
+export const SectionTitle: React.FC<{
   children: React.ReactNode
   hl?: string
   center?: boolean
@@ -360,9 +361,11 @@ const Home = () => {
         </div>
       </section> */}
 
-      <section className="bg-[#F7F9FC] py-14">
+      {/* ══ Services ══ */}
+
+      <Services />
+      {/* <section className="bg-[#F7F9FC] py-14">
         <div className="mx-auto max-w-7xl px-5 md:px-8 lg:px-10">
-          {/* Header */}
           <div className="mb-10 md:mb-12">
             <h2 className="text-4xl font-bold text-[#0D1B3E] md:text-5xl">
               Our <span className="text-[#2E7D32]">Services</span>
@@ -373,7 +376,6 @@ const Home = () => {
             </p>
           </div>
 
-          {/* Services Grid */}
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-[#DDE3F0] bg-[#DDE3F0] md:grid-cols-2 lg:grid-cols-3">
             {services.map((service, index) => (
               <button
@@ -381,27 +383,22 @@ const Home = () => {
                 onClick={() => navigate(service.page)}
                 className="group flex h-full flex-col bg-white p-8 text-left transition-all duration-300 hover:bg-[#EFF3FB] active:bg-[#E6ECF7] md:p-9 lg:p-10"
               >
-                {/* Icon */}
                 <div className="mb-6 text-4xl transition-transform duration-300 group-hover:scale-110 md:text-5xl">
                   {service.icon}
                 </div>
 
-                {/* Badge / Number */}
                 <div className="mb-3 text-xs font-bold tracking-[1.5px] text-[#2E7D32] uppercase md:text-sm">
                   {service.num}
                 </div>
 
-                {/* Title */}
                 <h3 className="mb-3 text-[20px] leading-tight font-extrabold text-[#0D1B3E] md:text-[22px]">
                   {service.title}
                 </h3>
 
-                {/* Description */}
                 <p className="flex-1 text-[13px] leading-relaxed text-[#5A6880] md:text-[14px]">
                   {service.desc}
                 </p>
 
-                {/* CTA */}
                 <div className="mt-6 flex items-center gap-2 font-inter text-sm font-semibold text-[#1B2B6B] transition-all group-hover:gap-3">
                   {service.cta}
                 </div>
@@ -409,7 +406,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ══ TOUR CARDS ══ */}
 
@@ -487,23 +484,20 @@ const Home = () => {
           </div>
         ))}
       </div> */}
-      <div className="grid grid-cols-2 border-t-[3px] border-[#388E3C] bg-[#0F1B47] md:grid-cols-4">
+      <div className="grid grid-cols-2 bg-[#0F1B47] md:grid-cols-4">
         {stats.map((s, i) => (
           <div
             key={i}
             className={`border-r border-white/10 px-6 py-8 text-center last:border-r-0 md:border-r md:px-7 md:py-[38px] md:last:border-r-0`}
           >
             <div
-              className="font-inter leading-none font-extrabold text-white"
+              className="flex items-center justify-center font-inter leading-none font-extrabold text-white"
               style={{ fontSize: "42px" }}
             >
-              {s.num}
-              <sup
-                className="align-super text-[22px]"
-                style={{ color: "#43A047" }}
-              >
+              <div> {s.num}</div>
+              <div className="ml-1 text-3xl" style={{ color: "#43A047" }}>
                 {s.sup}
-              </sup>
+              </div>
             </div>
 
             <div
@@ -672,19 +666,6 @@ const Home = () => {
       </section> */}
       <section className="py-14">
         <div className="mx-auto max-w-[1280px] px-5 md:px-8 lg:px-10">
-          {/* Header */}
-          {/* <div className="mx-auto mb-10 max-w-[580px] md:mb-11">
-            <SectionTitle center hl="Confidence">
-              Travel with
-            </SectionTitle>
-            <p
-              className="mx-auto mt-3 text-[15px] leading-relaxed md:leading-[1.7]"
-              style={{ color: "#5A6880" }}
-            >
-              15+ years of crafting unforgettable journeys — we're with you
-              every step of the way.
-            </p>
-          </div> */}
           <div className="mb-10 md:mb-12">
             <SectionTitle hl="Confidence">Travel with</SectionTitle>
             <p
@@ -868,12 +849,12 @@ const Home = () => {
                 }}
               >
                 {/* Big Quote Mark */}
-                <div
+                {/* <div
                   className="pointer-events-none absolute top-[-12px] right-4 text-[90px] leading-none font-extrabold select-none md:right-[18px] md:text-[110px]"
                   style={{ color: "#E8ECFA" }}
                 >
                   "
-                </div>
+                </div> */}
 
                 {/* Stars */}
                 <div
@@ -996,482 +977,6 @@ const Home = () => {
           </div>
         </div>
       </section> */}
-      <section
-        className="relative overflow-hidden py-14"
-        style={{
-          background:
-            "linear-gradient(135deg, #0F1B47 0%, #1B2B6B 55%, #1B5E20 100%)",
-        }}
-      >
-        {/* Background circles */}
-        <div
-          className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full md:h-72 md:w-72"
-          style={{ background: "rgba(255,255,255,0.04)" }}
-        />
-
-        <div
-          className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full md:h-56 md:w-56"
-          style={{ background: "rgba(255,255,255,0.03)" }}
-        />
-
-        <div className="relative z-[1] mx-auto max-w-[1280px] px-4 sm:px-6 md:px-8 xl:px-10">
-          <div className="text-center">
-            {/* Heading */}
-            <h2 className="mb-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl md:text-4xl">
-              ✉️ Stay Inspired
-            </h2>
-
-            {/* Subtitle */}
-            <p
-              className="mx-auto mb-8 max-w-2xl text-sm leading-relaxed sm:text-base"
-              style={{ color: "rgba(255,255,255,0.75)" }}
-            >
-              Join 50,000+ travellers. Get exclusive deals, destination guides,
-              and early-bird offers.
-            </p>
-
-            {/* Input */}
-            <div
-              className="mx-auto flex max-w-[600px] flex-col overflow-hidden rounded-2xl sm:flex-row sm:rounded-full"
-              style={{
-                background: "#fff",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-              }}
-            >
-              <input
-                type="email"
-                placeholder="Enter your email address..."
-                className="flex-1 px-5 py-4 text-sm text-[#0D1B3E] outline-none"
-              />
-
-              <button
-                className="cursor-pointer px-6 py-4 text-sm font-bold text-white transition-opacity duration-200 hover:opacity-90"
-                style={{
-                  background: "linear-gradient(135deg, #388E3C, #43A047)",
-                }}
-              >
-                Subscribe →
-              </button>
-            </div>
-
-            {/* Features */}
-            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-6">
-              {[
-                "✓ No spam, ever",
-                "✓ Exclusive deals first",
-                "✓ Unsubscribe anytime",
-              ].map((item) => (
-                <span
-                  key={item}
-                  className="text-sm"
-                  style={{
-                    color: "rgba(255,255,255,0.75)",
-                  }}
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* ══ FOOTER ══ */}
-      {/* <footer
-        style={{ background: "#060E24", paddingTop: 68, paddingBottom: 28 }}
-      >
-        <div className="mx-auto max-w-[1280px] px-10">
-          <div
-            className="grid gap-11 pb-11"
-            style={{
-              gridTemplateColumns: "2fr 1fr 1fr 1fr 1.3fr",
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <div>
-              <div className="mb-3.5 flex items-center gap-2.5">
-                <img
-                  src="/Logo.jpeg"
-                  alt="Udayam International"
-                  className="h-[52px] w-auto object-contain"
-                  style={{ filter: "brightness(1.05)" }}
-                  onError={(e) =>
-                    ((e.currentTarget as HTMLImageElement).style.display =
-                      "none")
-                  }
-                />
-              </div>
-              <p
-                className="mb-5 max-w-[250px] text-[13px] leading-[1.75]"
-                style={{ color: "rgba(255,255,255,0.42)", fontFamily: poppins }}
-              >
-                Your trusted partner for travel, medical tourism, foreign
-                education, trade, and global recruitment. Connecting lives
-                across the world since 2010.
-              </p>
-              <div className="flex gap-2">
-                {["📘", "📸", "🐦", "▶️"].map((ico, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="flex h-9 w-9 items-center justify-center rounded-[9px] text-[15px] transition-all duration-200"
-                    style={{
-                      background: "rgba(255,255,255,0.07)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    {ico}
-                  </a>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)", fontFamily: poppins }}
-              >
-                Services
-              </h4>
-              <ul className="flex list-none flex-col gap-[9px]">
-                {footerServices.map((s) => (
-                  <li key={s.page}>
-                    <button
-                      onClick={() => onNavigate(s.page)}
-                      className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                        fontFamily: poppins,
-                      }}
-                    >
-                      {s.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)", fontFamily: poppins }}
-              >
-                Company
-              </h4>
-              <ul className="flex list-none flex-col gap-[9px]">
-                {[
-                  { label: "Home", page: "home" as Page },
-                  { label: "About Us", page: "about" as Page },
-                  { label: "Contact Us", page: "contact" as Page },
-                ].map((l) => (
-                  <li key={l.label}>
-                    <button
-                      onClick={() => onNavigate(l.page)}
-                      className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                        fontFamily: poppins,
-                      }}
-                    >
-                      {l.label}
-                    </button>
-                  </li>
-                ))}
-                {["Privacy Policy", "Terms of Service"].map((l) => (
-                  <li key={l}>
-                    <a
-                      href="#"
-                      className="text-[13px] transition-colors duration-200"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                        fontFamily: poppins,
-                      }}
-                    >
-                      {l}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)", fontFamily: poppins }}
-              >
-                Popular Tours
-              </h4>
-              <ul className="flex list-none flex-col gap-[9px]">
-                {[
-                  "Rajasthan Circuit",
-                  "Kerala Backwaters",
-                  "Thailand Paradise",
-                  "Swiss Alps Tour",
-                  "Maldives Escape",
-                ].map((t) => (
-                  <li key={t}>
-                    <a
-                      href="#"
-                      className="text-[13px]"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                        fontFamily: poppins,
-                      }}
-                    >
-                      {t}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)", fontFamily: poppins }}
-              >
-                Contact Us
-              </h4>
-              <div
-                className="text-[13px] leading-[2.1]"
-                style={{ color: "rgba(255,255,255,0.42)", fontFamily: poppins }}
-              >
-                <div>📍 Chennai, Tamil Nadu, India</div>
-                <div>📞 +91 98765 43210</div>
-                <div>✉️ info@udayaminternational.com</div>
-                <div>🕐 Mon–Sat: 9AM–7PM</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3.5 pt-[22px]">
-            <div
-              className="text-[12px]"
-              style={{ color: "rgba(255,255,255,0.28)", fontFamily: poppins }}
-            >
-              © 2026 Udayam International. All rights reserved. | Trade · Travel
-              · Trust
-            </div>
-            <div className="flex items-center gap-[7px]">
-              <span
-                className="mr-1.5 text-[12px]"
-                style={{ color: "rgba(255,255,255,0.3)", fontFamily: poppins }}
-              >
-                We Accept:
-              </span>
-              {["VISA", "MC", "UPI", "EMI"].map((p) => (
-                <span
-                  key={p}
-                  className="rounded-[5px] px-[11px] py-[3px] text-[11px] font-bold tracking-[0.3px]"
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.5)",
-                    fontFamily: poppins,
-                  }}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer> */}
-
-      <footer
-        style={{ background: "#060E24", paddingTop: 68, paddingBottom: 28 }}
-      >
-        <div className="mx-auto max-w-[1280px] px-5 md:px-8 lg:px-10">
-          <div
-            className="grid grid-cols-1 gap-10 pb-11 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
-            style={{
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            {/* Brand Column */}
-            <div className="xl:col-span-2">
-              <div className="mb-3.5 flex items-center gap-2.5">
-                <img
-                  src="/Logo.jpeg"
-                  alt="Udayam International"
-                  className="h-[52px] w-auto object-contain"
-                  style={{ filter: "brightness(1.05)" }}
-                  onError={(e) =>
-                    ((e.currentTarget as HTMLImageElement).style.display =
-                      "none")
-                  }
-                />
-              </div>
-              <p
-                className="mb-5 max-w-[280px] text-[13px] leading-[1.75]"
-                style={{ color: "rgba(255,255,255,0.42)" }}
-              >
-                Your trusted partner for travel, medical tourism, foreign
-                education, trade, and global recruitment. Connecting lives
-                across the world since 2010.
-              </p>
-              <div className="flex gap-2">
-                {/* {["📘", "📸", "🐦", "▶️"].map((ico, i) => ( */}
-                {["📘", "📸", "🐦", "▶️"].map((ico, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="flex h-9 w-9 items-center justify-center rounded-[9px] text-[15px] transition-all duration-200"
-                    style={{
-                      background: "rgba(255,255,255,0.07)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    {ico}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Services */}
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)" }}
-              >
-                Services
-              </h4>
-              <ul className="flex list-none flex-col gap-[9px]">
-                {footerServices.map((s) => (
-                  <li key={s.page}>
-                    <button
-                      onClick={() => navigate(s.page)}
-                      className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                      }}
-                    >
-                      {s.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)" }}
-              >
-                Company
-              </h4>
-              <ul className="flex list-none flex-col gap-[9px]">
-                {[
-                  { label: "Home", page: "home" as Page },
-                  { label: "About Us", page: "about" as Page },
-                  { label: "Contact Us", page: "contact" as Page },
-                ].map((l) => (
-                  <li key={l.label}>
-                    <button
-                      onClick={() => navigate(l.page)}
-                      className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                      }}
-                    >
-                      {l.label}
-                    </button>
-                  </li>
-                ))}
-                {["Privacy Policy", "Terms of Service"].map((l) => (
-                  <li key={l}>
-                    <a
-                      href="#"
-                      className="text-[13px] transition-colors duration-200"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                      }}
-                    >
-                      {l}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Popular Tours */}
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)" }}
-              >
-                Popular Tours
-              </h4>
-              <ul className="flex list-none flex-col gap-[9px]">
-                {[
-                  "Rajasthan Circuit",
-                  "Kerala Backwaters",
-                  "Thailand Paradise",
-                  "Swiss Alps Tour",
-                  "Maldives Escape",
-                ].map((t) => (
-                  <li key={t}>
-                    <a
-                      href="#"
-                      className="text-[13px]"
-                      style={{
-                        color: "rgba(255,255,255,0.42)",
-                      }}
-                    >
-                      {t}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Contact Us */}
-            <div>
-              <h4
-                className="mb-4 text-[11px] font-bold tracking-[1.8px] uppercase"
-                style={{ color: "rgba(255,255,255,0.45)" }}
-              >
-                Contact Us
-              </h4>
-              <div
-                className="font-inter text-[13px] leading-[2.1]"
-                style={{ color: "rgba(255,255,255,0.42)" }}
-              >
-                <div> Chennai, Tamil Nadu, India</div>
-                <div> +91 98765 43210</div>
-                <div> info@udayaminternational.com</div>
-                <div> Mon–Sat: 9AM–7PM</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="flex flex-col items-center justify-between gap-4 pt-[22px] md:flex-row">
-            <div
-              className="text-center text-[12px] md:text-left"
-              style={{ color: "rgba(255,255,255,0.28)" }}
-            >
-              © 2026 Udayam International. All rights reserved. | Trade · Travel
-              · Trust
-            </div>
-            <div className="flex items-center gap-[7px]">
-              <span
-                className="mr-1.5 text-[12px]"
-                style={{ color: "rgba(255,255,255,0.3)" }}
-              >
-                We Accept:
-              </span>
-              {["VISA", "MC", "UPI", "EMI"].map((p) => (
-                <span
-                  key={p}
-                  className="rounded-[5px] px-[11px] py-[3px] text-[11px] font-bold tracking-[0.3px]"
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.5)",
-                  }}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
 
       {/* ══ WHATSAPP ══ */}
       <a

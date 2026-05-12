@@ -1,6 +1,6 @@
-import top1 from "../assets/home/toptour1.jpeg"
-import top2 from "../assets/home/toptour2.jpeg"
-import top3 from "../assets/home/toptour3.jpeg"
+import top1 from "../../assets/home/toptour1.jpeg"
+import top2 from "../../assets/home/toptour2.jpeg"
+import top3 from "../../assets/home/toptour3.jpeg"
 
 interface Destination {
   id: string
@@ -64,7 +64,7 @@ export default function TravelCards() {
                 />
                 {/* Region Badge */}
                 <div className="absolute top-4 right-4">
-                  <span className="rounded-lg bg-orange-500 px-3 py-1 text-sm font-semibold text-white shadow-md hover:bg-orange-600 sm:text-base">
+                  <span className="rounded-md bg-orange-500 px-3 py-1 text-sm font-semibold text-white shadow-md hover:bg-orange-600 sm:text-base">
                     {destination.region}
                   </span>
                 </div>

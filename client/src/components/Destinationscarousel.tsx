@@ -525,7 +525,7 @@ const destinationsData = [
     image:
       "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=900&q=80",
     featured: true,
-    badge: "⭐ Featured",
+    badge: " Featured",
   },
   {
     id: 2,

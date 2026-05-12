@@ -3915,7 +3915,7 @@ const Tourism: React.FC<TourismProps> = ({ onNavigate }) => {
         </section>
 
         {/* ─── MARQUEE ─── */}
-        <div
+        {/* <div
           style={{
             background: "#1B2B6B",
             overflow: "hidden",
@@ -3956,7 +3956,7 @@ const Tourism: React.FC<TourismProps> = ({ onNavigate }) => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* ─── MOBILE FILTER BAR ─── */}
         <div
@@ -4066,6 +4066,7 @@ const Tourism: React.FC<TourismProps> = ({ onNavigate }) => {
 
           {/* ─── MAIN CONTENT ─── */}
           <main
+            className="bg-white!"
             style={{
               minWidth: 0,
               padding: isMobile
@@ -4077,7 +4078,7 @@ const Tourism: React.FC<TourismProps> = ({ onNavigate }) => {
             }}
           >
             {/* Results bar */}
-            <div
+            {/* <div
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -4122,10 +4123,10 @@ const Tourism: React.FC<TourismProps> = ({ onNavigate }) => {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* Featured Banner */}
-            <div
+            {/* <div
               className="feat-banner-inner"
               style={{
                 background:
@@ -4247,10 +4248,54 @@ const Tourism: React.FC<TourismProps> = ({ onNavigate }) => {
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Featured Card */}
-            <SecHeader eyebrow="Editor's Pick" title="Featured Package" />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 40,
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: isMobile ? "1.2rem" : "1.5rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                }}
+              >
+                <span style={{ color: "#2E7D32" }}>Featured</span> Packages
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {(["grid", "list"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setGridView(v)}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      border: `1.5px solid ${gridView === v ? "#1B2B6B" : "#E8E4DC"}`,
+                      background: gridView === v ? "#1B2B6B" : "#fff",
+                      color: gridView === v ? "#fff" : "#9494b0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      fontSize: ".85rem",
+                      transition: "all .2s",
+                    }}
+                  >
+                    {v === "grid" ? "⊞" : "☰"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div
               className="feat-card-inner"
               style={{

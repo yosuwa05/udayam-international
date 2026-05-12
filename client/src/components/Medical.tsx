@@ -971,10 +971,6 @@ const MedicalTourism: React.FC = () => {
   }
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap"
-        rel="stylesheet"
-      />
       <style>{`
         :root {
           --teal:#007A6E; --teal-mid:#009688; --teal-dim:#005A52;
@@ -1033,225 +1029,66 @@ const MedicalTourism: React.FC = () => {
 
       <div className="med-wrap">
         {/* ─── HERO ─── */}
-        <section
-          style={{
-            minHeight: isMobile ? "auto" : "100vh",
-            position: "relative",
-            overflow: "hidden",
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          }}
-        >
-          {/* Left */}
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-              padding: isMobile ? "120px 22px 160px" : "0 72px 80px",
-              background: "var(--obsidian)",
-              order: isMobile ? 1 : 0,
-            }}
-          >
-            {/* Diagonal cut — desktop only */}
-            {!isMobile && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: -80,
-                  bottom: 0,
-                  width: 160,
-                  background: "var(--obsidian)",
-                  transform: "skewX(-4deg)",
-                  zIndex: 3,
-                  pointerEvents: "none",
-                }}
-              />
-            )}
-            <div
-              className="hero-eyebrow-anim"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                fontFamily: "'DM Mono',monospace",
-                fontSize: ".65rem",
-                fontWeight: 400,
-                color: "var(--teal)",
-                letterSpacing: ".2em",
-                textTransform: "uppercase" as const,
-                marginBottom: 28,
-              }}
-            >
-              <span
-                style={{
-                  width: 40,
-                  height: 1,
-                  background: "var(--teal)",
-                  display: "inline-block",
-                }}
-              />
-              Medical Tourism · Est. 2004
+        <section className="hero relative flex h-screen min-h-[700px] flex-col justify-end overflow-hidden px-4 pb-[88px] md:px-16">
+          <div className="hbg absolute inset-0 bg-[url('https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=1200&auto=format&fit=crop&q=85')] bg-cover bg-center" />
+          <div className="hov2 absolute inset-0 bg-gradient-to-b from-[rgba(15,26,66,0.2)] via-[rgba(15,26,66,0.12)] via-35% to-[rgba(15,26,66,0.93)] to-75%" />
+          <div className="scroll-hint absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 animate-[fsu_1s_0.7s_forwards] flex-col items-center gap-2 opacity-0">
+            <div className="sh-line h-11 w-px animate-[shp_2.2s_ease-in-out_infinite] bg-gradient-to-b from-white/50 to-transparent" />
+            <span className="sh-txt font-inter text-[0.62rem] tracking-[0.14em] text-white/35 uppercase">
+              Scroll
+            </span>
+          </div>
+          <div className="hero-content relative z-[2] max-w-[1100px]">
+            <div className="h-eye mb-5 inline-flex animate-[fsu_0.9s_0.2s_forwards] items-center gap-2.5 font-inter text-[0.72rem] font-semibold tracking-[0.16em] text-white/55 uppercase opacity-0">
+              <span className="inline-block h-px w-[30px] bg-white/40" />
+              About Horizons Travel Co. · Est. 2004
             </div>
-            <h1
-              className="hero-h1-anim"
-              style={{
-                fontFamily: "'Cormorant Garamond',serif",
-                fontSize: "clamp(3.2rem,5.5vw,5.8rem)",
-                fontWeight: 300,
-                lineHeight: 1.0,
-                color: "var(--ivory)",
-                marginBottom: 32,
-              }}
-            >
-              Heal
+            <h1 className="h1 font-libre mb-[30px] animate-[fsu_1s_0.35s_forwards] text-[clamp(3rem,6vw,6.2rem)] leading-[1.01] font-bold text-white opacity-0">
+              We Craft Journeys
               <br />
-              <strong style={{ fontWeight: 600 }}>Without</strong>
+              That Become{" "}
+              <em className="text-[#7ed88a] italic not-italic">Stories</em>
               <br />
-              <em
-                style={{
-                  fontStyle: "italic",
-                  color: "var(--teal)",
-                  fontWeight: 300,
-                }}
-              >
-                Borders.
-              </em>
+              For a Lifetime.
             </h1>
-            <p
-              className="hero-desc-anim"
-              style={{
-                fontSize: ".95rem",
-                lineHeight: 1.85,
-                color: "var(--ivory-dim)",
-                maxWidth: 420,
-                marginBottom: 44,
-              }}
-            >
-              India's finest hospitals. Surgeons trained at Harvard and Johns
-              Hopkins. Treatments at 20% of Western prices — with the care,
-              comfort, and support you deserve every step of the way.
-            </p>
-            <div
-              className="hero-btns-anim"
-              style={{ display: "flex", gap: 14, flexWrap: "wrap" }}
-            >
-              <a href="#inquiry" className="btn-teal-cls">
-                Get Free Quote →
-              </a>
-              <a href="#treatments" className="btn-ghost-cls">
-                View Treatments
-              </a>
-            </div>
-          </div>
-
-          {/* Right image */}
-          <div
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              height: isMobile ? "50vw" : "auto",
-              order: isMobile ? 0 : 1,
-              minHeight: isMobile ? 220 : 0,
-            }}
-          >
-            <div className="hero-scan" />
-            <img
-              src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=1200&auto=format&fit=crop&q=85"
-              alt="World class surgery"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: "saturate(.9) brightness(.82)",
-                transition: "transform 10s ease",
-                display: "block",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(to right,var(--obsidian) 0%,transparent 40%),linear-gradient(to top,rgba(245,243,239,.4) 0%,transparent 60%)",
-              }}
-            />
-          </div>
-
-          {/* Stats bar */}
-          <div
-            style={{
-              position: isMobile ? "relative" : "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 10,
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)",
-              borderTop: "1px solid rgba(0,0,0,.08)",
-            }}
-          >
-            {[
-              { n: 30, suf: "+", label: "Partner Hospitals" },
-              { n: 12, suf: "K+", label: "Patients Served" },
-              { n: 80, suf: "%", label: "Average Cost Saving" },
-              { n: null, label: "Patient Satisfaction", fixed: "4.9★" },
-            ].map((s, i) => (
-              <div
-                key={i}
-                style={{
-                  padding: "20px 28px",
-                  borderRight: i < 3 ? "1px solid var(--border)" : "none",
-                  borderBottom:
-                    isMobile && i < 2 ? "1px solid var(--border)" : "none",
-                  background: "rgba(245,243,239,.92)",
-                  backdropFilter: "blur(12px)",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "'Cormorant Garamond',serif",
-                    fontSize: "2rem",
-                    fontWeight: 600,
-                    color: "var(--navy)",
-                    lineHeight: 1,
-                    marginBottom: 4,
-                  }}
-                >
-                  {s.fixed ? (
-                    <span>{s.fixed}</span>
-                  ) : (
-                    <>
-                      <AnimCounter target={s.n!} />
-                      <span
-                        style={{ color: "var(--teal)", fontSize: "1.1rem" }}
-                      >
-                        {s.suf}
-                      </span>
-                    </>
-                  )}
+            <div className="h-row flex animate-[fsu_1s_0.5s_forwards] flex-col items-start justify-between gap-10 opacity-0 md:flex-row md:items-end">
+              <p className="h-desc max-w-[460px] text-base leading-[1.8] text-white/60">
+                Twenty years curating the world's finest travel experiences for
+                explorers who believe the journey is just as important as the
+                destination.
+              </p>
+              <div className="h-stats flex gap-11">
+                <div className="hs text-right">
+                  <div className="hs-n font-libre font-inter text-[2.2rem] leading-none font-bold text-white">
+                    48K<sup className="text-[1.1rem] text-[#7ed88a]">+</sup>
+                  </div>
+                  <div className="hs-l mt-1 font-inter text-[0.68rem] tracking-[0.1em] text-white/40 uppercase">
+                    Travellers
+                  </div>
                 </div>
-                <div
-                  style={{
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: ".66rem",
-                    color: "var(--ivory-muted)",
-                    letterSpacing: ".1em",
-                    textTransform: "uppercase" as const,
-                  }}
-                >
-                  {s.label}
+                <div className="hs text-right">
+                  <div className="hs-n font-libre font-inter text-[2.2rem] leading-none font-bold text-white">
+                    120<sup className="text-[1.1rem] text-[#7ed88a]">+</sup>
+                  </div>
+                  <div className="hs-l mt-1 font-inter text-[0.68rem] tracking-[0.1em] text-white/40 uppercase">
+                    Countries
+                  </div>
+                </div>
+                <div className="hs text-right">
+                  <div className="hs-n font-libre font-inter text-[2.2rem] leading-none font-bold text-white">
+                    4.9<sup className="text-[1.1rem] text-[#7ed88a]">★</sup>
+                  </div>
+                  <div className="hs-l mt-1 font-inter text-[0.68rem] tracking-[0.1em] text-white/40 uppercase">
+                    Rating
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </section>
 
         {/* ─── MARQUEE ─── */}
-        <div
+        {/* <div
           style={{
             borderTop: "1px solid var(--border)",
             borderBottom: "1px solid var(--border)",
@@ -1285,7 +1122,7 @@ const MedicalTourism: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* ─── PROMISE ─── */}
         <div
@@ -1607,6 +1444,7 @@ const MedicalTourism: React.FC = () => {
 
           {/* ─── MAIN CONTENT ─── */}
           <main
+            className="bg-white!"
             style={{
               minWidth: 0,
               padding: isMobile
@@ -1618,7 +1456,7 @@ const MedicalTourism: React.FC = () => {
             }}
           >
             {/* Results bar */}
-            <div
+            {/* <div
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -1663,10 +1501,10 @@ const MedicalTourism: React.FC = () => {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* Featured Banner */}
-            <div
+            {/* <div
               className="feat-banner-inner"
               style={{
                 background:
@@ -1788,10 +1626,55 @@ const MedicalTourism: React.FC = () => {
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Featured Card */}
-            <SecHeader eyebrow="Editor's Pick" title="Featured Package" />
+            {/* <SecHeader eyebrow="Editor's Pick" title="Featured Package" /> */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 40,
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: isMobile ? "1.2rem" : "1.5rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                }}
+              >
+                <span style={{ color: "#2E7D32" }}>Featured</span> Packages
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {(["grid", "list"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setGridView(v)}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      border: `1.5px solid ${gridView === v ? "#1B2B6B" : "#E8E4DC"}`,
+                      background: gridView === v ? "#1B2B6B" : "#fff",
+                      color: gridView === v ? "#fff" : "#9494b0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      fontSize: ".85rem",
+                      transition: "all .2s",
+                    }}
+                  >
+                    {v === "grid" ? "⊞" : "☰"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div
               className="feat-card-inner"
               style={{

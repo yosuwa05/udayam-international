@@ -85,6 +85,8 @@ import Home from "./components/Home/Home"
 import AboutUs from "./components/Aboutus"
 import Tourism from "./components/Tourism"
 import MedicalTourism from "./components/Medical"
+import Footer from "./components/Footer"
+import NewsLetter from "./components/NewsLetter"
 
 const ComingSoon = ({ label }: { label: string }) => {
   const navigate = useNavigate()
@@ -159,6 +161,9 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <NewsLetter />
+
+      <Footer />
     </>
   )
 }

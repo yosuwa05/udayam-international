@@ -293,7 +293,7 @@ const AboutUs = () => {
       </section>
 
       {/* MARQUEE */}
-      <div className="mq overflow-hidden border-y border-white/5 bg-[#1B2B6B] py-[18px]">
+      {/* <div className="mq overflow-hidden border-y border-white/5 bg-[#1B2B6B] py-[18px]">
         <div className="mq-track flex w-max animate-[mqscroll_28s_linear_infinite]">
           {[
             "Personalised Itineraries",
@@ -329,7 +329,7 @@ const AboutUs = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* INTRO SPLIT */}
       <div
@@ -382,7 +382,7 @@ const AboutUs = () => {
           <div className="ir-overlay absolute inset-0 bg-gradient-to-r from-[rgba(247,245,240,0.15)] to-transparent" />
 
           {/* Top Tag - Responsive */}
-          <div className="ir-tag absolute top-6 right-6 rounded-full bg-[rgba(46,125,50,0.9)] px-5 py-2.5 font-inter text-[0.7rem] font-semibold tracking-[0.06em] text-white backdrop-blur-[8px] sm:top-8 sm:right-8 sm:text-[0.72rem]">
+          <div className="ir-tag absolute top-6 right-6 rounded-full bg-orange-500 px-5 py-2.5 font-inter text-[0.7rem] font-semibold tracking-[0.06em] text-white backdrop-blur-[8px] hover:bg-orange-600 sm:top-8 sm:right-8 sm:text-[0.72rem]">
             ✦ Est. 2004 · Chennai
           </div>
 
@@ -401,7 +401,7 @@ const AboutUs = () => {
       </div>
 
       {/* PHOTO COLLAGE */}
-      <section className="collage bg-white px-6 py-[110px] md:px-16">
+      <section className="collage bg-white px-6 py-20 md:px-16">
         <div className="col-top mb-14 grid grid-cols-1 items-end gap-12 md:grid-cols-2">
           <div className="rv translate-y-9 opacity-0 transition-all duration-800">
             <p className="ey mb-[14px] flex items-center gap-2.5 font-inter text-[0.7rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
@@ -517,7 +517,7 @@ const AboutUs = () => {
       </div> */}
 
       {/* VISION MISSION */}
-      <section className="vm bg-[#F7F5F0] px-6 py-[110px] md:px-16" id="vision">
+      <section className="vm bg-[#F7F5F0] px-6 py-20 md:px-16" id="vision">
         <div className="rv max-w-[600px] translate-y-9 opacity-0 transition-all duration-800">
           <p className="ey mb-[14px] flex items-center gap-2.5 font-inter text-[0.7rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
             <span className="h-[1.5px] w-6 bg-[#2E7D32]" />
@@ -572,7 +572,7 @@ const AboutUs = () => {
       </section>
 
       {/* STORY TIMELINE */}
-      <section className="story bg-white px-6 py-[110px] md:px-16">
+      <section className="story bg-white px-6 py-20 md:px-16">
         <div className="st-g grid grid-cols-1 items-center gap-[100px] lg:grid-cols-2">
           <div>
             <div className="rv translate-y-9 opacity-0 transition-all duration-800">
@@ -644,7 +644,7 @@ const AboutUs = () => {
               ))}
             </div>
           </div>
-          <div className="st-imgs rvr relative h-[600px] opacity-0 transition-all duration-800 md:translate-x-9">
+          <div className="st-imgs rvr relative h-[600px] opacity-0 transition-all duration-800 md:mt-16 md:translate-x-9">
             <div className="si1 absolute top-0 left-0 z-[1] h-[80%] w-[72%] overflow-hidden rounded-2xl">
               <img
                 src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&auto=format&fit=crop&q=80"
@@ -674,7 +674,7 @@ const AboutUs = () => {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="testi relative overflow-hidden bg-[#1B2B6B] px-6 py-[110px] md:px-16">
+      <section className="testi relative overflow-hidden bg-[#1B2B6B] px-6 py-20 md:px-16">
         <div className="bg-radial-gradient absolute -top-[200px] -right-[200px] h-[600px] w-[600px] rounded-full from-[rgba(46,125,50,0.12)] to-transparent" />
         <div className="testi-hd mb-14 flex flex-col items-start justify-between md:flex-row md:items-end">
           <div>
@@ -766,32 +766,6 @@ const AboutUs = () => {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── PARALLAX CTA SECTION (SCROLL EFFECT) ──────────────────── */}
-      <section
-        className="parallax-bg relative flex items-center justify-center px-6 py-36"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80')",
-        }}
-      >
-        {/* Overlay layers for depth effect */}
-        <div className="absolute inset-0 bg-[#1B2B6B]/65 mix-blend-multiply"></div>
-        <div className="absolute inset-0 bg-black/25"></div>
-
-        {/* Content */}
-        <div className="reveal relative z-10 mx-auto max-w-3xl text-center text-white">
-          <h2 className="mb-6 font-heading text-4xl md:text-5xl">
-            Ready to Begin Your Journey?
-          </h2>
-          <p className="mb-10 text-xl font-light text-white/85">
-            Let us craft the trip of a lifetime for you.
-          </p>
-          <button className="font-ui rounded-full bg-[#2E7D32] px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-[#256427] hover:shadow-xl">
-            Explore Our Tours
-          </button>
         </div>
       </section>
 
