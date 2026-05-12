@@ -264,7 +264,7 @@ const AboutUs = () => {
             </p>
             <div className="h-stats flex gap-11">
               <div className="hs text-right">
-                <div className="hs-n font-libre text-[2.2rem] leading-none font-bold text-white">
+                <div className="hs-n font-libre font-inter text-[2.2rem] leading-none font-bold text-white">
                   48K<sup className="text-[1.1rem] text-[#7ed88a]">+</sup>
                 </div>
                 <div className="hs-l mt-1 font-inter text-[0.68rem] tracking-[0.1em] text-white/40 uppercase">
@@ -272,7 +272,7 @@ const AboutUs = () => {
                 </div>
               </div>
               <div className="hs text-right">
-                <div className="hs-n font-libre text-[2.2rem] leading-none font-bold text-white">
+                <div className="hs-n font-libre font-inter text-[2.2rem] leading-none font-bold text-white">
                   120<sup className="text-[1.1rem] text-[#7ed88a]">+</sup>
                 </div>
                 <div className="hs-l mt-1 font-inter text-[0.68rem] tracking-[0.1em] text-white/40 uppercase">
@@ -280,7 +280,7 @@ const AboutUs = () => {
                 </div>
               </div>
               <div className="hs text-right">
-                <div className="hs-n font-libre text-[2.2rem] leading-none font-bold text-white">
+                <div className="hs-n font-libre font-inter text-[2.2rem] leading-none font-bold text-white">
                   4.9<sup className="text-[1.1rem] text-[#7ed88a]">★</sup>
                 </div>
                 <div className="hs-l mt-1 font-inter text-[0.68rem] tracking-[0.1em] text-white/40 uppercase">
@@ -431,7 +431,7 @@ const AboutUs = () => {
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             />
             <div className="ci-lbl absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 font-inter text-[0.66rem] font-semibold tracking-[0.05em] text-[#1B2B6B] backdrop-blur-[8px]">
-              🏔 Swiss Alps
+              Swiss Alps
             </div>
           </div>
           <div className="ci relative overflow-hidden rounded-2xl">
@@ -441,7 +441,7 @@ const AboutUs = () => {
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             />
             <div className="ci-lbl absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 font-inter text-[0.66rem] font-semibold tracking-[0.05em] text-[#1B2B6B] backdrop-blur-[8px]">
-              🇬🇷 Santorini
+              Santorini
             </div>
           </div>
           <div className="ci c3 relative overflow-hidden rounded-2xl lg:row-span-2">
@@ -451,7 +451,7 @@ const AboutUs = () => {
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             />
             <div className="ci-lbl absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 font-inter text-[0.66rem] font-semibold tracking-[0.05em] text-[#1B2B6B] backdrop-blur-[8px]">
-              🇦🇪 Dubai
+              Dubai
             </div>
           </div>
           <div className="ci relative overflow-hidden rounded-2xl">
@@ -461,14 +461,14 @@ const AboutUs = () => {
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             />
             <div className="ci-lbl absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 font-inter text-[0.66rem] font-semibold tracking-[0.05em] text-[#1B2B6B] backdrop-blur-[8px]">
-              🌴 Bali
+              Bali
             </div>
           </div>
         </div>
       </section>
 
       {/* STATS BAND */}
-      <div className="sb relative grid grid-cols-2 overflow-hidden bg-[#1B2B6B] px-6 py-[72px] md:grid-cols-4 md:px-16">
+      {/* <div className="sb relative grid grid-cols-2 overflow-hidden bg-[#1B2B6B] px-6 py-[72px] md:grid-cols-4 md:px-16">
         <div className="bg-radial-gradient absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full from-[rgba(46,125,50,0.12)] to-transparent" />
         <div className="si rv relative z-[1] translate-y-9 border-r border-white/7 px-5 py-10 text-center opacity-0 transition-all duration-800">
           <div className="sn font-libre mb-2 text-[3.4rem] leading-none font-bold text-white">
@@ -514,7 +514,7 @@ const AboutUs = () => {
             Industry Awards
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* VISION MISSION */}
       <section className="vm bg-[#F7F5F0] px-6 py-[110px] md:px-16" id="vision">
@@ -530,7 +530,7 @@ const AboutUs = () => {
         </div>
         <div className="vm-g mt-[60px] grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="vc rv d1 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-100 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
-            <div className="vc-n font-libre mb-5 text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
+            <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
               01
             </div>
             <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
@@ -543,7 +543,7 @@ const AboutUs = () => {
             </p>
           </div>
           <div className="vc rv d2 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-200 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
-            <div className="vc-n font-libre mb-5 text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
+            <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
               02
             </div>
             <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
@@ -556,7 +556,7 @@ const AboutUs = () => {
             </p>
           </div>
           <div className="vc rv d3 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-300 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
-            <div className="vc-n font-libre mb-5 text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
+            <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
               03
             </div>
             <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">

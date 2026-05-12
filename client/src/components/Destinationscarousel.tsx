@@ -625,7 +625,7 @@ const DestinationsSection = () => {
 
               {/* Badge */}
               {dest.badge && (
-                <div className="absolute top-6 right-6 rounded-full bg-[#C9A227] px-4 py-2 text-xs font-bold text-[#0D1B4B]">
+                <div className="absolute top-6 right-6 rounded-full bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600">
                   {dest.badge}
                 </div>
               )}
@@ -640,11 +640,11 @@ const DestinationsSection = () => {
                 >
                   {dest.city}
                 </h3>
-                <p className="text-sm opacity-90">{dest.price}</p>
+                <p className="font-inter text-sm opacity-90">{dest.price}</p>
               </div>
 
               {/* Hover Effect Layer */}
-              <div className="absolute inset-0 rounded-3xl border-2 border-transparent transition-all duration-300 group-hover:border-[#C9A227]/50" />
+              <div className="group-hover:border-bg-orange-500 absolute inset-0 rounded-3xl border-2 border-transparent transition-all duration-300" />
             </div>
           ))}
         </div>

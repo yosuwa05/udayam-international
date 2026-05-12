@@ -1,7 +1,6 @@
-import { MapPin } from "lucide-react"
-import top1 from "../assets/toptour1.jpeg"
-import top2 from "../assets/toptour2.jpeg"
-import top3 from "../assets/toptour3.jpeg"
+import top1 from "../assets/home/toptour1.jpeg"
+import top2 from "../assets/home/toptour2.jpeg"
+import top3 from "../assets/home/toptour3.jpeg"
 
 interface Destination {
   id: string

@@ -1,297 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import type { Page } from "./Navbar"
-import DestinationsSection from "./Destinationscarousel"
-import TravelCards from "./TravelCards"
-import banner1 from "../assets/2.jpeg"
-import banner2 from "../assets/1.jpeg"
-import banner3 from "../assets/3.jpeg"
-import banner4 from "../assets/4.jpeg"
-import banner5 from "../assets/5.jpeg"
-
-// import DestinationsCarousel from "./Destinationscarousel"
-
-interface HomeProps {
-  onNavigate: (page: Page) => void
-}
-
-/* ─── DATA ─────────────────────────────────────────────── */
-
-const heroSlides = [
-  {
-    img: banner1,
-    thumb: banner1,
-    eyebrow: "Wonders of the world",
-    h1Parts: ["Taj Mahal", "A Classic", " Travel Angle"],
-    emWord: "Taj Mahal",
-    desc: "Discover India’s breathtaking destinations, vibrant cultures, luxury experiences, scenic escapes, and unforgettable travel adventures worldwide.",
-    btn1: { label: "View Packages →", page: "tourism" as Page },
-    btn2: { label: "Get Free Quote ", page: "contact" as Page },
-  },
-  {
-    img: banner2,
-    thumb: banner2,
-    eyebrow: "Domestic Heritage",
-    h1Parts: ["Explore the", "Land of", "Royal Wonders"],
-    emWord: "Royal Wonders",
-    desc: "Witness grand forts, golden deserts, and unforgettable cultural experiences.",
-    btn1: { label: "Book Now →", page: "tourism" as Page },
-    btn2: { label: "View Itinerary", page: "tourism" as Page },
-  },
-  {
-    img: banner3,
-    thumb: banner3,
-    eyebrow: "Medical Tourism",
-    h1Parts: ["Healing", "Beyond,", "Borders"],
-    emWord: "Borders",
-    desc: "Experience affordable medical care, trusted hospitals, and dedicated assistance throughout your treatment journey.",
-    btn1: { label: " Explore  →", page: "tourism" as Page },
-    btn2: { label: "Visa Help", page: "travel" as Page },
-  },
-  {
-    img: banner5,
-    thumb: banner5,
-    eyebrow: "Iconic Landmarks",
-    h1Parts: ["The World is", "Yours to", "Explore"],
-    emWord: "Explore",
-    desc: " From the romance of the Eiffel Tower to the majesty of Eastern temples, we curate seamless journeys to the globe’s most iconic landmarks.",
-    btn1: { label: "Know More →", page: "medical" as Page },
-    btn2: { label: "Free Consultation", page: "contact" as Page },
-  },
-]
-
-// const searchTabs = [
-//   "🌍 Tours & Packages",
-//   "✈️ Flights & Visa",
-//   "🏥 Medical Tourism",
-//   "🎓 Foreign Education",
-//   "💼 Recruitment",
-// ]
-
-const services = [
-  {
-    icon: "🌍",
-    num: "01",
-    title: "Tourism",
-    desc: "Domestic & international packages for every kind of traveller — adventure, leisure, heritage, and honeymoon.",
-    cta: "Explore packages →",
-    page: "tourism" as Page,
-  },
-  {
-    icon: "🏥",
-    num: "02",
-    title: "Medical Tourism",
-    desc: "World-class treatments at JCI-accredited hospitals abroad with full end-to-end coordination and care.",
-    cta: "Learn more →",
-    page: "medical" as Page,
-  },
-  {
-    icon: "✈️",
-    num: "03",
-    title: "Travel Services",
-    desc: "Flight booking, visa assistance, documentation guidance — everything for smooth and stress-free travel.",
-    cta: "View services →",
-    page: "travel" as Page,
-  },
-  {
-    icon: "📦",
-    num: "04",
-    title: "Trade",
-    desc: "Import and export facilitation across multiple industry categories with documentation and logistics support.",
-    cta: "Get in touch →",
-    page: "trade" as Page,
-  },
-  {
-    icon: "🎓",
-    num: "05",
-    title: "Foreign Education",
-    desc: "Study abroad guidance, admissions support, and student visa assistance for your global academic journey.",
-    cta: "Explore destinations →",
-    page: "education" as Page,
-  },
-  {
-    icon: "💼",
-    num: "06",
-    title: "Recruitment",
-    desc: "Domestic and international placement connecting skilled talent with the right opportunities worldwide.",
-    cta: "Register now →",
-    page: "recruitment" as Page,
-  },
-]
-
-const catPills = [
-  "🌟 All",
-  "🏔️ Adventure",
-  "🏖️ Beach",
-  "🏰 Heritage",
-  "💑 Honeymoon",
-  "👨‍👩‍👧 Family",
-]
-
-const tourCards = [
-  {
-    img: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&q=80",
-    badge: { label: "Bestseller", color: "#FEF2F2", text: "#E53935" },
-    dur: "7 Days",
-    loc: "Jaipur · Jodhpur · Udaipur",
-    title: "Royal Rajasthan Heritage Circuit — Palaces, Forts & Desert Safari",
-    rating: "4.9",
-    reviews: "312 reviews",
-    tag: "Domestic",
-    tagColor: "#E8ECFA",
-    tagText: "#1B2B6B",
-    price: "₹28,500",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&q=80",
-    badge: { label: "Top Rated", color: "#E8F5E9", text: "#2E7D32" },
-    dur: "5 Days",
-    loc: "Alleppey · Munnar · Thekkady",
-    title: "Kerala Backwaters & Misty Hills — Houseboat & Tea Estate Retreat",
-    rating: "4.8",
-    reviews: "247 reviews",
-    tag: "Domestic",
-    tagColor: "#E8ECFA",
-    tagText: "#1B2B6B",
-    // price: "₹22,000",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&q=80",
-    badge: { label: "Hot Deal", color: "#FEF2F2", text: "#E53935" },
-    dur: "6 Days",
-    loc: "Bangkok · Pattaya · Phuket",
-    title: "Thailand Paradise — Temples, Islands & Culture",
-    rating: "4.9",
-    reviews: "589 reviews",
-    tag: "International",
-    tagColor: "#FFFBEB",
-    tagText: "#92400E",
-    price: "₹55,000",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1548013146-72479768bada?w=600&q=80",
-    badge: { label: "Premium", color: "#E8ECFA", text: "#1B2B6B" },
-    dur: "8 Days",
-    loc: "Zurich · Interlaken · Geneva",
-    title: "Swiss Alps Splendour — Jungfraujoch & Lake Geneva",
-    rating: "5.0",
-    reviews: "198 reviews",
-    tag: "International",
-    tagColor: "#FFFBEB",
-    tagText: "#92400E",
-    price: "₹1,85,000",
-  },
-]
-
-const stats = [
-  { num: "12K", sup: "+", label: "Happy Travellers" },
-  { num: "80", sup: "+", label: "Destinations" },
-  { num: "500", sup: "+", label: "Tour Packages" },
-  { num: "98", sup: "%", label: "Satisfaction Rate" },
-]
-
-const deals = [
-  {
-    img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
-    tag: "25% OFF",
-    title: "Cherry Blossom Japan Tour",
-    sub: "Tokyo · Kyoto · Osaka · Nara",
-    price: "Starting from ₹1,45,000/person",
-    big: true,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=600&q=80",
-    tag: "HONEYMOON",
-    title: "Maldives Water Villa",
-    sub: "Overwater Paradise · 5 Nights",
-    price: "From ₹95,000/person",
-    big: false,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=600&q=80",
-    tag: "LAST MINUTE",
-    title: "Goa Beach Escape",
-    sub: "North & South Goa · 4 Nights",
-    price: "From ₹12,500/person",
-    big: false,
-  },
-]
-
-const whyUs = [
-  {
-    icon: "🏅",
-    title: "15+ Years of Trust",
-    desc: "Over a decade of crafting journeys for thousands of happy travellers across India and globally.",
-  },
-  {
-    icon: "💰",
-    title: "Best Price Guarantee",
-    desc: "Transparent pricing with zero hidden surprises. Found it cheaper? We'll match the price.",
-  },
-  {
-    icon: "🛡️",
-    title: "Safe & Insured Travel",
-    desc: "Fully insured packages, verified vendors, and 24/7 emergency support while you travel.",
-  },
-  {
-    icon: "✈️",
-    title: "End-to-End Service",
-    desc: "Flights, hotels, visa, transfers, sightseeing — we handle everything so you just enjoy.",
-  },
-]
-
-const testimonials = [
-  {
-    av: "P",
-    stars: "★★★★★",
-    text: '"The Rajasthan tour was absolutely magical. Every detail was taken care of — the hotels, transport, guides. Udayam made it feel completely effortless and truly royal!"',
-    name: "Priya Menon",
-    trip: "📍 Rajasthan Heritage Tour · 2025",
-  },
-  {
-    av: "A",
-    stars: "★★★★★",
-    text: '"Our Maldives honeymoon was beyond our dreams. The water villa, sunset dinners, snorkelling — every moment was perfect. The team coordinated everything seamlessly!"',
-    name: "Arjun & Sneha Pillai",
-    trip: "📍 Maldives Honeymoon · 2025",
-  },
-  {
-    av: "R",
-    stars: "★★★★★",
-    text: '"Switzerland with the family was the best decision we made. The Jungfraujoch ride, the team handled our visa and arrangements impeccably. Truly world-class service!"',
-    name: "Rajesh Krishnamurthy",
-    trip: "📍 Swiss Alps Family Tour · 2025",
-  },
-]
-
-export const footerServices: { label: string; page: Page }[] = [
-  { label: "Tourism", page: "tourism" },
-  { label: "Medical Tourism", page: "medical" },
-  { label: "Travel Services", page: "travel" },
-  { label: "Trade", page: "trade" },
-  { label: "Foreign Education", page: "education" },
-  { label: "Recruitment", page: "recruitment" },
-]
-
-/* ─── HELPERS ───────────────────────────────────────────── */
-
-const Eyebrow: React.FC<{ children: React.ReactNode; center?: boolean }> = ({
-  children,
-  center,
-}) => (
-  <div
-    className={`mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] uppercase`}
-    style={{
-      color: "#2E7D32",
-      justifyContent: center ? "center" : "flex-start",
-    }}
-  >
-    <span
-      className="h-[2px] w-5 flex-shrink-0 rounded-sm"
-      style={{ background: "#2E7D32" }}
-    />
-    {children}
-  </div>
-)
+import DestinationsSection from "../Destinationscarousel"
+import TravelCards from "../TravelCards"
+import { useNavigate } from "react-router-dom"
+import {
+  heroSlides,
+  services,
+  catPills,
+  footerServices,
+  stats,
+  testimonials,
+  whyUs,
+} from "@/lib/homeData"
+import type { Page } from "@/lib/navData"
 
 const SectionTitle: React.FC<{
   children: React.ReactNode
@@ -311,13 +31,11 @@ const SectionTitle: React.FC<{
   </h2>
 )
 
-/* ─── COMPONENT ─────────────────────────────────────────── */
-const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+const Home = () => {
   const [slide, setSlide] = useState(0)
-  // const [activeTab, setActiveTab] = useState(0)
   const [activeCat, setActiveCat] = useState(0)
-  const [wishlist, setWishlist] = useState<Set<number>>(new Set())
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const navigate = useNavigate()
 
   const gSlide = useCallback((n: number) => {
     setSlide((n + heroSlides.length) % heroSlides.length)
@@ -329,14 +47,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [slide, gSlide])
-
-  const toggleWish = (i: number) => {
-    setWishlist((prev) => {
-      const next = new Set(prev)
-      next.has(i) ? next.delete(i) : next.add(i)
-      return next
-    })
-  }
 
   return (
     <div>
@@ -410,7 +120,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </p>
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={() => onNavigate(s.btn1.page)}
+                  onClick={() => navigate(s.btn1.page)}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-full border-none px-[30px] py-[13px] font-inter text-[14.5px] font-bold text-white transition-all duration-200 hover:-translate-y-0.5"
                   style={{
                     background: "linear-gradient(135deg, #388E3C, #43A047)",
@@ -420,7 +130,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   {s.btn1.label}
                 </button>
                 <button
-                  onClick={() => onNavigate(s.btn2.page)}
+                  onClick={() => navigate(s.btn2.page)}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-full px-[26px] py-[13px] font-inter text-[14.5px] font-semibold text-white transition-all duration-200"
                   style={{
                     border: "2px solid rgba(255,255,255,0.5)",
@@ -436,7 +146,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         ))}
 
         {/* Prev / Next */}
-        {[
+        {/* {[
           { dir: "prev", ch: "←" },
           { dir: "next", ch: "→" },
         ].map(({ dir, ch }) => (
@@ -453,7 +163,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           >
             {ch}
           </button>
-        ))}
+        ))} */}
 
         {/* Dots */}
         <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 gap-2">
@@ -668,7 +378,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             {services.map((service, index) => (
               <button
                 key={index}
-                onClick={() => onNavigate(service.page)}
+                onClick={() => navigate(service.page)}
                 className="group flex h-full flex-col bg-white p-8 text-left transition-all duration-300 hover:bg-[#EFF3FB] active:bg-[#E6ECF7] md:p-9 lg:p-10"
               >
                 {/* Icon */}
@@ -727,7 +437,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               <button
                 key={i}
                 onClick={() => setActiveCat(i)}
-                className={`rounded-full px-3 py-2.5 font-inter text-sm font-medium transition-all duration-200 ${
+                className={`rounded-full px-4 py-2.5 font-inter text-sm font-medium transition-all duration-200 ${
                   activeCat === i
                     ? "bg-[#1B2B6B] text-white shadow-lg shadow-[#1B2B6B]/30"
                     : "border border-[#DDE3F0] bg-white text-[#2D3A5A] hover:border-[#1B2B6B]"
@@ -784,7 +494,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             className={`border-r border-white/10 px-6 py-8 text-center last:border-r-0 md:border-r md:px-7 md:py-[38px] md:last:border-r-0`}
           >
             <div
-              className="leading-none font-extrabold text-white"
+              className="font-inter leading-none font-extrabold text-white"
               style={{ fontSize: "42px" }}
             >
               {s.num}
@@ -978,7 +688,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <div className="mb-10 md:mb-12">
             <SectionTitle hl="Confidence">Travel with</SectionTitle>
             <p
-              className="mx-auto mt-3 text-[15px] leading-relaxed md:leading-[1.7]"
+              className="mx-auto mt-3 font-inter text-[15px] leading-relaxed md:leading-[1.7]"
               style={{ color: "#5A6880" }}
             >
               15+ years of crafting unforgettable journeys — we're with you
@@ -1020,7 +730,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
                 {/* Title */}
                 <div
-                  className="mb-3 text-lg font-bold md:text-[15.5px]"
+                  className="mb-3 font-inter text-lg font-bold md:text-[15.5px]"
                   style={{ color: "#0D1B3E" }}
                 >
                   {w.title}
@@ -1595,6 +1305,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 across the world since 2010.
               </p>
               <div className="flex gap-2">
+                {/* {["📘", "📸", "🐦", "▶️"].map((ico, i) => ( */}
                 {["📘", "📸", "🐦", "▶️"].map((ico, i) => (
                   <a
                     key={i}
@@ -1623,7 +1334,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 {footerServices.map((s) => (
                   <li key={s.page}>
                     <button
-                      onClick={() => onNavigate(s.page)}
+                      onClick={() => navigate(s.page)}
                       className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
                       style={{
                         color: "rgba(255,255,255,0.42)",
@@ -1652,7 +1363,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 ].map((l) => (
                   <li key={l.label}>
                     <button
-                      onClick={() => onNavigate(l.page)}
+                      onClick={() => navigate(l.page)}
                       className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
                       style={{
                         color: "rgba(255,255,255,0.42)",
@@ -1718,13 +1429,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 Contact Us
               </h4>
               <div
-                className="text-[13px] leading-[2.1]"
+                className="font-inter text-[13px] leading-[2.1]"
                 style={{ color: "rgba(255,255,255,0.42)" }}
               >
-                <div>📍 Chennai, Tamil Nadu, India</div>
-                <div>📞 +91 98765 43210</div>
-                <div>✉️ info@udayaminternational.com</div>
-                <div>🕐 Mon–Sat: 9AM–7PM</div>
+                <div> Chennai, Tamil Nadu, India</div>
+                <div> +91 98765 43210</div>
+                <div> info@udayaminternational.com</div>
+                <div> Mon–Sat: 9AM–7PM</div>
               </div>
             </div>
           </div>

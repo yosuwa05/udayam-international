@@ -1,77 +1,23 @@
 import React, { useState } from "react"
-import logo from "../assets/HomeLogo.jpeg"
-export type Page =
-  | "home"
-  | "about"
-  | "tourism"
-  | "medical"
-  | "travel"
-  | "trade"
-  | "education"
-  | "recruitment"
-  | "contact"
+import { useNavigate, useLocation } from "react-router-dom"
+import logo from "../assets/home/HomeLogo.jpeg"
+import { navItems, pageToPath, type Page } from "@/lib/navData"
 
-interface NavbarProps {
-  currentPage: Page
-  onNavigate: (page: Page) => void
-}
-
-const navItems: { label: string; page: Page }[] = [
-  { label: "Home", page: "home" },
-  { label: "About Us", page: "about" },
-  { label: "Tourism", page: "tourism" },
-  { label: "Medical Tourism", page: "medical" },
-  { label: "Travel Services", page: "travel" },
-  { label: "Trade", page: "trade" },
-  { label: "Foreign Education", page: "education" },
-  { label: "Recruitment", page: "recruitment" },
-  // { label: "Contact Us", page: "contact" },
-]
-
-const promoItems = [
-  "Flat 20% OFF on International Packages",
-  "Free Visa Assistance on Select Tours",
-  "Medical Tourism — JCI Accredited Hospitals",
-  "Group Discounts: 5+ Travellers Save More",
-  "EMI Starting ₹3,999/month — No Cost",
-]
-
-const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
+const Navbar: React.FC = () => {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
-  const doubled = [...promoItems, ...promoItems]
+
+  const isActive = (page: Page) => location.pathname === pageToPath[page]
+
+  const go = (page: Page) => {
+    navigate(pageToPath[page])
+    window.scrollTo({ top: 0, behavior: "smooth" })
+    setMenuOpen(false)
+  }
 
   return (
     <>
-      {/* <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap"
-        rel="stylesheet"
-      /> */}
-
-      {/* ── PROMO TICKER ── */}
-      {/* <div
-        className="overflow-hidden py-2"
-        style={{
-          background: "linear-gradient(90deg, #0F1B47, #1B2B6B, #0F1B47)",
-        }}
-      >
-        <div
-          className="inline-flex whitespace-nowrap"
-          style={{ animation: "ticker 32s linear infinite" }}
-        >
-          {doubled.map((item, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-2 px-10 text-[12.5px] font-medium"
-              style={{ color: "rgba(255,255,255,0.9)" }}
-            >
-              <span className="text-base" style={{ color: "#43A047" }}>
-                ✦
-              </span>
-              {item}
-            </span>
-          ))}
-        </div>
-      </div> */}
       <div
         className="hidden flex-col items-center justify-between gap-3 px-4 py-2 md:flex md:flex-row md:px-8 xl:px-10"
         style={{
@@ -96,24 +42,22 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           ))}
         </div>
 
-        {/* Contact info */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13px] text-white md:justify-end">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-inter text-[13px] text-white md:justify-end">
           <div className="flex items-center gap-2 opacity-90">
             <span>📞</span>
             <span>+1 (555) 123-4567</span>
           </div>
-
           <div className="flex items-center gap-2 opacity-90">
             <span>✉</span>
             <span>info@example.com</span>
           </div>
-
           <div className="hidden items-center gap-2 opacity-90 lg:flex">
             <span>📍</span>
             <span>123 Main Street, Suite 62704</span>
           </div>
         </div>
       </div>
+
       {/* ── NAVBAR ── */}
       <nav
         className="sticky top-0 z-[999] flex h-[72px] items-center justify-between bg-white px-10"
@@ -125,7 +69,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         {/* Logo */}
         <div
           className="flex h-[54px] cursor-pointer items-center"
-          onClick={() => onNavigate("home")}
+          onClick={() => go("home")}
         >
           <img
             src={logo}
@@ -147,14 +91,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           {navItems.map(({ label, page }) => (
             <li key={page}>
               <button
-                onClick={() => onNavigate(page)}
+                onClick={() => go(page)}
                 className="cursor-pointer rounded-lg px-3 py-[7px] font-inter text-[13px] font-medium transition-all duration-200"
                 style={{
-                  background: currentPage === page ? "#E8ECFA" : "transparent",
-                  color: currentPage === page ? "#1B2B6B" : "#2D3A5A",
+                  background: isActive(page) ? "#E8ECFA" : "transparent",
+                  color: isActive(page) ? "#1B2B6B" : "#2D3A5A",
                 }}
                 onMouseEnter={(e) => {
-                  if (currentPage !== page) {
+                  if (!isActive(page)) {
                     ;(e.currentTarget as HTMLButtonElement).style.background =
                       "#E8ECFA"
                     ;(e.currentTarget as HTMLButtonElement).style.color =
@@ -162,7 +106,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (currentPage !== page) {
+                  if (!isActive(page)) {
                     ;(e.currentTarget as HTMLButtonElement).style.background =
                       "transparent"
                     ;(e.currentTarget as HTMLButtonElement).style.color =
@@ -176,23 +120,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           ))}
         </ul>
 
-        {/* Right actions */}
+        {/* Contact Us button */}
         <div className="hidden items-center gap-2.5 xl:flex">
-          {/* <button
-            className="rounded-full px-[18px] py-2 text-[13px] font-semibold transition-all duration-200"
-            style={{
-              border: "1.5px solid #C5CEDF",
-              color: "#2D3A5A",
-              background: "none",
-              fontFamily: "'Poppins', sans-serif",
-              cursor: "pointer",
-            }}
-          >
-            Sign In
-          </button> */}
           <button
-            onClick={() => onNavigate("contact")}
-            className="cursor-pointer rounded-full border-none px-[22px] py-[9px] !font-inter text-[13px] font-bold text-white transition-all duration-200 hover:-translate-y-px"
+            onClick={() => go("contact")}
+            className="cursor-pointer rounded-full border-none px-[22px] py-[9px] font-inter text-[13px] font-bold text-white transition-all duration-200 hover:-translate-y-px"
             style={{
               background: "linear-gradient(135deg, #388E3C, #43A047)",
               boxShadow: "0 6px 24px rgba(46,125,50,0.45)",
@@ -225,7 +157,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         </button>
       </nav>
 
-      {/* Mobile menu */}
+      {/* ── MOBILE MENU ── */}
       <div
         className="fixed right-0 left-0 z-[998] overflow-hidden bg-white transition-all duration-300 xl:hidden"
         style={{
@@ -239,15 +171,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           {navItems.map(({ label, page }) => (
             <li key={page}>
               <button
-                onClick={() => {
-                  onNavigate(page)
-                  setMenuOpen(false)
-                }}
+                onClick={() => go(page)}
                 className="w-full rounded-lg px-3 py-3 text-left font-inter text-[13px] font-medium transition-all duration-200"
                 style={{
                   borderBottom: "1px solid #DDE3F0",
-                  background: currentPage === page ? "#E8ECFA" : "transparent",
-                  color: currentPage === page ? "#1B2B6B" : "#2D3A5A",
+                  background: isActive(page) ? "#E8ECFA" : "transparent",
+                  color: isActive(page) ? "#1B2B6B" : "#2D3A5A",
                 }}
               >
                 {label}
@@ -255,21 +184,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
             </li>
           ))}
           <li className="flex flex-col gap-2 pt-3 pb-2">
-            {/* <button
-              className="w-full rounded-full py-3 text-[13px] font-semibold"
-              style={{
-                border: "1.5px solid #C5CEDF",
-                color: "#2D3A5A",
-                fontFamily: "'Poppins', sans-serif",
-              }}
-            >
-              Sign In
-            </button> */}
             <button
-              onClick={() => {
-                onNavigate("contact")
-                setMenuOpen(false)
-              }}
+              onClick={() => go("contact")}
               className="w-full rounded-full py-3 font-inter text-[13px] font-bold text-white"
               style={{
                 background: "linear-gradient(135deg, #388E3C, #43A047)",
