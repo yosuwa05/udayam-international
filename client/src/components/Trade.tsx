@@ -1,5 +1,6 @@
 import React from "react"
 import { useState } from "react"
+import trade from "../assets/Trade.jpeg"
 
 const tradeCategories = [
   { icon: "🌾", name: "Agriculture", sub: "Spices, grains, pulses" },
@@ -88,8 +89,8 @@ export default function Trade() {
             style={{
               position: "absolute",
               inset: 0,
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=1800&auto=format&fit=crop&q=80')",
+              backgroundImage: `url(${trade})`,
+
               backgroundSize: "cover",
               backgroundPosition: "center",
               transition: "transform 8s ease",
