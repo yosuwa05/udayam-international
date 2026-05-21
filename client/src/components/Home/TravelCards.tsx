@@ -46,6 +46,23 @@ const destinations: Destination[] = [
 ]
 
 export default function TravelCards() {
+  const handleWhatsAppEnquiry = (destination: Destination) => {
+    const WHATSAPP_NUMBER = "917299771111"
+
+    const message =
+      `🌍 New Travel Enquiry\n\n` +
+      `📍 Destination: ${destination.title}\n` +
+      `🏷 Region: ${destination.region}\n` +
+      `📅 Travel Date: ${destination.date}\n` +
+      `💰 Starting Price: $${destination.price}\n\n` +
+      `I am interested in this destination. Please share more details.`
+
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      message
+    )}`
+
+    window.open(whatsappUrl, "_blank")
+  }
   return (
     <div className="py-12">
       <div className="mx-auto max-w-7xl">
@@ -85,6 +102,7 @@ export default function TravelCards() {
                 {/* Footer: Date and Price */}
                 <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <button
+                    onClick={() => handleWhatsAppEnquiry(destination)}
                     className="w-full rounded-full py-3 font-inter text-[13px] font-bold text-white"
                     style={{
                       background: "linear-gradient(135deg, #388E3C, #43A047)",

@@ -747,6 +747,24 @@ export const PCard: React.FC<{ card: PackageCard; listView: boolean }> = ({
 }) => {
   const [wished, setWished] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const WHATSAPP_NUMBER = "917299771111"
+
+  const handleWhatsAppEnquiry = () => {
+    const message =
+      `🌍 New Travel Package Enquiry\n\n` +
+      `📦 Package: ${card.title}\n` +
+      `📍 Destination: ${card.destination.replace("📍", "")}\n` +
+      `🗓 Duration: ${card.duration}\n` +
+      `👥 Pax: ${card.pax}\n` +
+      `💰 Price: ${card.price}\n\n` +
+      `I am interested in this package. Please share more details.`
+
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      message
+    )}`
+
+    window.open(whatsappUrl, "_blank")
+  }
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -1079,6 +1097,7 @@ export const PCard: React.FC<{ card: PackageCard; listView: boolean }> = ({
             </span>
           )}
           <button
+            onClick={handleWhatsAppEnquiry}
             style={{
               fontFamily: f,
               fontSize: ".78rem",
@@ -1107,7 +1126,7 @@ export const PCard: React.FC<{ card: PackageCard; listView: boolean }> = ({
                 "translateX(0)"
             }}
           >
-            Book Now →
+            Enquiry Now →
           </button>
         </div>
       </div>

@@ -70,7 +70,10 @@ const Footer = () => {
               {footerServices.map((s) => (
                 <li key={s.page}>
                   <button
-                    onClick={() => navigate(s.page)}
+                    onClick={() => {
+                      navigate(s.page)
+                      window.scrollTo({ top: 0, behavior: "smooth" })
+                    }}
                     className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
                     style={{ color: "white" }}
                   >
@@ -97,7 +100,10 @@ const Footer = () => {
               ].map((l) => (
                 <li key={l.label}>
                   <button
-                    onClick={() => navigate(l.page)}
+                    onClick={() => {
+                      navigate(l.page)
+                      window.scrollTo({ top: 0, behavior: "smooth" })
+                    }}
                     className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
                     style={{ color: "white" }}
                   >
