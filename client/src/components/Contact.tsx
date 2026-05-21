@@ -1,5 +1,6 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { useState } from "react"
+import { useLocation } from "react-router-dom"
 
 const contactInfo = [
   {
@@ -35,6 +36,22 @@ export default function Contact() {
   })
   const [submitted, setSubmitted] = useState(false)
   const f = "'Inter',sans-serif"
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.hash) {
+      const el = document.querySelector(location.hash)
+
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          })
+        }, 100)
+      }
+    }
+  }, [location])
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -191,7 +208,7 @@ export default function Contact() {
         </section>
 
         {/* CONTACT SECTION */}
-        <section className="py-16 md:py-20">
+        <section id="contact-section" className="py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="mb-10">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">

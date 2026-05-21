@@ -313,15 +313,23 @@ const PanelContent = ({
     <div
       className={`flex gap-3 ${isMobile ? "flex-col sm:flex-row" : "flex-wrap"}`}
     >
-      <button
+      <a
+        href="https://wa.me/917299771111"
+        target="_blank"
+        rel="noreferrer"
         className="inline-flex cursor-pointer items-center gap-2 rounded-full border-none bg-[#1B2B6B] px-7 py-3.5 font-sans text-[12px] font-bold tracking-[0.07em] text-white uppercase transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#243580] hover:shadow-xl"
         style={{ boxShadow: "0 12px 40px rgba(27,43,107,0.14)" }}
       >
         Explore Treatment <ArrowRight />
-      </button>
-      <button className="cursor-pointer rounded-full border-[1.5px] border-gray-200 bg-white px-7 py-3.5 font-sans text-[12px] font-bold tracking-[0.07em] text-[#1B2B6B] uppercase transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1B2B6B] hover:bg-[#e8ecf7]">
+      </a>
+      <a
+        href="https://wa.me/917299771111"
+        target="_blank"
+        rel="noreferrer"
+        className="cursor-pointer rounded-full border-[1.5px] border-gray-200 bg-white px-7 py-3.5 font-sans text-[12px] font-bold tracking-[0.07em] text-[#1B2B6B] uppercase transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1B2B6B] hover:bg-[#e8ecf7]"
+      >
         Free Consultation
-      </button>
+      </a>
     </div>
   </div>
 )

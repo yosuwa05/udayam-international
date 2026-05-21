@@ -96,7 +96,10 @@ const Footer = () => {
               {[
                 { label: "Home", page: "home" as Page },
                 { label: "About Us", page: "about" as Page },
-                { label: "Contact Us", page: "contact" as Page },
+                {
+                  label: "Contact Us",
+                  page: "contact/#contact-section" as Page,
+                },
               ].map((l) => (
                 <li key={l.label}>
                   <button

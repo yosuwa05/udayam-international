@@ -22,9 +22,18 @@ const Navbar: React.FC = () => {
   const isActive = (page: Page) => location.pathname === pageToPath[page]
 
   const go = (page: Page) => {
-    navigate(pageToPath[page])
-    window.scrollTo({ top: 0, behavior: "smooth" })
     setMenuOpen(false)
+
+    if (page === "contact") {
+      navigate("/contact#contact-section")
+      return
+    }
+    navigate(pageToPath[page])
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    })
   }
 
   const pageLogos: Partial<Record<Page, string>> = {
