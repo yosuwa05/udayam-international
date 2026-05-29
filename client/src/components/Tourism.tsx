@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import { ToursCursor } from "./cursor/Tourscursor"
-
+import video from "../assets/de251262.mov"
 // ─── Types ────────────────────────────────────────────────
 
 interface PackageCard {
@@ -1365,7 +1365,7 @@ const Tourism = () => {
         }}
       >
         {/* ─── HERO ─── */}
-        <section
+        {/* <section
           className="hero-sect"
           style={{
             position: "relative",
@@ -1489,8 +1489,144 @@ const Tourism = () => {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
+        <section
+          className="hero-sect"
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            height: "72vh",
+            minHeight: 560,
+            padding: "0 64px 80px",
+          }}
+        >
+          {/* Video Background */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="hero-video"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transition: "transform 8s ease",
+            }}
+            onMouseEnter={(e) => {
+              ;(e.currentTarget as HTMLElement).style.transform = "scale(1.03)"
+            }}
+            onMouseLeave={(e) => {
+              ;(e.currentTarget as HTMLElement).style.transform = "scale(1)"
+            }}
+          >
+            <source src={video} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
 
+          {/* Gradient Overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(15,26,66,.25) 0%, rgba(15,26,66,.15) 30%, rgba(15,26,66,.7) 70%, rgba(15,26,66,.92) 100%)",
+            }}
+          />
+
+          {/* Hero Content */}
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <div
+              className="t-eye-anim"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                fontFamily: f,
+                fontSize: ".72rem",
+                fontWeight: 600,
+                color: "rgba(255,255,255,.5)",
+                letterSpacing: ".16em",
+                textTransform: "uppercase",
+                marginBottom: 18,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 30,
+                  height: 1,
+                  background: "rgba(255,255,255,.35)",
+                }}
+              />
+              Explore · Discover · Experience
+            </div>
+            <h1
+              className="t-h1-anim"
+              style={{
+                fontFamily: "'Libre Baskerville',serif",
+                fontSize: "clamp(2.4rem,5.5vw,5.5rem)",
+                fontWeight: 700,
+                lineHeight: 1.02,
+                color: "#fff",
+                marginBottom: 28,
+              }}
+            >
+              Find Your Perfect
+              <br />
+              <em style={{ fontStyle: "italic", color: "#7ed88a" }}>
+                Tour Package
+              </em>
+            </h1>
+            <div
+              className="t-meta-anim"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 24,
+                flexWrap: "wrap",
+              }}
+            >
+              {[
+                ["240+", "Curated Packages"],
+                ["Domestic & International", ""],
+                ["All Budgets", "Welcome"],
+              ].map(([b, r], i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && (
+                    <div
+                      style={{
+                        width: 1,
+                        height: 20,
+                        background: "rgba(255,255,255,.2)",
+                      }}
+                    />
+                  )}
+                  <div
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".82rem",
+                      color: "rgba(255,255,255,.55)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <strong style={{ color: "#fff", fontWeight: 600 }}>
+                      {b}
+                    </strong>
+                    {r && <span>{r}</span>}
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </section>
         {/* ─── MARQUEE ─── */}
         {/* <div
           style={{
@@ -1528,11 +1664,15 @@ const Tourism = () => {
                     background: "#43A047",
                     flexShrink: 0,
                   }}
+            </div>
+            <div cla
                 />
                 {item}
               </div>
             ))}
           </div>
+            </div>
+            <div cla
         </div> */}
 
         {/* ─── MOBILE FILTER BAR ─── */}
