@@ -2519,7 +2519,7 @@ const Tourism = () => {
         {/* end page grid */}
 
         {/* ─── CTA ─── */}
-        <section
+        {/* <section
           className="cta-sect"
           style={{
             background: "#0f1a42",
@@ -2635,10 +2635,10 @@ const Tourism = () => {
               Talk to an Expert
             </a>
           </div>
-        </section>
+        </section> */}
 
         {/* ─── FOOTER ─── */}
-        <footer
+        {/* <footer
           className="footer-sect"
           style={{
             background: "#0f1a42",
@@ -2698,7 +2698,7 @@ const Tourism = () => {
               © 2026 Horizons Travel Co. All rights reserved.
             </div>
           </div>
-        </footer>
+        </footer> */}
       </div>
     </>
   )
