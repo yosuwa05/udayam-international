@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 
 const NewsLetter = () => {
   const observersRef = useRef<IntersectionObserver[]>([])
-
+  const navigate = useNavigate()
   useEffect(() => {
     const elements = document.querySelectorAll(".rv, .rvl, .rvr, .reveal")
 
@@ -48,7 +49,12 @@ const NewsLetter = () => {
           <p className="mb-10 text-xl font-light text-white/85">
             Let us craft the trip of a lifetime for you.
           </p>
-          <button className="font-ui rounded-full bg-[#2E7D32] px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-[#256427] hover:shadow-xl">
+          <button
+            onClick={() => {
+              navigate("/tourism")
+            }}
+            className="font-ui cursor-pointer rounded-full bg-[#2E7D32] px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-[#256427] hover:shadow-xl"
+          >
             Explore Our Tours
           </button>
         </div>

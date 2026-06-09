@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 const AboutUs = () => {
   // Refs
@@ -8,7 +9,7 @@ const AboutUs = () => {
   const planeAnimRef = useRef<number | null>(null)
   const flyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const observersRef = useRef<IntersectionObserver[]>([])
-
+  const navigate = useNavigate()
   // States
   const [countersStarted, setCountersStarted] = useState(false)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
@@ -301,32 +302,46 @@ const AboutUs = () => {
           </p>
 
           <h2 className="sh font-libre mb-5 text-[clamp(2rem,5vw,3.2rem)] leading-[1.1] font-bold text-[#1B2B6B]">
-            Connecting People
-            <br />
-            to Global <em className="text-[#2E7D32] italic">Opportunities</em>
+            About &nbsp;
+            <em className="text-[#2E7D32] italic">Udayam International</em>
           </h2>
 
           <p className="bt mb-5 text-[15px] leading-[1.85] text-[#5a5a7a] sm:text-base">
-            Udayam International was founded with a vision to provide trusted
-            international services and create opportunities beyond borders. From
-            travel and medical tourism to education and recruitment, we help
-            individuals and businesses achieve their global goals with
-            confidence and ease.
+            Established in 2025 and operational since 13 February 2026, Udayam
+            International is a professionally managed proprietorship company
+            dedicated to delivering trusted international solutions across
+            tourism, medical tourism, travel, trade, overseas education, and
+            recruitment services.
           </p>
 
           <p className="bt mb-9 text-[15px] leading-[1.85] text-[#5a5a7a] sm:text-base">
-            Over two decades, we've grown from a local boutique agency to a
-            nationally recognised travel brand — crafting over 48,000
-            personalised journeys for travellers who believe every trip should
-            feel like the best chapter of their story.
+            The name Udayam, derived from the Tamil language, means “Rise” —
+            symbolizing growth, opportunity, progress, and a forward-looking
+            vision. The term International reflects our commitment to connecting
+            individuals and businesses with global possibilities. At the heart
+            of our brand identity is “UV” — short for Udayam Vision — which
+            represents the vision and aspirations driving our six specialized
+            verticals: UV Holidays, UV Travel N Cure, UV Wings, UV Commerce, UV
+            Pathways, and UV Placements.
+          </p>
+          <p className="bt mb-9 text-[15px] leading-[1.85] text-[#5a5a7a] sm:text-base">
+            Guided by integrity, professionalism, compliance, and
+            customer-centric excellence, we build long-term trust through
+            reliable, transparent, and value-driven services. Udayam
+            International is committed to creating meaningful international
+            connections, fostering global opportunities, and delivering lasting
+            value for individuals, businesses, and communities worldwide.
           </p>
 
-          <a
-            href="#cta"
-            className="btn-nv inline-flex items-center gap-2 self-start rounded-full bg-[#1B2B6B] px-8 py-4 font-inter text-[0.88rem] font-semibold text-white transition-all duration-300 hover:-translate-y-[2px] hover:bg-[#243590] hover:shadow-[0_10px_28px_rgba(27,43,107,0.25)]"
+          <div
+            onClick={() => {
+              navigate("/tourism")
+            }}
+            style={{ cursor: "pointer" }}
+            className="inline-flex items-center gap-2 self-start rounded-full bg-[#1B2B6B] px-8 py-4 font-inter text-[0.88rem] font-semibold text-white transition-all duration-300 hover:-translate-y-[2px] hover:bg-[#243590] hover:shadow-[0_10px_28px_rgba(27,43,107,0.25)]"
           >
             Start Your Journey →
-          </a>
+          </div>
         </div>
 
         {/* Right - Image */}
@@ -341,11 +356,11 @@ const AboutUs = () => {
 
           {/* Top Tag - Responsive */}
           <div className="ir-tag absolute top-6 right-6 rounded-full bg-orange-500 px-5 py-2.5 font-inter text-[0.7rem] font-semibold tracking-[0.06em] text-white backdrop-blur-[8px] hover:bg-orange-600 sm:top-8 sm:right-8 sm:text-[0.72rem]">
-            ✦ Est. 2004 · Chennai
+            ✦ Est. 2025
           </div>
 
           {/* Bottom Badge - Responsive */}
-          <div className="ir-badge absolute bottom-8 left-4 min-w-[130px] rounded-2xl bg-white px-6 py-5 text-center shadow-[0_20px_60px_rgba(27,43,107,0.15)] sm:left-6 sm:min-w-[140px] sm:py-[22px] md:left-8 lg:-left-7">
+          {/* <div className="ir-badge absolute bottom-8 left-4 min-w-[130px] rounded-2xl bg-white px-6 py-5 text-center shadow-[0_20px_60px_rgba(27,43,107,0.15)] sm:left-6 sm:min-w-[140px] sm:py-[22px] md:left-8 lg:-left-7">
             <div className="ib-n font-libre text-[2.2rem] leading-none font-bold text-[#1B2B6B] sm:text-[2.6rem]">
               20+
             </div>
@@ -354,12 +369,12 @@ const AboutUs = () => {
               <br />
               Excellence
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
       {/* PHOTO COLLAGE */}
-      <section className="collage bg-white px-6 py-20 md:px-16">
+      {/* <section className="collage bg-white px-6 py-20 md:px-16">
         <div className="col-top mb-14 grid grid-cols-1 items-end gap-12 md:grid-cols-2">
           <div className="rv translate-y-9 opacity-0 transition-all duration-800">
             <p className="ey mb-[14px] flex items-center gap-2.5 font-inter text-[0.7rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
@@ -423,7 +438,7 @@ const AboutUs = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* VISION MISSION */}
       <section className="vm bg-[#F7F5F0] px-6 py-20 md:px-16" id="vision">
@@ -437,7 +452,7 @@ const AboutUs = () => {
             <em className="text-[#2E7D32] italic not-italic">Forward</em>
           </h2>
         </div>
-        <div className="vm-g mt-[60px] grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="vm-g mt-[60px] grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
           <div className="vc rv d1 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-100 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
             <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
               01
@@ -472,14 +487,53 @@ const AboutUs = () => {
               03
             </div>
             <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
-              Our Promise
+              Why Choose Us
             </h3>
             <p className="text-[0.9rem] leading-[1.8] text-[#5a5a7a]">
-              We are committed to delivering trusted, transparent, and
-              customer-focused international services. From travel and medical
-              tourism to education and recruitment, we ensure personalized
-              guidance, reliable support, and seamless experiences at every step
-              of your journey.
+              At Udayam International, we focus on delivering practical,
+              transparent, and reliable international services with
+              professionalism and responsibility. Through our six specialized
+              verticals—UV Holidays, UV Travel N Cure, UV Wings, UV Commerce, UV
+              Pathways, and UV Placements—we provide trusted support across
+              tourism, medical tourism, travel, trade, overseas education, and
+              recruitment, all under one organization.
+            </p>
+            <p className="pt-3 text-[0.9rem] leading-[1.8] text-[#5a5a7a] md:pt-5">
+              We believe in clear communication, timely support, and
+              customer-focused solutions. Our commitment to integrity,
+              compliance, responsiveness, and consistent service standards helps
+              us build long-term customer trust and lasting professional
+              relationships. When you choose us, you choose a partner dedicated
+              to your success and satisfaction.
+            </p>
+          </div>
+          <div className="vc rv d4 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-300 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
+            <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
+              04
+            </div>
+            <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
+              Quality Policy
+            </h3>
+            <p className="text-[0.9rem] leading-[1.8] text-[#5a5a7a]">
+              Udayam International is committed to delivering reliable,
+              transparent, and trusted international services across all
+              divisions, while meeting all applicable statutory and regulatory
+              requirements.
+            </p>
+            <p className="pt-3 text-[0.9rem] leading-[1.8] text-[#5a5a7a] md:pt-5">
+              To every customer, we promise professional guidance, honest
+              communication, and timely execution with integrity and
+              accountability.
+            </p>
+            <p className="pt-3 text-[0.9rem] leading-[1.8] text-[#5a5a7a] md:pt-5">
+              We ensure consistent quality through standardized processes,
+              competent teams, measurable quality objectives, risk-based
+              thinking, and continual improvement of our management systems.
+            </p>
+            <p className="pt-3 text-[0.9rem] leading-[1.8] text-[#5a5a7a] md:pt-5">
+              We respond to challenges with prompt action, clear communication,
+              and corrective and preventive measures to strengthen customer
+              trust and long-term satisfaction.
             </p>
           </div>
         </div>
@@ -495,43 +549,34 @@ const AboutUs = () => {
                 Our Journey
               </p>
               <h2 className="sh font-libre text-[clamp(2rem,3.5vw,3.2rem)] leading-[1.15] font-bold text-[#1B2B6B]">
-                From Idea to a
-                <br />
-                <em className="text-[#2E7D32] italic not-italic">
-                  Trusted
-                </em>{" "}
-                Travel Partner
+                <em className="text-[#2E7D32] italic not-italic">Core</em>{" "}
+                Values
               </h2>
             </div>
             <div className="tl mt-10">
               {[
                 {
-                  year: "2004",
-                  title: "Founded in Chennai",
-                  desc: "Started as a 3-person team with a shared belief that travel should be deeply personal and stress-free.",
+                  title: "Integrity Without Compromise",
+                  desc: "We uphold honesty, transparency, and ethical practices in every decision and action.",
                   delay: "d1",
                 },
                 {
-                  year: "2010",
-                  title: "National Recognition",
-                  desc: "Featured in Condé Nast Traveller India as one of the most exciting boutique travel curators.",
+                  title: "Compliance & Accountability",
+                  desc: "We adhere to regulations, policies, and take full responsibility for our commitments.",
                   delay: "d2",
                 },
                 {
-                  year: "2015",
-                  title: "IATA Accreditation",
-                  desc: "Received full International Air Transport Association accreditation, joining verified global operators.",
+                  title: "Customer-Centric Excellence",
+                  desc: "We prioritize customer needs and consistently deliver exceptional service and value.",
                   delay: "d3",
                 },
                 {
-                  year: "2019",
-                  title: "Digital Innovation Award",
-                  desc: "First Indian agency to launch an AI-powered personalised trip-builder platform for modern travellers.",
+                  title: "Mutual Respect & Team Unity",
+                  desc: "We foster a collaborative environment built on respect, trust, and shared success.",
                   delay: "d4",
                 },
                 {
-                  year: "2024",
-                  title: "48,000+ Journeys Crafted",
+                  title: "Reliability & Measurable Results",
                   desc: "Celebrated two decades with a community of 48,000+ travellers across 120+ countries worldwide.",
                   delay: "d5",
                 },
@@ -573,7 +618,7 @@ const AboutUs = () => {
                 className="h-full w-full object-cover"
               />
             </div>
-            <div className="si3 absolute top-[58%] left-1/2 z-[3] min-w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#1B2B6B] px-7 py-[22px] text-center shadow-[0_16px_48px_rgba(27,43,107,0.25)]">
+            {/* <div className="si3 absolute top-[58%] left-1/2 z-[3] min-w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#1B2B6B] px-7 py-[22px] text-center shadow-[0_16px_48px_rgba(27,43,107,0.25)]">
               <div className="si3-n font-libre text-3xl font-bold text-white">
                 20+
               </div>
@@ -582,7 +627,7 @@ const AboutUs = () => {
                 <br />
                 Wanderlust
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

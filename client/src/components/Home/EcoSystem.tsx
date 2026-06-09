@@ -1416,6 +1416,7 @@ import TradeLogo from "../../assets/TradeLogo.jpeg"
 import RecruitmentLogo from "../../assets/RecruitmentLogo.jpeg"
 import TravelLogo from "../../assets/TravelLogo.jpeg"
 import EducationLogo from "../../assets/EducationLogo.jpeg"
+import { useNavigate } from "react-router-dom"
 
 /*
   LAYOUT (matching hand-drawn sketch):
@@ -1530,8 +1531,13 @@ function HubLogo({ size = 80 }) {
 }
 
 /* ── BRAND CARD ── */
-function BrandCard({ logo, id, name }) {
+function BrandCard({ logo, id, name, path }) {
   const [hovered, setHovered] = useState(false)
+  const navigate = useNavigate()
+
+  const handleClick = () => {
+    if (path) navigate(path)
+  }
   return (
     <div
       id={`card-${id}`}
@@ -1546,6 +1552,7 @@ function BrandCard({ logo, id, name }) {
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={handleClick}
     >
       {/* Top accent bar */}
       <div
@@ -1630,9 +1637,17 @@ function ConnectorLines({ containerRef, hubRef }) {
 }
 
 /* ── MOBILE CARD ── */
-function MobileBrandCard({ logo, name }) {
+function MobileBrandCard({ logo, name, path }) {
+  const navigate = useNavigate()
+
+  const handleClick = () => {
+    if (path) navigate(path)
+  }
   return (
-    <div className="relative overflow-hidden rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_6px_28px_rgba(27,43,107,0.10)]">
+    <div
+      onClick={handleClick}
+      className="relative overflow-hidden rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_6px_28px_rgba(27,43,107,0.10)]"
+    >
       <img src={logo} alt="" className="block h-auto w-full rounded-[6px]" />
       <div className="text-center text-sm">{name}</div>
     </div>
@@ -1643,7 +1658,7 @@ function MobileBrandCard({ logo, name }) {
 export default function UdayamEcosystem() {
   const containerRef = useRef(null)
   const hubRef = useRef(null)
-
+  const navigate = useNavigate()
   return (
     <>
       <link
@@ -1702,7 +1717,12 @@ export default function UdayamEcosystem() {
             {/* ── ROW 1: TOP CENTER ── */}
             <div style={{ gridColumn: "1", gridRow: "1" }} />
             <div style={{ gridColumn: "2", gridRow: "1", paddingBottom: 80 }}>
-              <BrandCard id="top" logo={TourismLogo} name={"Tourism"} />
+              <BrandCard
+                id="top"
+                logo={TourismLogo}
+                name={"Tourism"}
+                path={"/tourism"}
+              />
             </div>
             <div style={{ gridColumn: "3", gridRow: "1" }} />
 
@@ -1716,7 +1736,12 @@ export default function UdayamEcosystem() {
                 paddingBottom: 36,
               }}
             >
-              <BrandCard id="left1" logo={TravelLogo} name={"Travel"} />
+              <BrandCard
+                id="left1"
+                logo={TravelLogo}
+                name={"Travel"}
+                path={"/travel"}
+              />
             </div>
 
             {/* HUB spans rows 2–3 */}
@@ -1743,13 +1768,20 @@ export default function UdayamEcosystem() {
                   style={{ inset: -14, animation: "spin 30s linear infinite" }}
                 />
                 <div
-                  className="absolute rounded-full border border-dashed border-[rgba(27,43,107,0.07)]"
+                  onClick={() => {
+                    navigate("/about")
+                  }}
+                  className="absolute cursor-pointer rounded-full border border-dashed border-[rgba(27,43,107,0.07)]"
                   style={{
                     inset: -28,
                     animation: "spinRev 50s linear infinite",
                   }}
                 />
-                <img src={Homelogo} alt="udyam" className="h-36 w-36" />
+                <img
+                  src={Homelogo}
+                  alt="udyam"
+                  className="h-36 w-36 cursor-pointer"
+                />
                 {/* <div
                   className="mt-2.5 leading-tight font-bold text-[#1b2b6b]"
                   style={{
@@ -1773,7 +1805,12 @@ export default function UdayamEcosystem() {
                 paddingBottom: 36,
               }}
             >
-              <BrandCard id="right1" logo={TradeLogo} name={"Trade"} />
+              <BrandCard
+                id="right1"
+                logo={TradeLogo}
+                name={"Trade"}
+                path={"/trade"}
+              />
             </div>
 
             {/* ── ROW 3: LEFT2 | (hub) | RIGHT2 ── */}
@@ -1786,7 +1823,12 @@ export default function UdayamEcosystem() {
                 paddingTop: 36,
               }}
             >
-              <BrandCard id="left2" logo={EducationLogo} name={"Education"} />
+              <BrandCard
+                id="left2"
+                logo={EducationLogo}
+                name={"Education"}
+                path={"/education"}
+              />
             </div>
 
             {/* hub continues here (span 2) — no element needed */}
@@ -1804,6 +1846,7 @@ export default function UdayamEcosystem() {
                 id="right2"
                 logo={RecruitmentLogo}
                 name={"Recruitment"}
+                path={"/recruitment"}
               />
             </div>
 
@@ -1814,6 +1857,7 @@ export default function UdayamEcosystem() {
                 id="bottom"
                 logo={MedicalLogo}
                 name={"Medical Tourism"}
+                path={"/medical"}
               />
             </div>
             <div style={{ gridColumn: "3", gridRow: "4" }} />
@@ -1839,22 +1883,52 @@ export default function UdayamEcosystem() {
               }}
             >
               <div
-                className="absolute rounded-full border border-dashed border-[rgba(27,43,107,0.14)]"
+                onClick={() => {
+                  navigate("/about")
+                }}
+                className="absolute cursor-pointer rounded-full border border-dashed border-[rgba(27,43,107,0.14)]"
                 style={{ inset: -10, animation: "spin 25s linear infinite" }}
               />
-              <img src={Homelogo} alt="udyam" className="h-28 w-28" />
+              <img
+                onClick={() => {
+                  navigate("/aboutus")
+                }}
+                src={Homelogo}
+                alt="udyam"
+                className="h-28 w-28"
+              />
             </div>
             <div className="mt-0 h-6 w-px bg-gradient-to-b from-[rgba(27,43,107,0.2)] to-transparent" />
           </div>
 
           {/* Mobile Cards Grid */}
           <div className="grid grid-cols-2 gap-3">
-            <MobileBrandCard logo={TourismLogo} name={"Tourism"} />
-            <MobileBrandCard logo={TravelLogo} name={"Travel"} />
-            <MobileBrandCard logo={TradeLogo} name={"Trade"} />
-            <MobileBrandCard logo={EducationLogo} name={"Education"} />
-            <MobileBrandCard logo={RecruitmentLogo} name={"Recruitment"} />
-            <MobileBrandCard logo={MedicalLogo} name={"Medical Tourism"} />
+            <MobileBrandCard
+              logo={TourismLogo}
+              name={"Tourism"}
+              path={"/tourism"}
+            />
+            <MobileBrandCard
+              logo={TravelLogo}
+              name={"Travel"}
+              path={"/travel"}
+            />
+            <MobileBrandCard logo={TradeLogo} name={"Trade"} path={"/trade"} />
+            <MobileBrandCard
+              logo={EducationLogo}
+              name={"Education"}
+              path={"/education"}
+            />
+            <MobileBrandCard
+              logo={RecruitmentLogo}
+              name={"Recruitment"}
+              path={"/recruitment"}
+            />
+            <MobileBrandCard
+              logo={MedicalLogo}
+              name={"Medical Tourism"}
+              path={"/medical"}
+            />
           </div>
         </div>
       </div>

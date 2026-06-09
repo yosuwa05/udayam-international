@@ -1,25 +1,38 @@
+import ReactDOM from 'react-dom/client'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { routeTree } from './routeTree.gen'
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Toaster } from 'react-hot-toast'
-import './index.css'
-import App from './App.tsx'
+import './styles.css'
+import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-    <Toaster
-      position="top-right"
-      toastOptions={{
-        style: {
-          background: '#1e293b',
-          color: '#f1f5f9',
-          border: '1px solid #334155',
-          borderRadius: '12px',
-          fontSize: '14px',
-        },
-        success: { iconTheme: { primary: '#10b981', secondary: '#1e293b' } },
-        error: { iconTheme: { primary: '#ef4444', secondary: '#1e293b' } },
-      }}
-    />
-  </StrictMode>,
-)
+const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
+
+const router = createRouter({
+  routeTree,
+  context: {
+    ...TanStackQueryProviderContext,
+  },
+  defaultPreload: 'intent',
+  scrollRestoration: true,
+  defaultStructuralSharing: true,
+  defaultPreloadStaleTime: 0,
+})
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
+const rootElement = document.getElementById('app')!
+
+if (rootElement && !rootElement.innerHTML) {
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(
+    <StrictMode>
+      <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
+        <RouterProvider router={router} />
+      </TanStackQueryProvider.Provider>
+    </StrictMode>,
+  )
+}
