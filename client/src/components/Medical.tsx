@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import {
   destFilters,
   domesticPackages,
-  intlPackages,
+  // intlPackages,
   PCard,
   SecHeader,
   tripTypes,
@@ -926,11 +926,11 @@ const MedicalTourism: React.FC = () => {
     if (activeType === "international") return false
     return !search || c.title.toLowerCase().includes(search.toLowerCase())
   })
-  const filteredIntl = intlPackages.filter((c) => {
-    if (activeType === "domestic") return false
-    return !search || c.title.toLowerCase().includes(search.toLowerCase())
-  })
-  const totalVisible = filteredDomestic.length + filteredIntl.length
+  // const filteredIntl = intlPackages.filter((c) => {
+  //   if (activeType === "domestic") return false
+  //   return !search || c.title.toLowerCase().includes(search.toLowerCase())
+  // })
+  const totalVisible = filteredDomestic.length
 
   useEffect(() => {
     const fn = () => setVw(window.innerWidth)
@@ -1367,7 +1367,7 @@ const MedicalTourism: React.FC = () => {
               color: "#1B2B6B",
             }}
           >
-            {totalVisible} Packages Found
+            {/* {totalVisible} Packages Found */}
           </span>
           <button
             onClick={() => setSheetOpen(true)}
@@ -1417,7 +1417,7 @@ const MedicalTourism: React.FC = () => {
                   marginTop: 2,
                 }}
               >
-                {totalVisible} packages match
+                {/* {totalVisible} packages match */}
               </div>
             </div>
             <SidebarContent {...sidebarProps} />
@@ -2091,7 +2091,7 @@ const MedicalTourism: React.FC = () => {
               )}
 
             {/* International Packages */}
-            {(activeType === "all" || activeType === "international") &&
+            {/* {(activeType === "all" || activeType === "international") &&
               filteredIntl.length > 0 && (
                 <>
                   <SecHeader
@@ -2116,10 +2116,10 @@ const MedicalTourism: React.FC = () => {
                     ))}
                   </div>
                 </>
-              )}
+              )} */}
 
             {/* Empty */}
-            {totalVisible === 0 && (
+            {/* {totalVisible === 0 && (
               <div style={{ textAlign: "center", padding: "80px 20px" }}>
                 <div style={{ fontSize: "3rem", marginBottom: 16 }}>🔍</div>
                 <h3
@@ -2142,10 +2142,10 @@ const MedicalTourism: React.FC = () => {
                   Try adjusting your filters or search term.
                 </p>
               </div>
-            )}
+            )} */}
 
             {/* Load More */}
-            {totalVisible > 0 && (
+            {/* {totalVisible > 0 && (
               <div style={{ textAlign: "center", padding: "16px 0 32px" }}>
                 <button
                   onClick={() => {
@@ -2186,7 +2186,7 @@ const MedicalTourism: React.FC = () => {
                   {loadingMore ? "Loading..." : "Load More Packages"} ↓
                 </button>
               </div>
-            )}
+            )} */}
           </main>
         </div>
 

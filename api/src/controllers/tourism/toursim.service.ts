@@ -210,9 +210,11 @@ export const getAllTouristPlaces = async (
         const isFeatured = parseBool(query.isFeatured)
         if (isFeatured !== undefined) filter.isFeatured = isFeatured
 
-        // ── Text search ──────────────────────────────────────────────────────────
         if (query.search?.trim()) {
-            filter.$text = { $search: query.search.trim() }
+            filter.title = {
+                $regex: query.search.trim(),
+                $options: "i",
+            };
         }
 
         // ── Sorting ──────────────────────────────────────────────────────────────

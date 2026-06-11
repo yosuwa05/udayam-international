@@ -1409,13 +1409,13 @@
 // }
 
 import { useEffect, useRef, useState } from "react"
-import TourismLogo from "../../assets/TourismLogo.jpeg"
+import TourismLogo from "../../assets/UVHolidays.JPG.jpeg"
 import Homelogo from "../../assets/home/ecoLogo.jpeg"
 import MedicalLogo from "../../assets/MedicalLogo.jpeg"
 import TradeLogo from "../../assets/TradeLogo.jpeg"
 import RecruitmentLogo from "../../assets/RecruitmentLogo.jpeg"
 import TravelLogo from "../../assets/TravelLogo.jpeg"
-import EducationLogo from "../../assets/EducationLogo.jpeg"
+import EducationLogo from "../../assets/UVPathways.JPG.jpeg"
 import { useNavigate } from "react-router-dom"
 
 /*

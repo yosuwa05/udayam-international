@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-
+import aboutusimg from "../assets/Aboutus.png"
+import roadImg from "../assets/whyus.png"
 const AboutUs = () => {
   // Refs
   const counterRefs = useRef<(HTMLSpanElement | null)[]>([])
@@ -256,8 +257,8 @@ const AboutUs = () => {
           </h1>
           <div className="h-row flex animate-[fsu_1s_0.5s_forwards] flex-col items-start justify-between gap-10 opacity-0 md:flex-row md:items-end">
             <p className="h-desc max-w-[460px] text-base leading-[1.8] text-white/60">
-              Trusted International Services for Every Journey From tourism to
-              education and recruitment, we guide you every step of the way.
+              Trusted International Services for Every Journey. Across borders
+              and beyond, we guide you every step of the way
             </p>
             <div className="h-stats flex gap-11">
               <div className="hs text-right">
@@ -347,7 +348,8 @@ const AboutUs = () => {
         {/* Right - Image */}
         <div className="intro-r rvr relative min-h-[380px] translate-x-0 overflow-hidden opacity-0 transition-all duration-800 lg:min-h-auto">
           <img
-            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&auto=format&fit=crop&q=80"
+            // src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&auto=format&fit=crop&q=80"
+            src={aboutusimg}
             alt="Road trip travel"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-[8s] ease-in-out hover:scale-150"
           />
@@ -486,31 +488,7 @@ const AboutUs = () => {
             <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
               03
             </div>
-            <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
-              Why Choose Us
-            </h3>
-            <p className="text-[0.9rem] leading-[1.8] text-[#5a5a7a]">
-              At Udayam International, we focus on delivering practical,
-              transparent, and reliable international services with
-              professionalism and responsibility. Through our six specialized
-              verticals—UV Holidays, UV Travel N Cure, UV Wings, UV Commerce, UV
-              Pathways, and UV Placements—we provide trusted support across
-              tourism, medical tourism, travel, trade, overseas education, and
-              recruitment, all under one organization.
-            </p>
-            <p className="pt-3 text-[0.9rem] leading-[1.8] text-[#5a5a7a] md:pt-5">
-              We believe in clear communication, timely support, and
-              customer-focused solutions. Our commitment to integrity,
-              compliance, responsiveness, and consistent service standards helps
-              us build long-term customer trust and lasting professional
-              relationships. When you choose us, you choose a partner dedicated
-              to your success and satisfaction.
-            </p>
-          </div>
-          <div className="vc rv d4 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-300 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
-            <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
-              04
-            </div>
+
             <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
               Quality Policy
             </h3>
@@ -534,6 +512,31 @@ const AboutUs = () => {
               We respond to challenges with prompt action, clear communication,
               and corrective and preventive measures to strengthen customer
               trust and long-term satisfaction.
+            </p>
+          </div>
+          <div className="vc rv d4 relative translate-y-9 overflow-hidden rounded-2xl border border-[#E8E4DC] bg-white p-11 opacity-0 transition-all delay-300 duration-400 duration-800 hover:-translate-y-2 hover:border-[rgba(27,43,107,0.15)] hover:shadow-[0_32px_80px_rgba(27,43,107,0.1)]">
+            <div className="vc-n font-libre mb-5 font-inter text-[3.5rem] leading-none font-bold text-[#E8E4DC]">
+              04
+            </div>
+            <h3 className="font-libre mb-[14px] text-[1.35rem] text-[#1B2B6B]">
+              Why Choose Us
+            </h3>
+            <p className="text-[0.9rem] leading-[1.8] text-[#5a5a7a]">
+              At Udayam International, we focus on delivering practical,
+              transparent, and reliable international services with
+              professionalism and responsibility. Through our six specialized
+              verticals—UV Holidays, UV Travel N Cure, UV Wings, UV Commerce, UV
+              Pathways, and UV Placements—we provide trusted support across
+              tourism, medical tourism, travel, trade, overseas education, and
+              recruitment, all under one organization.
+            </p>
+            <p className="pt-3 text-[0.9rem] leading-[1.8] text-[#5a5a7a] md:pt-5">
+              We believe in clear communication, timely support, and
+              customer-focused solutions. Our commitment to integrity,
+              compliance, responsiveness, and consistent service standards helps
+              us build long-term customer trust and lasting professional
+              relationships. When you choose us, you choose a partner dedicated
+              to your success and satisfaction.
             </p>
           </div>
         </div>
@@ -606,7 +609,8 @@ const AboutUs = () => {
           <div className="st-imgs rvr relative h-[600px] opacity-0 transition-all duration-800 md:mt-16 md:translate-x-9">
             <div className="si1 absolute top-0 left-0 z-[1] h-[80%] w-[72%] overflow-hidden rounded-2xl">
               <img
-                src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&auto=format&fit=crop&q=80"
+                src={roadImg}
+                // src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&auto=format&fit=crop&q=80"
                 alt="Journey"
                 className="h-full w-full object-cover"
               />

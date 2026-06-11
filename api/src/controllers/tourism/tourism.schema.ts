@@ -48,38 +48,38 @@ const durationCategoryEnum = t.Union([
 // ─── Create DTO ─────────────────────────────────────────────────────────────
 
 export const createTourismDto = {
-    body: t.Object({
-        title: t.String({ minLength: 2, maxLength: 200 }),
-        destination: t.String({ minLength: 2, maxLength: 200 }),
-        destinationRegion: destinationRegionEnum,
-        packageType: t.Union([t.Literal("DOMESTIC"), t.Literal("INTERNATIONAL")]),
-        tripTypes: t.Array(tripTypeEnum, { minItems: 1 }),
+    // body: t.Object({
+    //     title: t.String({ minLength: 2, maxLength: 200 }),
+    //     destination: t.String({ minLength: 2, maxLength: 200 }),
+    //     destinationRegion: destinationRegionEnum,
+    //     packageType: t.Union([t.Literal("DOMESTIC"), t.Literal("INTERNATIONAL")]),
+    //     tripTypes: t.Array(tripTypeEnum, { minItems: 1 }),
 
-        price: t.Number({ minimum: 0 }),
-        strikePrice: t.Optional(t.Number({ minimum: 0 })),
-        discount: t.Optional(t.String()),
+    //     price: t.Number({ minimum: 0 }),
+    //     strikePrice: t.Optional(t.Number({ minimum: 0 })),
+    //     discount: t.Optional(t.String()),
 
-        days: t.Number({ minimum: 1 }),
-        nights: t.Number({ minimum: 0 }),
+    //     days: t.Number({ minimum: 1 }),
+    //     nights: t.Number({ minimum: 0 }),
 
-        minPax: t.Optional(t.Number({ minimum: 1, default: 1 })),
-        maxPax: t.Optional(t.Number({ minimum: 1, default: 10 })),
+    //     minPax: t.Optional(t.Number({ minimum: 1, default: 1 })),
+    //     maxPax: t.Optional(t.Number({ minimum: 1, default: 10 })),
 
-        // image comes as a File (multipart)
-        imageUrl: t.File({ type: ["image/jpeg", "image/png", "image/webp"] }),
+    //     // image comes as a File (multipart)
+    //     imageUrl: t.File({ type: ["image/jpeg", "image/png", "image/webp"] }),
 
-        badges: t.Array(badgeSchema),
-        inclusions: t.Array(t.String()),
+    //     badges: t.Array(badgeSchema),
+    //     inclusions: t.Array(t.String()),
 
-        description: t.Optional(t.String()),
-        highlights: t.Optional(t.Array(t.String())),
-        itinerary: t.Optional(t.Array(itineraryDaySchema)),
+    //     description: t.Optional(t.String()),
+    //     highlights: t.Optional(t.Array(t.String())),
+    //     itinerary: t.Optional(t.Array(itineraryDaySchema)),
 
-        isActive: t.Optional(t.Boolean({ default: true })),
-        isFeatured: t.Optional(t.Boolean({ default: false })),
-        label: t.Optional(t.String()),
-    }),
-    type: "multipart/form-data",
+    //     isActive: t.Optional(t.Boolean({ default: true })),
+    //     isFeatured: t.Optional(t.Boolean({ default: false })),
+    //     label: t.Optional(t.String()),
+    // }),
+    // type: "multipart/form-data",
     detail: {
         summary: "Create a new Tourism Package",
         description: "Admin: Upload image + package details. Image stored in S3.",
@@ -89,42 +89,42 @@ export const createTourismDto = {
 // ─── Update DTO ──────────────────────────────────────────────────────────────
 
 export const updateTourismDto = {
-    body: t.Object({
-        title: t.Optional(t.String({ minLength: 2, maxLength: 200 })),
-        destination: t.Optional(t.String({ minLength: 2, maxLength: 200 })),
-        destinationRegion: t.Optional(destinationRegionEnum),
-        packageType: t.Optional(
-            t.Union([t.Literal("DOMESTIC"), t.Literal("INTERNATIONAL")])
-        ),
-        tripTypes: t.Optional(t.Array(tripTypeEnum, { minItems: 1 })),
+    // body: t.Object({
+    //     title: t.Optional(t.String({ minLength: 2, maxLength: 200 })),
+    //     destination: t.Optional(t.String({ minLength: 2, maxLength: 200 })),
+    //     destinationRegion: t.Optional(destinationRegionEnum),
+    //     packageType: t.Optional(
+    //         t.Union([t.Literal("DOMESTIC"), t.Literal("INTERNATIONAL")])
+    //     ),
+    //     tripTypes: t.Optional(t.Array(tripTypeEnum, { minItems: 1 })),
 
-        price: t.Optional(t.Number({ minimum: 0 })),
-        strikePrice: t.Optional(t.Number({ minimum: 0 })),
-        discount: t.Optional(t.String()),
+    //     price: t.Optional(t.Number({ minimum: 0 })),
+    //     strikePrice: t.Optional(t.Number({ minimum: 0 })),
+    //     discount: t.Optional(t.String()),
 
-        days: t.Optional(t.Number({ minimum: 1 })),
-        nights: t.Optional(t.Number({ minimum: 0 })),
+    //     days: t.Optional(t.Number({ minimum: 1 })),
+    //     nights: t.Optional(t.Number({ minimum: 0 })),
 
-        minPax: t.Optional(t.Number({ minimum: 1 })),
-        maxPax: t.Optional(t.Number({ minimum: 1 })),
+    //     minPax: t.Optional(t.Number({ minimum: 1 })),
+    //     maxPax: t.Optional(t.Number({ minimum: 1 })),
 
-        // new image replaces old one
-        imageUrl: t.Optional(
-            t.File({ type: ["image/jpeg", "image/png", "image/webp"] })
-        ),
+    //     // new image replaces old one
+    //     imageUrl: t.Optional(
+    //         t.File({ type: ["image/jpeg", "image/png", "image/webp"] })
+    //     ),
 
-        badges: t.Optional(t.Array(badgeSchema)),
-        inclusions: t.Optional(t.Array(t.String())),
+    //     badges: t.Optional(t.Array(badgeSchema)),
+    //     inclusions: t.Optional(t.Array(t.String())),
 
-        description: t.Optional(t.String()),
-        highlights: t.Optional(t.Array(t.String())),
-        itinerary: t.Optional(t.Array(itineraryDaySchema)),
+    //     description: t.Optional(t.String()),
+    //     highlights: t.Optional(t.Array(t.String())),
+    //     itinerary: t.Optional(t.Array(itineraryDaySchema)),
 
-        isActive: t.Optional(t.Boolean()),
-        isFeatured: t.Optional(t.Boolean()),
-        label: t.Optional(t.String()),
-    }),
-    type: "multipart/form-data" as const,
+    //     isActive: t.Optional(t.Boolean()),
+    //     isFeatured: t.Optional(t.Boolean()),
+    //     label: t.Optional(t.String()),
+    // }),
+    // type: "multipart/form-data" as const,
     detail: {
         summary: "Update a Tourism Package",
         description: "Admin: Partial update. Upload new image only if replacing.",
@@ -185,6 +185,6 @@ export const tourismParamDto = {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type CreateTourismSchema = typeof createTourismDto.body.static
-export type UpdateTourismSchema = typeof updateTourismDto.body.static
+export type CreateTourismSchema = typeof createTourismDto.detail
+export type UpdateTourismSchema = typeof updateTourismDto.detail
 export type GetTourismQuery = typeof getTourismDto.query.static

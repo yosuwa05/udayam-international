@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TourismIndexRouteImport } from './routes/tourism/index'
+import { Route as TourismAddRouteImport } from './routes/tourism/add'
+import { Route as TourismIdEditRouteImport } from './routes/tourism/$id/edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -22,31 +25,64 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TourismIndexRoute = TourismIndexRouteImport.update({
+  id: '/tourism/',
+  path: '/tourism/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TourismAddRoute = TourismAddRouteImport.update({
+  id: '/tourism/add',
+  path: '/tourism/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TourismIdEditRoute = TourismIdEditRouteImport.update({
+  id: '/tourism/$id/edit',
+  path: '/tourism/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/tourism/add': typeof TourismAddRoute
+  '/tourism/': typeof TourismIndexRoute
+  '/tourism/$id/edit': typeof TourismIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/tourism/add': typeof TourismAddRoute
+  '/tourism': typeof TourismIndexRoute
+  '/tourism/$id/edit': typeof TourismIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/tourism/add': typeof TourismAddRoute
+  '/tourism/': typeof TourismIndexRoute
+  '/tourism/$id/edit': typeof TourismIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths: '/' | '/login' | '/tourism/add' | '/tourism/' | '/tourism/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
-  id: '__root__' | '/' | '/login'
+  to: '/' | '/login' | '/tourism/add' | '/tourism' | '/tourism/$id/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/tourism/add'
+    | '/tourism/'
+    | '/tourism/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  TourismAddRoute: typeof TourismAddRoute
+  TourismIndexRoute: typeof TourismIndexRoute
+  TourismIdEditRoute: typeof TourismIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +101,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tourism/': {
+      id: '/tourism/'
+      path: '/tourism'
+      fullPath: '/tourism/'
+      preLoaderRoute: typeof TourismIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tourism/add': {
+      id: '/tourism/add'
+      path: '/tourism/add'
+      fullPath: '/tourism/add'
+      preLoaderRoute: typeof TourismAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tourism/$id/edit': {
+      id: '/tourism/$id/edit'
+      path: '/tourism/$id/edit'
+      fullPath: '/tourism/$id/edit'
+      preLoaderRoute: typeof TourismIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  TourismAddRoute: TourismAddRoute,
+  TourismIndexRoute: TourismIndexRoute,
+  TourismIdEditRoute: TourismIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

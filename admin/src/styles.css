@@ -24,11 +24,11 @@ body {
    ───────────────────────────────────────────── */
 :root {
   /* Brand Colors */
-  --ui-primary: #0f172a; /* Deep Navy */
-  --ui-primary-light: #1e40af; /* Royal Blue */
-  --ui-accent: #f59e0b; /* Warm Amber/Gold */
+  --ui-primary: #0f172a;
+  --ui-primary-light: #1e40af;
+  --ui-accent: #f59e0b;
   --ui-accent-hover: #d97706;
-  --ui-teal: #14b8a6; /* Teal accent for travel feel */
+  --ui-teal: #14b8a6;
 
   /* Sidebar */
   --ui-sidebar-bg: #0f172a;
@@ -82,60 +82,93 @@ body {
   --color-foreground: var(--ui-base-font);
 }
 
-/* Light Mode Root Variables */
+/* ─────────────────────────────────────────────
+   Light Mode
+   ───────────────────────────────────────────── */
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+
   --card: #ffffff;
   --card-foreground: #0f172a;
+
+  /* Popover is used by Select, AlertDialog, DropdownMenu, Tooltip, Combobox, etc.
+     Keep it white with enough border contrast so it lifts off the page. */
   --popover: #ffffff;
   --popover-foreground: #0f172a;
-  --primary: var(--ui-primary-light);
+
+  --primary: #1e40af;
   --primary-foreground: #ffffff;
+
   --secondary: #e2e8f0;
   --secondary-foreground: #0f172a;
+
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
-  --accent: var(--ui-accent);
+
+  /* accent = hover background inside Select items, DropdownMenu items, Command palette.
+     Must be a neutral tone — NOT the brand amber — otherwise every hover is orange. */
+  --accent: #f1f5f9;
   --accent-foreground: #0f172a;
+
   --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: var(--ui-accent);
+
+  /* ring = focus outline on inputs, buttons, selects */
+  --ring: #1e40af;
+
   --radius: 0.625rem;
 
   /* Sidebar */
-  --sidebar: var(--ui-sidebar-bg);
-  --sidebar-foreground: var(--ui-sidebar-fg);
-  --sidebar-primary: var(--ui-primary-light);
+  --sidebar: #0f172a;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #1e40af;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--ui-sidebar-hover-bg);
-  --sidebar-accent-foreground: var(--ui-sidebar-fg);
-  --sidebar-border: var(--ui-sidebar-border);
-  --sidebar-ring: var(--ui-accent);
+  --sidebar-accent: #1e2937;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: #334155;
+  --sidebar-ring: #f59e0b;
 }
 
-/* Dark Mode */
+/* ─────────────────────────────────────────────
+   Dark Mode
+   ───────────────────────────────────────────── */
 .dark {
   --background: #0f172a;
   --foreground: #f1f5f9;
+
   --card: #1e2937;
   --card-foreground: #f1f5f9;
+
+  /* Dark mode popover — slightly lighter than bg so floating panels are visible */
   --popover: #1e2937;
   --popover-foreground: #f1f5f9;
-  --primary: #60a5fa;
-  --primary-foreground: #0f172a;
+
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+
   --secondary: #334155;
   --secondary-foreground: #f1f5f9;
+
   --muted: #334155;
   --muted-foreground: #94a3b8;
-  --accent: var(--ui-accent);
-  --accent-foreground: #0f172a;
+
+  /* Dark mode hover inside dropdowns/select — subtle slate, not amber */
+  --accent: #334155;
+  --accent-foreground: #f1f5f9;
+
   --destructive: #f87171;
+  --destructive-foreground: #0f172a;
+
   --border: #334155;
   --input: #334155;
-  --ring: var(--ui-accent);
 
+  --ring: #3b82f6;
+
+  /* Sidebar */
   --sidebar: #0f172a;
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #3b82f6;
@@ -143,8 +176,12 @@ body {
   --sidebar-accent: #1e2937;
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #334155;
-  --sidebar-ring: var(--ui-accent);
+  --sidebar-ring: #f59e0b;
 }
+
+/* ─────────────────────────────────────────────
+   Tailwind Base Layer
+   ───────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -155,4 +192,52 @@ body {
   html {
     @apply font-sans;
   }
+}
+
+/* ─────────────────────────────────────────────
+   Shadcn Popover / Select / Dropdown Overrides
+   These components use --popover for bg but need
+   a visible shadow + border to lift off the page.
+   ───────────────────────────────────────────── */
+
+/* Select dropdown panel */
+[data-radix-popper-content-wrapper] > div,
+[role='listbox'],
+[data-radix-select-viewport] {
+  background-color: hsl(var(--popover)) !important;
+}
+
+/* Universal fix: any floating Radix panel */
+[data-radix-popper-content-wrapper] {
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
+}
+
+[data-slot='select-content'],
+[data-slot='dropdown-menu-content'],
+[data-slot='popover-content'],
+[data-slot='command'] {
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Select item hover */
+[data-slot='select-item']:hover,
+[data-slot='select-item'][data-highlighted] {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* AlertDialog overlay */
+[data-slot='alert-dialog-overlay'] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* AlertDialog panel */
+[data-slot='alert-dialog-content'] {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18) !important;
 }

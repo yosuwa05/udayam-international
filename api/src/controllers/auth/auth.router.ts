@@ -9,7 +9,7 @@ export const adminAuthController = new Elysia({
         tags: ["Admin Authentication"]
     }
 })
-    .post("/create", createAdmin, { ...createAdminDto, beforeHandle: adminOnly })
-    .post("/login", loginAdmin, { ...loginAdminDto, beforeHandle: adminOnly })
-    .post("/logout", logoutAdmin, { ...logoutDto, beforeHandle: adminOnly })
-    .get("/session", adminSession, { ...sessionDto, beforeHandle: adminOnly })
+    .post("/create", createAdmin, { ...createAdminDto })
+    .post("/login", loginAdmin, { ...loginAdminDto })
+    .post("/logout", logoutAdmin, { ...logoutDto })
+    .get("/session", adminSession, { ...sessionDto })

@@ -1,15 +1,4 @@
-import {
-  ChevronLeft,
-  Home,
-  Bell,
-  LogOut,
-  Menu,
-  Search,
-  Plus,
-  X,
-  LayoutDashboard,
-  Users,
-} from 'lucide-react'
+import { ChevronLeft, LogOut, Menu, X, LayoutDashboard } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { Toaster } from '@/components/ui/sonner'
@@ -42,6 +31,7 @@ interface NavLink {
 
 const allLinks: NavLink[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Tourism', href: '/tourism', icon: LayoutDashboard },
 ]
 
 interface LayoutProps {

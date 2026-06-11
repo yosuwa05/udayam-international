@@ -5,17 +5,18 @@ import {
     S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { APP_CONSTANTS } from "constant";
 import { Readable } from "stream";
 
 export const s3Client = new S3Client({
-    region: process.env.REGION as string,
+    region: APP_CONSTANTS.REGION as string,
     credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+        accessKeyId: APP_CONSTANTS.AWS_ACCESS_KEY as string,
+        secretAccessKey: APP_CONSTANTS.AWS_SECRET_ACCESS_KEY as string,
     },
 });
 
-const bucketName = process.env.BUCKET_NAME;
+const bucketName = APP_CONSTANTS.BUCKET_NAME;
 
 export const saveFile = async (
     blob: Blob | any,
