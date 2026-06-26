@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { ToursCursor } from "./cursor/Tourscursor"
 import video from "../assets/de251262.mov"
-import img1 from "../assets/tourismside1.webp"
-import img2 from "../assets/tourismside2.jpeg"
+import img1 from "../assets/2.png"
 import TourismIntro from "./TourismIntro"
 // ─── Types ────────────────────────────────────────────────
 
@@ -1273,8 +1272,8 @@ const Tourism = () => {
               </em>
             </h1>
             <p className="h-desc max-w-[460px] text-base leading-[1.8] text-white/60">
-              Trusted International Services for Every Journey. Across borders
-              and beyond, we guide you every step of the way
+              Discover unforgettable journeys with expertly crafted holiday
+              packages and seamless travel experiences worldwide.
             </p>
           </div>
         </section>
@@ -1285,13 +1284,13 @@ const Tourism = () => {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-[72px]">
             {/* LEFT — Text */}
             <div>
-              <p className="mb-[14px] flex items-center gap-2.5 font-inter text-[0.68rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
+              <p className="mb-[14px] flex items-center gap-2.5 font-inter text-[0.75rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
                 <span className="h-[1.5px] w-6 flex-shrink-0 bg-[#2E7D32]" />
                 Who We Are
               </p>
-              <h2 className="font-libre text-[clamp(1.7rem,3vw,2.8rem)] leading-[1.15] font-bold text-[#1B2B6B]">
+              {/* <h2 className="font-libre text-[clamp(1.7rem,3vw,2.8rem)] leading-[1.15] font-bold text-[#1B2B6B]">
                 <em className="text-[#2E7D32] italic">About</em> UV Holidays
-              </h2>
+              </h2> */}
               <p className="mt-5 text-[0.92rem] leading-[1.85] text-[#5a5a7a]">
                 UV Holidays is the tourism division of{" "}
                 <strong className="text-[#1B2B6B]">Udayam International</strong>
@@ -1302,9 +1301,9 @@ const Tourism = () => {
 
               {/* Timeline */}
               <div className="mt-8">
-                <p className="mb-5 flex items-center gap-2.5 font-inter text-[0.68rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
+                <p className="mb-5 flex items-center gap-2.5 font-inter text-[0.75rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
                   <span className="h-[1.5px] w-6 flex-shrink-0 bg-[#2E7D32]" />
-                  What Makes Us Different
+                  WHAT MAKES UV HOLIDAYS DIFFERENT
                 </p>
 
                 {[
@@ -1356,13 +1355,12 @@ const Tourism = () => {
               </div>
             </div>
 
-            {/* RIGHT — Single image with overlay badges */}
             {/* RIGHT — Single image */}
-            <div className="relative h-[300px] w-full overflow-hidden rounded-2xl sm:h-[400px] lg:h-[560px]">
+            <div className="relative flex h-[300px] w-full items-center justify-center sm:h-[400px] lg:h-[560px]">
               <img
                 src={img1}
                 alt="Travel with UV Holidays"
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-2xl object-contain"
               />
             </div>
           </div>
