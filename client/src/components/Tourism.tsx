@@ -1250,8 +1250,8 @@ const Tourism = () => {
             <h1
               className="t-h1-anim"
               style={{
-                fontFamily: "'Libre Baskerville',serif",
-                fontSize: "clamp(2.4rem,5.5vw,5.5rem)",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "clamp(2.4rem,5.5vw,5rem)",
                 fontWeight: 700,
                 lineHeight: 1.02,
                 color: "#fff",
@@ -1280,7 +1280,7 @@ const Tourism = () => {
         {/* ABOUT US SECTION */}
         {/* ── ABOUT US SECTION ── */}
         {/* ── ABOUT US SECTION ── */}
-        <section className="w-full bg-white px-5 py-16 md:px-16 md:py-20">
+        <section className="w-full bg-white px-5 pt-16 md:px-16 md:pt-20">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-[72px]">
             {/* LEFT — Text */}
             <div>
@@ -1292,11 +1292,11 @@ const Tourism = () => {
                 <em className="text-[#2E7D32] italic">About</em> UV Holidays
               </h2> */}
               <p className="mt-5 text-[0.92rem] leading-[1.85] text-[#5a5a7a]">
-                UV Holidays is the tourism division of{" "}
-                <strong className="text-[#1B2B6B]">Udayam International</strong>
-                , specialising in customised holiday packages, tours, and
-                itineraries that create memorable travel experiences across
-                domestic and international destinations.
+                <strong className="text-[#1B2B6B]"> UV Holidays</strong> is the
+                tourism division of Udayam International , specialising in
+                customised holiday packages, tours, and itineraries that create
+                memorable travel experiences across domestic and international
+                destinations.
               </p>
 
               {/* Timeline */}
