@@ -2,6 +2,8 @@ import banner1 from "../assets/home/banner1.jpeg"
 import banner2 from "../assets/home/banner2.jpeg"
 import banner3 from "../assets/home/banner3.jpeg"
 import banner4 from "../assets/home/banner4.jpeg"
+import video1 from "../assets/de251262.mov"
+import video2 from "../assets/bannervid2.MP4"
 import type { Page } from "./navData"
 
 
@@ -9,44 +11,22 @@ import type { Page } from "./navData"
 
 const heroSlides = [
     {
-        img: banner1,
-        thumb: banner1,
-        eyebrow: "Wonders of the world",
-        h1Parts: ["Taj Mahal", "A Classic", " Travel Angle"],
-        emWord: "Taj Mahal",
-        desc: "Discover India’s breathtaking destinations, vibrant cultures, luxury experiences, scenic escapes, and unforgettable travel adventures worldwide.",
-        btn1: { label: "View Packages →", page: "/tourism" as Page },
-        btn2: { label: "Get Free Quote ", page: "contact" as Page },
+        img: video2,
+        video: video2,
+    },
+    // {
+    //     img: banner1,
+    // },
+    {
+        img: banner3,
     },
     {
         img: banner2,
-        thumb: banner2,
-        eyebrow: "Domestic Heritage",
-        h1Parts: ["Explore the", "Land of", "Royal Wonders"],
-        emWord: "Royal Wonders",
-        desc: "Witness grand forts, golden deserts, and unforgettable cultural experiences.",
-        btn1: { label: "Book Now →", page: "/tourism" as Page },
-        btn2: { label: "View Itinerary", page: "/tourism" as Page },
     },
+
     {
-        img: banner3,
-        thumb: banner3,
-        eyebrow: "Medical Tourism",
-        h1Parts: ["Healing", "Beyond,", "Borders"],
-        emWord: "Borders",
-        desc: "Experience affordable medical care, trusted hospitals, and dedicated assistance throughout your treatment journey.",
-        btn1: { label: " Explore  →", page: "/tourism" as Page },
-        btn2: { label: "Visa Help", page: "/travel" as Page },
-    },
-    {
-        img: banner4,
-        thumb: banner4,
-        eyebrow: "Iconic Landmarks",
-        h1Parts: ["The World is", "Yours to", "Explore"],
-        emWord: "Explore",
-        desc: " From the romance of the Eiffel Tower to the majesty of Eastern temples, we curate seamless journeys to the globe’s most iconic landmarks.",
-        btn1: { label: "Know More →", page: "/medical" as Page },
-        btn2: { label: "Free Consultation", page: "contact" as Page },
+        img: video1,
+        video: video1,
     },
 ]
 

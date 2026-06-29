@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react"
 import { ToursCursor } from "./cursor/Tourscursor"
 import video from "../assets/de251262.mov"
-import img1 from "../assets/2.png"
+import img1 from "../assets/1.png"
 import TourismIntro from "./TourismIntro"
+import Carsoule from "./Carsoule"
 // ─── Types ────────────────────────────────────────────────
 
 interface PackageCard {
@@ -1171,7 +1172,9 @@ const Tourism = () => {
           transition: "opacity 0.4s ease",
         }}
       >
-        <section
+        <Carsoule />
+
+        {/* <section
           className="hero-sect"
           style={{
             position: "relative",
@@ -1184,7 +1187,6 @@ const Tourism = () => {
             padding: "0 64px 80px",
           }}
         >
-          {/* Video Background */}
           <video
             autoPlay
             loop
@@ -1210,7 +1212,6 @@ const Tourism = () => {
             Your browser does not support the video tag.
           </video>
 
-          {/* Gradient Overlay */}
           <div
             style={{
               position: "absolute",
@@ -1220,7 +1221,6 @@ const Tourism = () => {
             }}
           />
 
-          {/* Hero Content */}
           <div style={{ position: "relative", zIndex: 2 }}>
             <div
               className="t-eye-anim"
@@ -1276,93 +1276,91 @@ const Tourism = () => {
               packages and seamless travel experiences worldwide.
             </p>
           </div>
-        </section>
+        </section> */}
         {/* ABOUT US SECTION */}
         {/* ── ABOUT US SECTION ── */}
-        {/* ── ABOUT US SECTION ── */}
-        <section className="w-full bg-white px-5 pt-16 pb-3 md:px-16 md:pt-20">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-[72px]">
-            {/* LEFT — Text */}
-            <div>
-              <p className="mb-[14px] flex items-center gap-2.5 font-inter text-[0.75rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
+        <section
+          className="intro grid min-h-[85vh] grid-cols-1 overflow-hidden lg:min-h-[88vh] lg:grid-cols-2"
+          id="about-us"
+        >
+          {/* LEFT — Text */}
+          <div className="intro-l flex flex-col justify-center bg-[#FAF8F4] p-6 sm:p-10 lg:p-16">
+            <p className="mb-[14px] flex items-center gap-2.5 font-inter text-[0.75rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
+              <span className="h-[1.5px] w-6 flex-shrink-0 bg-[#2E7D32]" />
+              Who We Are
+            </p>
+            <p className="mt-5 text-[0.92rem] leading-[1.85] text-[#5a5a7a]">
+              <strong className="text-[#1B2B6B]"> UV Holidays</strong> is the
+              tourism division of Udayam International , specialising in
+              customised holiday packages, tours, and itineraries that create
+              memorable travel experiences across domestic and international
+              destinations.
+            </p>
+
+            {/* Timeline */}
+            <div className="mt-8">
+              <p className="mb-5 flex items-center gap-2.5 font-inter text-[0.75rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
                 <span className="h-[1.5px] w-6 flex-shrink-0 bg-[#2E7D32]" />
-                Who We Are
-              </p>
-              {/* <h2 className="font-libre text-[clamp(1.7rem,3vw,2.8rem)] leading-[1.15] font-bold text-[#1B2B6B]">
-                <em className="text-[#2E7D32] italic">About</em> UV Holidays
-              </h2> */}
-              <p className="mt-5 text-[0.92rem] leading-[1.85] text-[#5a5a7a]">
-                <strong className="text-[#1B2B6B]"> UV Holidays</strong> is the
-                tourism division of Udayam International , specialising in
-                customised holiday packages, tours, and itineraries that create
-                memorable travel experiences across domestic and international
-                destinations.
+                WHAT MAKES UV HOLIDAYS DIFFERENT
               </p>
 
-              {/* Timeline */}
-              <div className="mt-8">
-                <p className="mb-5 flex items-center gap-2.5 font-inter text-[0.75rem] font-bold tracking-[0.18em] text-[#2E7D32] uppercase">
-                  <span className="h-[1.5px] w-6 flex-shrink-0 bg-[#2E7D32]" />
-                  WHAT MAKES UV HOLIDAYS DIFFERENT
-                </p>
-
-                {[
-                  {
-                    title: "Customised Itineraries",
-                    desc: "Every trip is crafted around your preferences — no cookie-cutter packages, just journeys designed for you.",
-                  },
-                  {
-                    title: "Expert Destination Guidance",
-                    desc: "Our specialists bring deep local knowledge so you experience the very best of every place.",
-                  },
-                  {
-                    title: "End-to-End Travel Solutions",
-                    desc: "Flights, hotels, transfers, sightseeing — every detail handled so you can simply enjoy the journey.",
-                  },
-                  {
-                    title: "Transparent Pricing",
-                    desc: "No hidden charges, no surprises. Clear and honest from the very first quote.",
-                  },
-                  {
-                    title: "Seamless Travel Experience",
-                    desc: "Smooth coordination at every touchpoint means stress-free travel from departure to return.",
-                  },
-                  {
-                    title: "Dedicated Customer Support",
-                    desc: "Our team is with you before, during, and after your trip — always reachable, always ready.",
-                  },
-                ].map((item, idx, arr) => (
-                  <div
-                    key={idx}
-                    className={`relative flex gap-[18px] ${idx < arr.length - 1 ? "pb-[26px]" : ""}`}
-                  >
-                    {idx < arr.length - 1 && (
-                      <div className="absolute top-[34px] left-[16px] h-[calc(100%-4px)] w-[1.5px] bg-[#E8E4DC]" />
-                    )}
-                    <div className="relative z-[1] flex h-[34px] w-[34px] flex-shrink-0 cursor-default items-center justify-center rounded-full border-[1.5px] border-[#E8E4DC] bg-white text-[0.72rem] text-[#1B2B6B] transition-all duration-300 hover:border-[#1B2B6B] hover:bg-[#1B2B6B] hover:text-white">
-                      ✦
-                    </div>
-                    <div>
-                      <div className="font-libre mb-1 text-[0.98rem] text-[#1B2B6B]">
-                        {item.title}
-                      </div>
-                      <p className="text-[0.84rem] leading-[1.72] text-[#9494b0]">
-                        {item.desc}
-                      </p>
-                    </div>
+              {[
+                {
+                  title: "Customised Itineraries",
+                  desc: "Every trip is crafted around your preferences — no cookie-cutter packages, just journeys designed for you.",
+                },
+                {
+                  title: "Expert Destination Guidance",
+                  desc: "Our specialists bring deep local knowledge so you experience the very best of every place.",
+                },
+                {
+                  title: "End-to-End Travel Solutions",
+                  desc: "Flights, hotels, transfers, sightseeing — every detail handled so you can simply enjoy the journey.",
+                },
+                {
+                  title: "Transparent Pricing",
+                  desc: "No hidden charges, no surprises. Clear and honest from the very first quote.",
+                },
+                {
+                  title: "Seamless Travel Experience",
+                  desc: "Smooth coordination at every touchpoint means stress-free travel from departure to return.",
+                },
+                {
+                  title: "Dedicated Customer Support",
+                  desc: "Our team is with you before, during, and after your trip — always reachable, always ready.",
+                },
+              ].map((item, idx, arr) => (
+                <div
+                  key={idx}
+                  className={`relative flex gap-[18px] ${idx < arr.length - 1 ? "pb-[26px]" : ""}`}
+                >
+                  {idx < arr.length - 1 && (
+                    <div className="absolute top-[34px] left-[16px] h-[calc(100%-4px)] w-[1.5px] bg-[#E8E4DC]" />
+                  )}
+                  <div className="relative z-[1] flex h-[34px] w-[34px] flex-shrink-0 cursor-default items-center justify-center rounded-full border-[1.5px] border-[#E8E4DC] bg-white text-[0.72rem] text-[#1B2B6B] transition-all duration-300 hover:border-[#1B2B6B] hover:bg-[#1B2B6B] hover:text-white">
+                    ✦
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <div className="font-libre mb-1 text-[0.98rem] text-[#1B2B6B]">
+                      {item.title}
+                    </div>
+                    <p className="text-[0.84rem] leading-[1.72] text-[#9494b0]">
+                      {item.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* RIGHT — Single image */}
-            <div className="relative flex h-[300px] w-full items-center justify-center sm:h-[400px] lg:h-[560px]">
-              <img
-                src={img1}
-                alt="Travel with UV Holidays"
-                className="h-full w-full rounded-2xl object-contain"
-              />
-            </div>
+          {/* RIGHT — Single image */}
+          <div className="intro-r relative min-h-[380px] overflow-hidden bg-[#fff] lg:min-h-auto">
+            <img
+              src={img1}
+              alt="Travel with UV Holidays"
+              className="absolute inset-0 h-full w-full object-contain transition-transform duration-[8s] ease-in-out hover:scale-110"
+            />
+            <div className="ir-overlay pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(247,245,240,0.15)] to-transparent" />
           </div>
         </section>
 
