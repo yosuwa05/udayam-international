@@ -1280,7 +1280,7 @@ const Tourism = () => {
         {/* ABOUT US SECTION */}
         {/* ── ABOUT US SECTION ── */}
         {/* ── ABOUT US SECTION ── */}
-        <section className="w-full bg-white px-5 pt-16 md:px-16 md:pt-20">
+        <section className="w-full bg-white px-5 pt-16 pb-3 md:px-16 md:pt-20">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-[72px]">
             {/* LEFT — Text */}
             <div>
