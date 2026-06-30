@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import aboutusimg from "../assets/Aboutus.png"
+import aboutusimg from "../assets/Aboutus1.png"
 import roadImg from "../assets/whyus.png"
 const AboutUs = () => {
   // Refs
