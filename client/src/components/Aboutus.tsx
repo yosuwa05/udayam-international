@@ -308,11 +308,10 @@ const AboutUs = () => {
           </h2>
 
           <p className="bt mb-5 text-[15px] leading-[1.85] text-[#5a5a7a] sm:text-base">
-            Established in 2025 and operational since 13 February 2026, Udayam
-            International is a professionally managed proprietorship company
-            dedicated to delivering trusted international solutions across
-            tourism, medical tourism, travel, trade, overseas education, and
-            recruitment services.
+            Udayam International is a professionally managed company dedicated
+            to delivering trusted international solutions across tourism,
+            medical tourism, travel, trade, overseas education, and recruitment
+            services.
           </p>
 
           <p className="bt mb-9 text-[15px] leading-[1.85] text-[#5a5a7a] sm:text-base">

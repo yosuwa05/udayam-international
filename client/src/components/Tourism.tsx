@@ -1358,7 +1358,7 @@ const Tourism = () => {
             <img
               src={img1}
               alt="Travel with UV Holidays"
-              className="absolute inset-0 h-full w-full object-contain transition-transform duration-[8s] ease-in-out hover:scale-110"
+              className="absolute inset-0 h-full w-full object-contain transition-transform duration-[3s] ease-in-out hover:scale-105"
             />
             <div className="ir-overlay pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(247,245,240,0.15)] to-transparent" />
           </div>
