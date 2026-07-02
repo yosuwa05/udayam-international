@@ -199,7 +199,7 @@ export default function Trade() {
         </section>
 
         {/* TRADE CATEGORIES */}
-        <section className="py-16 md:py-20">
+        {/* <section className="py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="mb-10">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">
@@ -232,13 +232,12 @@ export default function Trade() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* TRADE SUPPORT */}
-        <section className="bg-[#F7F9FC] py-16 md:py-20">
+        {/* <section className="bg-[#F7F9FC] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
-              {/* Left */}
               <div>
                 <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">
                   <span className="h-0.5 w-5 rounded bg-[#2E7D32]" />
@@ -269,7 +268,6 @@ export default function Trade() {
                   ))}
                 </div>
               </div>
-              {/* Right Image */}
               <div className="h-72 overflow-hidden rounded-2xl shadow-2xl md:h-[420px]">
                 <img
                   src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=800&q=80"
@@ -279,13 +277,12 @@ export default function Trade() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* BUSINESS ENQUIRY FORM */}
-        <section className="bg-[#0F1B47] py-16 md:py-20">
+        {/* <section className="bg-[#0F1B47] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-20">
-              {/* Left */}
               <div>
                 <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#43A047] uppercase">
                   <span className="h-0.5 w-5 rounded bg-[#43A047]" />
@@ -335,7 +332,6 @@ export default function Trade() {
                   ))}
                 </div>
               </div>
-              {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="rounded-2xl bg-white p-7 md:p-9"
@@ -442,7 +438,7 @@ export default function Trade() {
               </form>
             </div>
           </div>
-        </section>
+        </section> */}
       </div>
     </>
   )

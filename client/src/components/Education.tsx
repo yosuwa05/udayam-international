@@ -91,9 +91,7 @@ export default function Education() {
   return (
     <>
       <style>{`
-      * {
-  cursor: none !important;
-}
+    
         @keyframes fsu{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
         @keyframes mqscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
         .t-h1-anim{opacity:0;animation:fsu 1s .35s forwards}
@@ -104,7 +102,7 @@ export default function Education() {
     
     
       `}</style>
-      <EducationCursor /> {/* ← just this line */}
+      {/* <EducationCursor /> */}
       <div className="bg-white font-[Outfit,sans-serif] text-[#0D1B3E]">
         {/* PAGE HERO */}
         <section
@@ -233,7 +231,7 @@ export default function Education() {
         </section>
 
         {/* STUDY DESTINATIONS */}
-        <section className="py-16 md:py-20">
+        {/* <section className="py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="mb-10">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">
@@ -269,10 +267,10 @@ export default function Education() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* HOW WE HELP — STEPS */}
-        <section className="bg-[#F7F9FC] py-16 md:py-20">
+        {/* <section className="bg-[#F7F9FC] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="mb-10">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">
@@ -285,9 +283,7 @@ export default function Education() {
               </h2>
             </div>
 
-            {/* Steps — responsive: stack on mobile, horizontal on md+ */}
             <div className="relative mt-10">
-              {/* Connector line — hidden on mobile */}
               <div className="absolute top-8 right-[10%] left-[10%] hidden h-[1.5px] bg-[#C5CEDF] md:block" />
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5">
                 {steps.map((step, i) => (
@@ -309,13 +305,12 @@ export default function Education() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* ENQUIRY FORM */}
-        <section className="bg-[#0F1B47] py-16 md:py-20">
+        {/* <section className="bg-[#0F1B47] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-20">
-              {/* Left */}
               <div>
                 <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#43A047] uppercase">
                   <span className="h-0.5 w-5 rounded bg-[#43A047]" />
@@ -367,7 +362,6 @@ export default function Education() {
                   ))}
                 </div>
               </div>
-              {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="rounded-2xl bg-white p-7 md:p-9"
@@ -454,7 +448,7 @@ export default function Education() {
               </form>
             </div>
           </div>
-        </section>
+        </section> */}
       </div>
     </>
   )

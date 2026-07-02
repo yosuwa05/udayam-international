@@ -199,10 +199,9 @@ export default function TravelService() {
         </section>
 
         {/* WHAT WE OFFER */}
-        <section className="py-16 md:py-20">
+        {/* <section className="py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
-              {/* Left */}
               <div>
                 <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">
                   <span className="h-0.5 w-5 rounded bg-[#2E7D32]" />
@@ -233,7 +232,6 @@ export default function TravelService() {
                   ))}
                 </div>
               </div>
-              {/* Right Image */}
               <div className="h-72 overflow-hidden rounded-2xl shadow-2xl md:h-[420px]">
                 <img
                   src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80"
@@ -243,10 +241,10 @@ export default function TravelService() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* VISA DESTINATIONS */}
-        <section className="bg-[#F7F9FC] py-16 md:py-20">
+        {/* <section className="bg-[#F7F9FC] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="mb-10">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#2E7D32] uppercase">
@@ -274,13 +272,12 @@ export default function TravelService() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* ENQUIRY FORM */}
-        <section className="bg-[#0F1B47] py-16 md:py-20">
+        {/* <section className="bg-[#0F1B47] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-10">
             <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-20">
-              {/* Left */}
               <div>
                 <div className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-[2.5px] text-[#43A047] uppercase">
                   <span className="h-0.5 w-5 rounded bg-[#43A047]" />
@@ -330,7 +327,6 @@ export default function TravelService() {
                   ))}
                 </div>
               </div>
-              {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="rounded-2xl bg-white p-7 md:p-9"
@@ -367,24 +363,7 @@ export default function TravelService() {
                     className={inputCls}
                   />
                 </FormField>
-                {/* <FormField label="Service Type" className="mb-4">
-                  <select
-                    name="service"
-                    value={form.service}
-                    onChange={handleChange}
-                    className={inputCls}
-                  >
-                    <option value="">Select service</option>
-                    {[
-                      "Flight Booking",
-                      "Visa Assistance",
-                      "Hotel Booking",
-                      "Complete Package",
-                    ].map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
-                </FormField> */}
+               
                 <FormField label="Destination" className="mb-4">
                   <input
                     name="destination"
@@ -414,7 +393,7 @@ export default function TravelService() {
               </form>
             </div>
           </div>
-        </section>
+        </section> */}
       </div>
     </>
   )

@@ -972,10 +972,11 @@ const MedicalTourism: React.FC = () => {
   }
   return (
     <>
-      <style>{`
-      * {
+      {/* * {
   cursor: none !important;
-}
+} */}
+      <style>{`
+   
   @keyframes medPulse {
   0% {
     transform: translate(-50%, -50%) scale(1);
@@ -1040,7 +1041,7 @@ const MedicalTourism: React.FC = () => {
         @media(min-width:900px){.mob-filter-bar{display:none!important}}
         @media(max-width:899px){.tourism-sidebar{display:none!important}}
       `}</style>
-      <MedicalCursor /> {/* ← just this line */}
+      {/* <MedicalCursor />  */}
       <div className="med-wrap">
         {/* ─── HERO ─── */}
         <section className="hero relative flex h-screen min-h-[700px] flex-col justify-end overflow-hidden px-4 pb-[88px] md:px-16">
@@ -1098,52 +1099,13 @@ const MedicalTourism: React.FC = () => {
           </div>
         </section>
 
-        {/* ─── MARQUEE ─── */}
         {/* <div
-          style={{
-            borderTop: "1px solid var(--border)",
-            borderBottom: "1px solid var(--border)",
-            overflow: "hidden",
-            padding: "14px 0",
-            background: "var(--navy)",
-          }}
-        >
-          <div
-            className="mq-run"
-            style={{ display: "flex", width: "max-content" }}
-          >
-            {[...marqueeItems, ...marqueeItems].map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: ".65rem",
-                  color: "rgba(255,255,255,.5)",
-                  letterSpacing: ".18em",
-                  textTransform: "uppercase" as const,
-                  padding: "0 40px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 20,
-                  whiteSpace: "nowrap" as const,
-                }}
-              >
-                <span style={{ color: "#7ee8d4", fontSize: ".6rem" }}>✚</span>
-                {item}
-              </div>
-            ))}
-          </div>
-        </div> */}
-
-        {/* ─── PROMISE ─── */}
-        <div
           style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
             minHeight: isMobile ? "auto" : "75vh",
           }}
         >
-          {/* Image side */}
           <RV
             dir="left"
             style={{
@@ -1207,7 +1169,6 @@ const MedicalTourism: React.FC = () => {
             </div>
           </RV>
 
-          {/* Content side */}
           <RV
             dir="right"
             style={{
@@ -1347,7 +1308,6 @@ const MedicalTourism: React.FC = () => {
           </RV>
         </div>
 
-        {/* ─── MOBILE FILTER BAR ─── */}
         <div
           className="mob-filter-bar"
           style={{
@@ -1367,7 +1327,6 @@ const MedicalTourism: React.FC = () => {
               color: "#1B2B6B",
             }}
           >
-            {/* {totalVisible} Packages Found */}
           </span>
           <button
             onClick={() => setSheetOpen(true)}
@@ -1390,7 +1349,6 @@ const MedicalTourism: React.FC = () => {
           </button>
         </div>
 
-        {/* ─── MOBILE SHEET ─── */}
         <MobileSheet open={sheetOpen} onClose={() => setSheetOpen(false)}>
           <div style={{ paddingTop: 8 }}>
             <div
@@ -1417,14 +1375,12 @@ const MedicalTourism: React.FC = () => {
                   marginTop: 2,
                 }}
               >
-                {/* {totalVisible} packages match */}
               </div>
             </div>
             <SidebarContent {...sidebarProps} />
           </div>
         </MobileSheet>
 
-        {/* ─── PAGE LAYOUT — grid matches HTML .page-wrap exactly ─── */}
         <div
           ref={pageWrapRef}
           style={{
@@ -1437,7 +1393,6 @@ const MedicalTourism: React.FC = () => {
             alignItems: "start",
           }}
         >
-          {/* ─── SIDEBAR — position:sticky, align-self:start (required for sticky in grid) ─── */}
           <aside
             className="tourism-sidebar"
             style={{
@@ -1453,7 +1408,6 @@ const MedicalTourism: React.FC = () => {
             <SidebarContent {...sidebarProps} />
           </aside>
 
-          {/* ─── MAIN CONTENT ─── */}
           <main
             className="bg-white!"
             style={{
@@ -1466,181 +1420,6 @@ const MedicalTourism: React.FC = () => {
               overflowX: "hidden",
             }}
           >
-            {/* Results bar */}
-            {/* <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 40,
-                flexWrap: "wrap",
-                gap: 12,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "'Libre Baskerville',serif",
-                  fontSize: isMobile ? "1.2rem" : "1.5rem",
-                  fontWeight: 700,
-                  color: "#1B2B6B",
-                }}
-              >
-                Showing <span style={{ color: "#2E7D32" }}>{totalVisible}</span>{" "}
-                Packages
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {(["grid", "list"] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setGridView(v)}
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      border: `1.5px solid ${gridView === v ? "#1B2B6B" : "#E8E4DC"}`,
-                      background: gridView === v ? "#1B2B6B" : "#fff",
-                      color: gridView === v ? "#fff" : "#9494b0",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      fontSize: ".85rem",
-                      transition: "all .2s",
-                    }}
-                  >
-                    {v === "grid" ? "⊞" : "☰"}
-                  </button>
-                ))}
-              </div>
-            </div> */}
-
-            {/* Featured Banner */}
-            {/* <div
-              className="feat-banner-inner"
-              style={{
-                background:
-                  "linear-gradient(135deg,#1B2B6B 0%,#243590 50%,#243590 100%)",
-                borderRadius: 22,
-                padding: isMobile ? "28px 24px" : "40px 44px",
-                marginBottom: 36,
-                display: "grid",
-                gridTemplateColumns: "1fr auto",
-                alignItems: "center",
-                gap: 32,
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  right: -60,
-                  top: -60,
-                  width: 280,
-                  height: 280,
-                  borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle,rgba(46,125,50,.2) 0%,transparent 70%)",
-                  pointerEvents: "none",
-                }}
-              />
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 7,
-                    background: "rgba(255,255,255,.12)",
-                    border: "1px solid rgba(255,255,255,.18)",
-                    borderRadius: 999,
-                    padding: "6px 16px",
-                    fontFamily: f,
-                    fontSize: ".68rem",
-                    fontWeight: 700,
-                    color: "rgba(255,255,255,.8)",
-                    letterSpacing: ".1em",
-                    textTransform: "uppercase" as const,
-                    marginBottom: 14,
-                  }}
-                >
-                  ✦ &nbsp;Limited Time Offer
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'Libre Baskerville',serif",
-                    fontSize: isMobile ? "1.4rem" : "1.8rem",
-                    fontWeight: 700,
-                    color: "#fff",
-                    lineHeight: 1.2,
-                    marginBottom: 10,
-                  }}
-                >
-                  Early Bird{" "}
-                  <em style={{ fontStyle: "italic", color: "#7ed88a" }}>
-                    Summer Sale
-                  </em>
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'Raleway',sans-serif",
-                    fontSize: ".9rem",
-                    color: "rgba(255,255,255,.55)",
-                    maxWidth: 440,
-                    marginBottom: 20,
-                  }}
-                >
-                  Book before June 30th and get up to 25% off on all
-                  international packages. Use code HORIZONS25 at checkout.
-                </div>
-                <a
-                  href="#"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontFamily: f,
-                    fontSize: ".82rem",
-                    fontWeight: 600,
-                    color: "#fff",
-                    background: "rgba(255,255,255,.14)",
-                    border: "1px solid rgba(255,255,255,.2)",
-                    padding: "10px 22px",
-                    borderRadius: 999,
-                    textDecoration: "none",
-                    transition: "all .25s",
-                  }}
-                  onMouseEnter={(e) =>
-                    ((e.currentTarget as HTMLElement).style.background =
-                      "rgba(255,255,255,.22)")
-                  }
-                  onMouseLeave={(e) =>
-                    ((e.currentTarget as HTMLElement).style.background =
-                      "rgba(255,255,255,.14)")
-                  }
-                >
-                  Explore Offers →
-                </a>
-              </div>
-              <div
-                className="fb-img-wrap"
-                style={{
-                  width: 200,
-                  height: 130,
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format&fit=crop&q=80"
-                  alt="Offer"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              </div>
-            </div> */}
-
-            {/* Featured Card */}
-            {/* <SecHeader eyebrow="Editor's Pick" title="Featured Package" /> */}
             <div
               style={{
                 display: "flex",
@@ -1983,7 +1762,6 @@ const MedicalTourism: React.FC = () => {
               </div>
             </div>
 
-            {/* Promo Strip */}
             <div
               className="promo-strip-inner"
               style={{
@@ -2062,7 +1840,6 @@ const MedicalTourism: React.FC = () => {
               </a>
             </div>
 
-            {/* Domestic Packages */}
             {(activeType === "all" || activeType === "domestic") &&
               filteredDomestic.length > 0 && (
                 <>
@@ -2089,116 +1866,17 @@ const MedicalTourism: React.FC = () => {
                   </div>
                 </>
               )}
-
-            {/* International Packages */}
-            {/* {(activeType === "all" || activeType === "international") &&
-              filteredIntl.length > 0 && (
-                <>
-                  <SecHeader
-                    eyebrow="Beyond Borders"
-                    title="International Packages"
-                    seeAll="See all 96 →"
-                  />
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: cardCols,
-                      gap: 22,
-                      marginBottom: 52,
-                    }}
-                  >
-                    {filteredIntl.map((c) => (
-                      <PCard
-                        key={c.id}
-                        card={c}
-                        listView={gridView === "list"}
-                      />
-                    ))}
-                  </div>
-                </>
-              )} */}
-
-            {/* Empty */}
-            {/* {totalVisible === 0 && (
-              <div style={{ textAlign: "center", padding: "80px 20px" }}>
-                <div style={{ fontSize: "3rem", marginBottom: 16 }}>🔍</div>
-                <h3
-                  style={{
-                    fontFamily: "'Libre Baskerville',serif",
-                    fontSize: "1.3rem",
-                    color: "#1B2B6B",
-                    marginBottom: 8,
-                  }}
-                >
-                  No packages found
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "'Raleway',sans-serif",
-                    fontSize: ".9rem",
-                    color: "#9494b0",
-                  }}
-                >
-                  Try adjusting your filters or search term.
-                </p>
-              </div>
-            )} */}
-
-            {/* Load More */}
-            {/* {totalVisible > 0 && (
-              <div style={{ textAlign: "center", padding: "16px 0 32px" }}>
-                <button
-                  onClick={() => {
-                    setLoadingMore(true)
-                    setTimeout(() => setLoadingMore(false), 1500)
-                  }}
-                  style={{
-                    fontFamily: f,
-                    fontSize: ".88rem",
-                    fontWeight: 600,
-                    background: "transparent",
-                    color: "#1B2B6B",
-                    border: "1.5px solid rgba(27,43,107,.2)",
-                    padding: "14px 40px",
-                    borderRadius: 999,
-                    cursor: "pointer",
-                    transition: "all .3s",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.background =
-                      "#1B2B6B"
-                    ;(e.currentTarget as HTMLButtonElement).style.color = "#fff"
-                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#1B2B6B"
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.background =
-                      "transparent"
-                    ;(e.currentTarget as HTMLButtonElement).style.color =
-                      "#1B2B6B"
-                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "rgba(27,43,107,.2)"
-                  }}
-                >
-                  {loadingMore ? "Loading..." : "Load More Packages"} ↓
-                </button>
-              </div>
-            )} */}
           </main>
-        </div>
+        </div> */}
 
         {/* ─── TREATMENTS ─── */}
-        <section
+        {/* <section
           id="treatments"
           style={{
             padding: isMobile ? "70px 22px" : "120px 72px",
             background: "var(--obsidian)",
           }}
         >
-          {/* Header */}
           <div
             style={{
               display: "grid",
@@ -2266,7 +1944,6 @@ const MedicalTourism: React.FC = () => {
             </RV>
           </div>
 
-          {/* Cards grid — editorial masonry */}
           <div
             style={{
               display: "grid",
@@ -2311,7 +1988,6 @@ const MedicalTourism: React.FC = () => {
                       height: "100%",
                     }}
                   >
-                    {/* Image */}
                     <div
                       style={{
                         overflow: "hidden",
@@ -2379,7 +2055,6 @@ const MedicalTourism: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    {/* Body */}
                     <div
                       style={{
                         padding: "20px 20px 22px",
@@ -2457,10 +2132,9 @@ const MedicalTourism: React.FC = () => {
               )
             })}
           </div>
-        </section>
+        </section> */}
 
-        {/* ─── PROCESS ─── */}
-        <section
+        {/* <section
           id="process"
           style={{
             background: "var(--charcoal)",
@@ -2485,7 +2159,6 @@ const MedicalTourism: React.FC = () => {
             />
           )}
 
-          {/* Left */}
           <div
             style={{
               padding: isMobile ? "70px 22px" : "120px 72px",
@@ -2621,7 +2294,6 @@ const MedicalTourism: React.FC = () => {
             </div>
           </div>
 
-          {/* Right image */}
           <div
             style={{
               position: "relative",
@@ -2649,7 +2321,6 @@ const MedicalTourism: React.FC = () => {
                   "linear-gradient(to right,var(--charcoal) 0%,transparent 45%),linear-gradient(to top,rgba(234,231,224,.6) 0%,transparent 55%)",
               }}
             />
-            {/* Timeline card */}
             {!isMobile && (
               <div
                 style={{
@@ -2732,10 +2403,9 @@ const MedicalTourism: React.FC = () => {
               </div>
             )}
           </div>
-        </section>
+        </section> */}
 
-        {/* ─── HOSPITALS ─── */}
-        <section
+        {/* <section
           id="hospitals"
           style={{
             padding: isMobile ? "70px 22px" : "120px 72px",
@@ -3018,10 +2688,9 @@ const MedicalTourism: React.FC = () => {
               </RV>
             ))}
           </div>
-        </section>
+        </section> */}
 
-        {/* ─── WHY INDIA ─── */}
-        <section
+        {/* <section
           style={{
             position: "relative",
             minHeight: isMobile ? "auto" : "80vh",
@@ -3061,7 +2730,6 @@ const MedicalTourism: React.FC = () => {
               alignItems: "center",
             }}
           >
-            {/* Left */}
             <div>
               <RV>
                 <SectionCode style={{ color: "rgba(0,201,177,.85)" }}>
@@ -3145,7 +2813,6 @@ const MedicalTourism: React.FC = () => {
               </RV>
             </div>
 
-            {/* Right stats grid */}
             <RV delay={0.14}>
               <div
                 style={{
@@ -3201,10 +2868,9 @@ const MedicalTourism: React.FC = () => {
               </div>
             </RV>
           </div>
-        </section>
+        </section> */}
 
-        {/* ─── FOOTER ─── */}
-        <footer
+        {/* <footer
           style={{
             background: "#0f1a42",
             padding: isMobile ? "48px 22px 28px" : "64px 72px 36px",
@@ -3357,7 +3023,7 @@ const MedicalTourism: React.FC = () => {
               )}
             </div>
           </div>
-        </footer>
+        </footer> */}
       </div>
     </>
   )

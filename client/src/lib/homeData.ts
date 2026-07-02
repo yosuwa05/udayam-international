@@ -1,9 +1,10 @@
+// @ts-nocheck
 import banner1 from "../assets/home/banner1.jpeg"
 import banner2 from "../assets/home/banner2.jpeg"
 import banner3 from "../assets/home/banner3.jpeg"
 import banner4 from "../assets/home/banner4.jpeg"
 import video1 from "../assets/de251262.mov"
-import video2 from "../assets/bannervid1.mp4"
+import video2 from "../assets/bannervid2.MP4"
 import type { Page } from "./navData"
 
 

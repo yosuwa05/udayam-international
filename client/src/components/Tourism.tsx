@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import { ToursCursor } from "./cursor/Tourscursor"
 import video from "../assets/de251262.mov"
 import img1 from "../assets/1.png"
-import TourismIntro from "./TourismIntro"
+// import TourismIntro from "./TourismIntro"
 import Carsoule from "./Carsoule"
 // ─── Types ────────────────────────────────────────────────
 
@@ -1021,7 +1021,7 @@ export const SecHeader: React.FC<{
 
 // ─── Main Component ───────────────────────────────────────
 const Tourism = () => {
-  const [introComplete, setIntroComplete] = useState(false)
+  // const [introComplete, setIntroComplete] = useState(false)
 
   const [search, setSearch] = useState("")
   const [activeType, setActiveType] = useState<
@@ -1125,9 +1125,9 @@ const Tourism = () => {
 
   return (
     <>
-      {!introComplete && (
+      {/* {!introComplete && (
         <TourismIntro onComplete={() => setIntroComplete(true)} />
-      )}
+      )} */}
       <link
         href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet"
@@ -1168,7 +1168,7 @@ const Tourism = () => {
           background: "#F7F5F0",
           color: "#1a1a2e",
           overflowX: "hidden",
-          opacity: introComplete ? 1 : 0,
+          // opacity: introComplete ? 1 : 0,
           transition: "opacity 0.4s ease",
         }}
       >
