@@ -38,8 +38,8 @@ export type TourismFormValues = {
   description?: string
   highlights?: string[]
   itinerary?: { day: number; title: string; description: string }[]
-  isActive: boolean
-  isFeatured: boolean
+  // isActive: boolean
+  // isFeatured: boolean
   label?: string
 }
 
@@ -145,8 +145,8 @@ export function TourismForm({
   } = useForm<TourismFormValues>({
     defaultValues: {
       packageType: 'DOMESTIC',
-      isActive: true,
-      isFeatured: false,
+      // isActive: true,
+      // isFeatured: false,
       minPax: 1,
       maxPax: 10,
       tripTypes: [],
@@ -301,12 +301,12 @@ export function TourismForm({
           </Field>
         </div>
 
-        <Field label="Label (optional)">
+        {/* <Field label="Label (optional)">
           <Input
             placeholder="e.g. Top Pick, Best Value"
             {...register('label')}
           />
-        </Field>
+        </Field> */}
 
         {/* Trip types */}
         <Field label="Trip Types" required>
@@ -329,7 +329,7 @@ export function TourismForm({
         </Field>
 
         {/* Toggle flags */}
-        <div className="flex flex-wrap gap-6">
+        {/* <div className="flex flex-wrap gap-6">
           <Controller
             name="isActive"
             control={control}
@@ -362,7 +362,7 @@ export function TourismForm({
               </div>
             )}
           />
-        </div>
+        </div> */}
       </Section>
 
       {/* Pricing & Duration */}
@@ -562,7 +562,7 @@ export function TourismForm({
       </Section>
 
       {/* Description */}
-      <Section title="Description & Highlights">
+      {/* <Section title="Description & Highlights">
         <Field label="Description">
           <Textarea
             placeholder="Describe the package experience…"
@@ -601,10 +601,10 @@ export function TourismForm({
             </Button>
           </div>
         </Field>
-      </Section>
+      </Section> */}
 
       {/* Itinerary */}
-      <Section title="Itinerary (optional)">
+      {/* <Section title="Itinerary (optional)">
         <div className="space-y-3">
           {itinerary.map((_, i) => (
             <div
@@ -646,7 +646,7 @@ export function TourismForm({
             <Plus className="w-3.5 h-3.5" /> Add Day
           </Button>
         </div>
-      </Section>
+      </Section> */}
 
       {/* Footer actions */}
       <div className="flex justify-end gap-3 pb-6">

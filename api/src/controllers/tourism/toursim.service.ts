@@ -148,6 +148,43 @@ export const deleteTouristPlace = async (
     }
 }
 
+// ─── DASHBOARD STATS ───────────────────────────────────────────────────────────
+
+export const getTourismDashboardStats = async (ctx: Context) => {
+    const { set } = ctx
+
+    try {
+        const [
+            totalPackages,
+            domesticPackages,
+            internationalPackages,
+            activePackages,
+            inactivePackages
+        ] = await Promise.all([
+            TourismModel.countDocuments(),
+            TourismModel.countDocuments({ packageType: "DOMESTIC" }),
+            TourismModel.countDocuments({ packageType: "INTERNATIONAL" }),
+            TourismModel.countDocuments({ isActive: true }),
+            TourismModel.countDocuments({ isActive: false })
+        ])
+
+        return {
+            status: true,
+            data: {
+                totalPackages,
+                domesticPackages,
+                internationalPackages,
+                activePackages,
+                inactivePackages
+            }
+        }
+    } catch (error: any) {
+        console.error("Get Tourism Dashboard Stats Error", error)
+        set.status = 500
+        return { error: "Failed to fetch tourism dashboard stats", status: false }
+    }
+}
+
 // ─── GET ALL (with filters) ───────────────────────────────────────────────────
 
 export const getAllTouristPlaces = async (

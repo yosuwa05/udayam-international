@@ -5,6 +5,7 @@ import {
     deleteTouristPlace,
     getAllTouristPlaces,
     getTouristPlaceById,
+    getTourismDashboardStats,
 } from "./toursim.service"
 import {
     createTourismDto,
@@ -18,7 +19,13 @@ export const tourismRouter = new Elysia({
     prefix: "/tourism",
     detail: { tags: ["Tourism"] },
 })
-
+    .get("/dashboard", getTourismDashboardStats, {
+        beforeHandle: adminOnly,
+        detail: {
+            summary: "Get Tourism Dashboard Stats",
+            description: "Admin: Get counts for domestic, international, etc.",
+        }
+    })
     .post("/", createTouristPlace, { ...createTourismDto, beforeHandle: adminOnly })
     .get("/", getAllTouristPlaces, getTourismDto)
     .get("/:id", getTouristPlaceById, tourismParamDto)

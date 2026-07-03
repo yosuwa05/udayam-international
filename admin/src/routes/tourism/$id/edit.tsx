@@ -47,8 +47,8 @@ function RouteComponent() {
         'discount',
         'label',
         'description',
-        'isActive',
-        'isFeatured',
+        // 'isActive',
+        // 'isFeatured',
       ]
       for (const key of scalars) {
         const val = values[key]
@@ -138,8 +138,8 @@ function RouteComponent() {
     description: pkg.description ?? '',
     highlights: pkg.highlights ?? [],
     itinerary: pkg.itinerary ?? [],
-    isActive: pkg.isActive,
-    isFeatured: pkg.isFeatured,
+    // isActive: pkg.isActive,
+    // isFeatured: pkg.isFeatured,
     label: pkg.label ?? '',
   }
 

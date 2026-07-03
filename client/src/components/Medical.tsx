@@ -1,14 +1,153 @@
 import React, { useState, useEffect, useRef } from "react"
 import {
-  destFilters,
-  domesticPackages,
   // intlPackages,
   PCard,
   SecHeader,
-  tripTypes,
 } from "./Tourism"
 import { MedicalCursor } from "./cursor/Medicalcursor"
+export const tripTypes = [
+  { label: "Honeymoon", count: 28 },
+  { label: "Family", count: 44 },
+  { label: "Adventure", count: 30 },
+  { label: "Solo Travel", count: 20 },
+  { label: "Luxury", count: 16 },
+]
+interface PackageCard {
+  id: number
+  img: string
+  type: "domestic" | "international"
+  title: string
+  destination: string
+  duration: string
+  pax: string
+  rating: string
+  ratingScore: string
+  reviews: string
+  price: string
+  oldPrice?: string
+  discount?: string
+  label?: string
+  badges: {
+    text: string
+    variant: "domestic" | "intl" | "hot" | "sale" | "new"
+  }[]
+  inclusions: string[]
+}
 
+export const domesticPackages: PackageCard[] = [
+  {
+    id: 1,
+    type: "domestic",
+    img: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format&fit=crop&q=80",
+    title: "Kerala Backwaters Bliss",
+    destination: "📍 Kerala, India",
+    duration: "5 Days / 4 Nights",
+    pax: "2–8 Pax",
+    rating: "★★★★★",
+    ratingScore: "4.9",
+    reviews: "(312 reviews)",
+    price: "₹18,999",
+    oldPrice: "₹22,499",
+    discount: "15% OFF",
+    badges: [
+      { text: "Domestic", variant: "domestic" },
+      { text: "🔥 Top Pick", variant: "hot" },
+    ],
+    inclusions: ["🏨 Hotel", "🍽 Meals", "🚢 Houseboat", "🚌 Transfers"],
+  },
+  {
+    id: 2,
+    type: "domestic",
+    img: "https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?w=600&auto=format&fit=crop&q=80",
+    title: "Rajasthan Royal Heritage Tour",
+    destination: "📍 Rajasthan, India",
+    duration: "7 Days / 6 Nights",
+    pax: "2–12 Pax",
+    rating: "★★★★½",
+    ratingScore: "4.7",
+    reviews: "(218 reviews)",
+    price: "₹24,999",
+    oldPrice: "₹29,999",
+    discount: "17% OFF",
+    badges: [
+      { text: "Domestic", variant: "domestic" },
+      { text: "New", variant: "new" },
+    ],
+    inclusions: ["🏰 Palace Stay", "🍽 Meals", "🐪 Camel Safari"],
+  },
+  {
+    id: 3,
+    type: "domestic",
+    img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&auto=format&fit=crop&q=80",
+    title: "Himachal Mountain Escape",
+    destination: "📍 Himachal Pradesh, India",
+    duration: "6 Days / 5 Nights",
+    pax: "2–10 Pax",
+    rating: "★★★★★",
+    ratingScore: "4.8",
+    reviews: "(145 reviews)",
+    price: "₹15,999",
+    label: "Best Value",
+    badges: [{ text: "Domestic", variant: "domestic" }],
+    inclusions: ["🏔 Trekking", "🏨 Resort", "🚌 Transfers"],
+  },
+  {
+    id: 4,
+    type: "domestic",
+    img: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&auto=format&fit=crop&q=80",
+    title: "Goa Sun, Sand & Serenity",
+    destination: "📍 Goa, India",
+    duration: "4 Days / 3 Nights",
+    pax: "2–6 Pax",
+    rating: "★★★★",
+    ratingScore: "4.5",
+    reviews: "(389 reviews)",
+    price: "₹12,999",
+    oldPrice: "₹16,499",
+    discount: "21% OFF",
+    badges: [
+      { text: "Domestic", variant: "domestic" },
+      { text: "🏷 Sale", variant: "sale" },
+    ],
+    inclusions: ["🏖 Beach Resort", "🍹 Meals", "🛵 Bike Rental"],
+  },
+  {
+    id: 5,
+    type: "domestic",
+    img: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=600&auto=format&fit=crop&q=80",
+    title: "Andaman Island Retreat",
+    destination: "📍 Andaman Islands, India",
+    duration: "6 Days / 5 Nights",
+    pax: "2–8 Pax",
+    rating: "★★★★★",
+    ratingScore: "4.9",
+    reviews: "(267 reviews)",
+    price: "₹28,999",
+    oldPrice: "₹33,999",
+    discount: "15% OFF",
+    badges: [
+      { text: "Domestic", variant: "domestic" },
+      { text: "🔥 Trending", variant: "hot" },
+    ],
+    inclusions: ["✈ Flights", "🤿 Scuba", "🏨 Resort"],
+  },
+  {
+    id: 6,
+    type: "domestic",
+    img: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&auto=format&fit=crop&q=80",
+    title: "Varanasi Spiritual Journey",
+    destination: "📍 Varanasi, India",
+    duration: "3 Days / 2 Nights",
+    pax: "1–20 Pax",
+    rating: "★★★★",
+    ratingScore: "4.6",
+    reviews: "(190 reviews)",
+    price: "₹9,999",
+    label: "Best Budget",
+    badges: [{ text: "Domestic", variant: "domestic" }],
+    inclusions: ["🛕 Temple Tour", "🚢 River Cruise", "🏨 Hotel"],
+  },
+]
 // ─── Types ────────────────────────────────────────────────
 interface TreatmentCard {
   id: number
@@ -34,7 +173,13 @@ interface Hospital {
   rating: string
   reviews: string
 }
-
+export const destFilters = [
+  { label: "India", count: 48 },
+  { label: "Europe", count: 32 },
+  { label: "South-East Asia", count: 36 },
+  { label: "Middle East", count: 22 },
+  { label: "Americas", count: 18 },
+]
 // ─── Data ─────────────────────────────────────────────────
 const treatments: TreatmentCard[] = [
   {
