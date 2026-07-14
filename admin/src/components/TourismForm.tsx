@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { Upload, X, Plus, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,12 +36,14 @@ export type TourismFormValues = {
   imageUrl?: File
   badges: { text: string; variant: BadgeVariant }[]
   inclusions: string[]
+  exclusions: string[]
   description?: string
   highlights?: string[]
   itinerary?: { day: number; title: string; description: string }[]
   // isActive: boolean
   // isFeatured: boolean
   label?: string
+  order?: number
 }
 
 type Props = {
@@ -152,8 +155,10 @@ export function TourismForm({
       tripTypes: [],
       badges: [],
       inclusions: [],
+      exclusions: [],
       highlights: [],
       itinerary: [],
+      order: 0,
       ...defaultValues,
     },
   })
@@ -166,12 +171,21 @@ export function TourismForm({
   const tripTypes = watch('tripTypes')
   const badges = watch('badges')
   const inclusions = watch('inclusions')
+  const exclusions = watch('exclusions') ?? []
   const highlights = watch('highlights') ?? []
   const itinerary = watch('itinerary') ?? []
-
+  
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
+    const MAX_SIZE = 2 * 1024 * 1024 // 2MB
+    if (file.size > MAX_SIZE) {
+      toast.error('Image size must be less than 2MB')
+      e.target.value = ''
+      return
+    }
+
     setValue('imageUrl', file)
     setImagePreview(URL.createObjectURL(file))
   }
@@ -204,6 +218,13 @@ export function TourismForm({
     setValue(
       'inclusions',
       inclusions.filter((_, idx) => idx !== i),
+    )
+
+  const addExclusion = () => setValue('exclusions', [...exclusions, ''])
+  const removeExclusion = (i: number) =>
+    setValue(
+      'exclusions',
+      exclusions.filter((_, idx) => idx !== i),
     )
 
   const addHighlight = () => setValue('highlights', [...highlights, ''])
@@ -389,7 +410,16 @@ export function TourismForm({
           <Field label="Discount Label">
             <Input placeholder="e.g. 15% OFF" {...register('discount')} />
           </Field>
-          <div /> {/* spacer */}
+          <Field label="Display Order" error={errors.order?.message}>
+            <Input
+              type="number"
+              placeholder="0"
+              {...register('order', {
+                valueAsNumber: true,
+                min: { value: 0, message: 'Must be ≥ 0' },
+              })}
+            />
+          </Field>
           <Field label="Days" required error={errors.days?.message}>
             <Input
               type="number"
@@ -469,6 +499,9 @@ export function TourismForm({
             </>
           )}
         </div>
+        <p className="text-xs text-muted-foreground">
+          Recommended Cover Image Size: 1400 px (Width) × 600 px (Height) · Max Size: 2MB
+        </p>
         <input
           ref={fileInputRef}
           type="file"
@@ -557,6 +590,38 @@ export function TourismForm({
             onClick={addInclusion}
           >
             <Plus className="w-3.5 h-3.5" /> Add Inclusion
+          </Button>
+        </div>
+      </Section>
+
+      {/* Exclusions */}
+      <Section title="Exclusions">
+        <div className="space-y-2">
+          {exclusions.map((_, i) => (
+            <div key={i} className="flex gap-2">
+              <Input
+                placeholder="e.g. ✈️ Flights"
+                {...register(`exclusions.${i}`)}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive shrink-0"
+                onClick={() => removeExclusion(i)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={addExclusion}
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Exclusion
           </Button>
         </div>
       </Section>

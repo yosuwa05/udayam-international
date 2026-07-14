@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TourismIndexRouteImport } from './routes/tourism/index'
+import { Route as TestimonialsIndexRouteImport } from './routes/testimonials/index'
 import { Route as TourismAddRouteImport } from './routes/tourism/add'
+import { Route as TestimonialsAddRouteImport } from './routes/testimonials/add'
 import { Route as TourismIdEditRouteImport } from './routes/tourism/$id/edit'
+import { Route as TestimonialsIdEditRouteImport } from './routes/testimonials/$id/edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -30,9 +33,19 @@ const TourismIndexRoute = TourismIndexRouteImport.update({
   path: '/tourism/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TestimonialsIndexRoute = TestimonialsIndexRouteImport.update({
+  id: '/testimonials/',
+  path: '/testimonials/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TourismAddRoute = TourismAddRouteImport.update({
   id: '/tourism/add',
   path: '/tourism/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestimonialsAddRoute = TestimonialsAddRouteImport.update({
+  id: '/testimonials/add',
+  path: '/testimonials/add',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TourismIdEditRoute = TourismIdEditRouteImport.update({
@@ -40,48 +53,84 @@ const TourismIdEditRoute = TourismIdEditRouteImport.update({
   path: '/tourism/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TestimonialsIdEditRoute = TestimonialsIdEditRouteImport.update({
+  id: '/testimonials/$id/edit',
+  path: '/testimonials/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
+  '/testimonials/': typeof TestimonialsIndexRoute
   '/tourism/': typeof TourismIndexRoute
+  '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
+  '/testimonials': typeof TestimonialsIndexRoute
   '/tourism': typeof TourismIndexRoute
+  '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
+  '/testimonials/': typeof TestimonialsIndexRoute
   '/tourism/': typeof TourismIndexRoute
+  '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/tourism/add' | '/tourism/' | '/tourism/$id/edit'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/testimonials/add'
+    | '/tourism/add'
+    | '/testimonials/'
+    | '/tourism/'
+    | '/testimonials/$id/edit'
+    | '/tourism/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/tourism/add' | '/tourism' | '/tourism/$id/edit'
+  to:
+    | '/'
+    | '/login'
+    | '/testimonials/add'
+    | '/tourism/add'
+    | '/testimonials'
+    | '/tourism'
+    | '/testimonials/$id/edit'
+    | '/tourism/$id/edit'
   id:
     | '__root__'
     | '/'
     | '/login'
+    | '/testimonials/add'
     | '/tourism/add'
+    | '/testimonials/'
     | '/tourism/'
+    | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  TestimonialsAddRoute: typeof TestimonialsAddRoute
   TourismAddRoute: typeof TourismAddRoute
+  TestimonialsIndexRoute: typeof TestimonialsIndexRoute
   TourismIndexRoute: typeof TourismIndexRoute
+  TestimonialsIdEditRoute: typeof TestimonialsIdEditRoute
   TourismIdEditRoute: typeof TourismIdEditRoute
 }
 
@@ -108,11 +157,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TourismIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/testimonials/': {
+      id: '/testimonials/'
+      path: '/testimonials'
+      fullPath: '/testimonials/'
+      preLoaderRoute: typeof TestimonialsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tourism/add': {
       id: '/tourism/add'
       path: '/tourism/add'
       fullPath: '/tourism/add'
       preLoaderRoute: typeof TourismAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/testimonials/add': {
+      id: '/testimonials/add'
+      path: '/testimonials/add'
+      fullPath: '/testimonials/add'
+      preLoaderRoute: typeof TestimonialsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tourism/$id/edit': {
@@ -122,14 +185,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TourismIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/testimonials/$id/edit': {
+      id: '/testimonials/$id/edit'
+      path: '/testimonials/$id/edit'
+      fullPath: '/testimonials/$id/edit'
+      preLoaderRoute: typeof TestimonialsIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  TestimonialsAddRoute: TestimonialsAddRoute,
   TourismAddRoute: TourismAddRoute,
+  TestimonialsIndexRoute: TestimonialsIndexRoute,
   TourismIndexRoute: TourismIndexRoute,
+  TestimonialsIdEditRoute: TestimonialsIdEditRoute,
   TourismIdEditRoute: TourismIdEditRoute,
 }
 export const routeTree = rootRouteImport

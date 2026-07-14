@@ -69,9 +69,11 @@ type TourismPackage = {
   imageUrl: string
   badges: Badge[]
   inclusions: string[]
+  exclusions?: string[]
   isActive: boolean
   isFeatured: boolean
   label?: string
+  order?: number
 }
 
 type PaginationMeta = {
@@ -93,6 +95,7 @@ type FilterState = {
   maxPrice: string
   sortBy: string
   isActive: string
+  isFeatured: string
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -151,6 +154,7 @@ function RouteComponent() {
     maxPrice: '',
     sortBy: 'newest',
     isActive: 'true',
+    isFeatured: 'all',
   })
 
   // Build query params
@@ -172,6 +176,7 @@ function RouteComponent() {
     ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
     ...(filters.sortBy && { sortBy: filters.sortBy }),
     ...(filters.isActive && { isActive: filters.isActive }),
+    ...(filters.isFeatured && filters.isFeatured !== 'all' && { isFeatured: filters.isFeatured }),
   }
 
   const { data, isLoading, isError } = useQuery({
@@ -192,6 +197,17 @@ function RouteComponent() {
     onError: () => {
       toast.error('Failed to delete package')
       setDeleteId(null)
+    },
+  })
+
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: (id: string) => _axios.patch(`/tourism/${id}/toggle-featured`),
+    onSuccess: () => {
+      toast.success('Featured status updated successfully')
+      queryClient.invalidateQueries({ queryKey: ['tourism'] })
+    },
+    onError: () => {
+      toast.error('Failed to update featured status')
     },
   })
 
@@ -224,6 +240,7 @@ function RouteComponent() {
       maxPrice: '',
       sortBy: 'newest',
       isActive: 'true',
+      isFeatured: 'all',
     })
     setPage(1)
   }
@@ -234,6 +251,7 @@ function RouteComponent() {
     filters.tripTypes.length > 0,
     filters.durationCategories.length > 0,
     filters.minPrice || filters.maxPrice,
+    filters.isFeatured && filters.isFeatured !== 'all',
   ].filter(Boolean).length
 
   const packages = data?.data ?? []
@@ -301,6 +319,21 @@ function RouteComponent() {
             <SelectItem value="featured">Featured</SelectItem>
             <SelectItem value="price_asc">Price: Low → High</SelectItem>
             <SelectItem value="price_desc">Price: High → Low</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Featured Filter */}
+        <Select
+          value={filters.isFeatured}
+          onValueChange={(v) => setFilter('isFeatured', v)}
+        >
+          <SelectTrigger className="h-9 w-36 text-sm">
+            <SelectValue placeholder="Featured" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Packages</SelectItem>
+            <SelectItem value="true">Featured Only</SelectItem>
+            <SelectItem value="false">Non-Featured</SelectItem>
           </SelectContent>
         </Select>
 
@@ -455,9 +488,11 @@ function RouteComponent() {
               </TableHead>
               <TableHead className="hidden lg:table-cell">Duration</TableHead>
               <TableHead className="hidden lg:table-cell">Pax</TableHead>
+              <TableHead className="hidden sm:table-cell w-16">Order</TableHead>
               <TableHead>Price</TableHead>
               <TableHead className="hidden md:table-cell">Badges</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
+              <TableHead className="hidden sm:table-cell">Featured</TableHead>
               <TableHead className="w-20 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -465,7 +500,7 @@ function RouteComponent() {
             {isLoading ? (
               Array.from({ length: limit }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 9 }).map((_, j) => (
+                  {Array.from({ length: 11 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -475,7 +510,7 @@ function RouteComponent() {
             ) : isError ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={11}
                   className="text-center py-12 text-muted-foreground"
                 >
                   Failed to load packages. Try again.
@@ -484,7 +519,7 @@ function RouteComponent() {
             ) : packages.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={11}
                   className="text-center py-12 text-muted-foreground"
                 >
                   No packages found. Adjust filters or{' '}
@@ -531,6 +566,9 @@ function RouteComponent() {
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                     {pkg.minPax}–{pkg.maxPax}
                   </TableCell>
+                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                    {pkg.order ?? 0}
+                  </TableCell>
                   <TableCell>
                     <div className="font-semibold text-sm">
                       ₹{pkg.price.toLocaleString('en-IN')}
@@ -568,6 +606,24 @@ function RouteComponent() {
                     >
                       {pkg.isActive ? 'Active' : 'Inactive'}
                     </span>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-muted"
+                      onClick={() => toggleFeaturedMutation.mutate(pkg._id)}
+                      disabled={toggleFeaturedMutation.isPending}
+                      title="Toggle Featured"
+                    >
+                      <Star
+                        className={`w-4 h-4 transition-colors ${
+                          pkg.isFeatured
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-muted-foreground'
+                        }`}
+                      />
+                    </Button>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

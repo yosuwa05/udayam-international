@@ -49,6 +49,7 @@ function RouteComponent() {
         'description',
         // 'isActive',
         // 'isFeatured',
+        'order',
       ]
       for (const key of scalars) {
         const val = values[key]
@@ -64,6 +65,7 @@ function RouteComponent() {
       form.append('tripTypes', JSON.stringify(values.tripTypes))
       form.append('badges', JSON.stringify(values.badges))
       form.append('inclusions', JSON.stringify(values.inclusions))
+      form.append('exclusions', JSON.stringify(values.exclusions))
       if (values.highlights?.length) {
         form.append('highlights', JSON.stringify(values.highlights))
       }
@@ -135,12 +137,14 @@ function RouteComponent() {
     maxPax: pkg.maxPax,
     badges: pkg.badges ?? [],
     inclusions: pkg.inclusions ?? [],
+    exclusions: pkg.exclusions ?? [],
     description: pkg.description ?? '',
     highlights: pkg.highlights ?? [],
     itinerary: pkg.itinerary ?? [],
     // isActive: pkg.isActive,
     // isFeatured: pkg.isFeatured,
     label: pkg.label ?? '',
+    order: pkg.order ?? 0,
   }
 
   return (

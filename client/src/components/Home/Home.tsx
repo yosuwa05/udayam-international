@@ -2,13 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import DestinationsSection from "../Destinationscarousel"
 import TravelCards from "./TravelCards"
 import { useNavigate } from "react-router-dom"
-import {
-  heroSlides,
-  catPills,
-  stats,
-  testimonials,
-  whyUs,
-} from "@/lib/homeData"
+import { useQuery } from "@tanstack/react-query"
+import { _axios } from "@/lib/axios"
+import { heroSlides, catPills, stats, whyUs } from "@/lib/homeData"
 import Services from "./Services"
 import UdayamEcosystem from "./EcoSystem"
 
@@ -44,6 +40,78 @@ const Home = () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [slide, gSlide])
+
+  const { data: testimonialsResponse, isLoading: isTestimonialsLoading } =
+    useQuery({
+      queryKey: ["testimonials"],
+      queryFn: async () => {
+        const res = await _axios.get("/testimonials")
+        return res.data as { status: boolean; data: any[] }
+      },
+      staleTime: 60_000,
+    })
+  const activeTestimonials = testimonialsResponse?.data ?? []
+  const [testiIndex, setTestiIndex] = useState(1)
+  const [transitionEnabled, setTransitionEnabled] = useState(true)
+
+  const [vw, setVw] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  )
+
+  useEffect(() => {
+    const fn = () => setVw(window.innerWidth)
+    window.addEventListener("resize", fn)
+    return () => window.removeEventListener("resize", fn)
+  }, [])
+
+  const cardWidth = vw >= 1024 ? 33.333 : vw >= 768 ? 60 : 100
+
+  // Display list with cloned boundary elements for seamless looping
+  const displayList =
+    activeTestimonials.length > 1
+      ? [
+          activeTestimonials[activeTestimonials.length - 1],
+          ...activeTestimonials,
+          activeTestimonials[0],
+        ]
+      : activeTestimonials
+
+  useEffect(() => {
+    if (activeTestimonials.length > 1) {
+      setTestiIndex(1)
+    } else {
+      setTestiIndex(0)
+    }
+  }, [activeTestimonials.length])
+
+  useEffect(() => {
+    if (!transitionEnabled) {
+      // Force repaint to make browser register the instant transform transition removal
+      const _reflow = document.body.offsetHeight
+      setTransitionEnabled(true)
+    }
+  }, [transitionEnabled])
+
+  const handlePrevTesti = () => {
+    if (displayList.length <= 1) return
+    setTestiIndex((prev) => Math.max(0, prev - 1))
+  }
+
+  const handleNextTesti = () => {
+    if (displayList.length <= 1) return
+    setTestiIndex((prev) => Math.min(displayList.length - 1, prev + 1))
+  }
+
+  const handleTransitionEnd = () => {
+    if (activeTestimonials.length <= 1) return
+    if (testiIndex === displayList.length - 1) {
+      setTransitionEnabled(false)
+      setTestiIndex(1)
+    } else if (testiIndex === 0) {
+      setTransitionEnabled(false)
+      setTestiIndex(displayList.length - 2)
+    }
+  }
 
   return (
     <div>
@@ -335,85 +403,119 @@ const Home = () => {
             </SectionTitle>
           </div>
 
-          {/* Testimonials Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-[22px] lg:grid-cols-3">
-            {testimonials.map((t, i) => (
-              <div
-                key={i}
-                className="relative cursor-default overflow-hidden rounded-[18px] px-6 py-8 transition-all duration-300 md:px-7 md:py-[28px]"
-                style={{
-                  background: "#fff",
-                  border: "1px solid #DDE3F0",
-                  boxShadow: "0 1px 3px rgba(27,43,107,0.07)",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.borderColor = "#1B2B6B"
-                  el.style.boxShadow = "0 6px 24px rgba(27,43,107,0.11)"
-                  el.style.transform = "translateY(-4px)"
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.borderColor = "#DDE3F0"
-                  el.style.boxShadow = "0 1px 3px rgba(27,43,107,0.07)"
-                  el.style.transform = "none"
-                }}
-              >
-                {/* Big Quote Mark */}
-                {/* <div
-                  className="pointer-events-none absolute top-[-12px] right-4 text-[90px] leading-none font-extrabold select-none md:right-[18px] md:text-[110px]"
-                  style={{ color: "#E8ECFA" }}
-                >
-                  "
-                </div> */}
-
-                {/* Stars */}
+          {isTestimonialsLoading ? (
+            <div className="mx-auto h-72 w-full max-w-[620px] animate-pulse rounded-[18px] bg-white p-8" />
+          ) : activeTestimonials.length > 0 ? (
+            <div className="relative mt-8 px-10">
+              {/* Slider track area */}
+              <div className="w-full overflow-hidden py-6">
                 <div
-                  className="mb-4 text-[13px] tracking-[2px]"
-                  style={{ color: "#F59E0B" }}
+                  className="flex items-stretch"
+                  style={{
+                    transition: transitionEnabled
+                      ? "transform 500ms ease-in-out"
+                      : "none",
+                    transform: `translateX(calc(${(100 - cardWidth) / 2}% - ${testiIndex * cardWidth}%))`,
+                  }}
+                  onTransitionEnd={handleTransitionEnd}
                 >
-                  ★★★★★
-                </div>
+                  {displayList.map((t, i) => {
+                    const isActive = i === testiIndex
+                    return (
+                      <div
+                        key={t._id || i}
+                        className="flex flex-shrink-0 justify-center px-2 transition-all duration-500 md:px-3"
+                        style={{
+                          width: `${cardWidth}%`,
+                          opacity: isActive ? 1 : 0.55,
+                          transform: isActive ? "scale(1.04)" : "scale(0.94)",
+                        }}
+                      >
+                        <div
+                          className="relative flex w-full cursor-default flex-col rounded-[18px] px-7 py-7 sm:px-8 sm:py-8"
+                          style={{
+                            background: "#fff",
+                            border: `1.5px solid ${isActive ? "#1B2B6B" : "#E4E9F3"}`,
+                            boxShadow: isActive
+                              ? "0 16px 40px rgba(27,43,107,0.14)"
+                              : "0 4px 14px rgba(27,43,107,0.05)",
+                            transition: "all 0.5s ease-in-out",
+                            minHeight: "260px", // floor only — grows if text is longer, never clips
+                          }}
+                        >
+                          {/* Stars */}
+                          <div
+                            className="mb-4 text-left text-[15px] tracking-[2px]"
+                            style={{ color: "#F59E0B" }}
+                          >
+                            {"★".repeat(t.rating) + "☆".repeat(5 - t.rating)}
+                          </div>
 
-                {/* Testimonial Text */}
-                <p
-                  className="relative z-[1] mb-6 text-[14.5px] leading-relaxed md:text-[14px] md:leading-[1.78]"
-                  style={{ color: "#2D3A5A" }}
-                >
-                  {t.text}
-                </p>
+                          {/* Testimonial Text — left aligned, quotes inline, full text always shown */}
+                          <p
+                            className="mb-6 text-left text-[15px] leading-[1.7]"
+                            style={{ color: "#3A4560" }}
+                          >
+                            "{t.text}"
+                          </p>
 
-                {/* Author Info */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[17px] font-bold text-white"
-                    style={{
-                      background: "linear-gradient(135deg, #1B2B6B, #1565C0)",
-                    }}
-                  >
-                    {t.av}
-                  </div>
-                  <div>
-                    <div
-                      className="text-[14.5px] font-bold md:text-[14px]"
-                      style={{ color: "#0D1B3E" }}
-                    >
-                      {t.name}
-                    </div>
-                    <div
-                      className="mt-0.5 text-[12.5px] md:text-[12px]"
-                      style={{ color: "#5A6880" }}
-                    >
-                      {t.trip}
-                    </div>
-                  </div>
+                          {/* Author Info — avatar + name/trip in a row, pinned to bottom */}
+                          <div className="mt-auto flex items-center gap-3">
+                            <div
+                              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[17px] font-bold text-white shadow-md"
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #1B2B6B, #1565C0)",
+                              }}
+                            >
+                              {t.avatarInitial ||
+                                t.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="text-left">
+                              <div
+                                className="text-[15px] font-bold"
+                                style={{ color: "#0D1B3E" }}
+                              >
+                                {t.name}
+                              </div>
+                              <div
+                                className="mt-0.5 text-[13px]"
+                                style={{ color: "#5A6880" }}
+                              >
+                                📍 {t.trip}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Navigation buttons */}
+              {activeTestimonials.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevTesti}
+                    className="absolute top-1/2 left-0 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#DDE3F0] bg-white text-[#1B2B6B] shadow-sm transition-all hover:border-[#1B2B6B] hover:bg-slate-50 sm:h-10 sm:w-10"
+                    style={{ zIndex: 10 }}
+                  >
+                    ←
+                  </button>
+                  <button
+                    onClick={handleNextTesti}
+                    className="absolute top-1/2 right-0 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#DDE3F0] bg-white text-[#1B2B6B] shadow-sm transition-all hover:border-[#1B2B6B] hover:bg-slate-50 sm:h-10 sm:w-10"
+                    style={{ zIndex: 10 }}
+                  >
+                    →
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
         </div>
       </section>
-
       {/* ══ WHATSAPP ══ */}
 
       <style>{`

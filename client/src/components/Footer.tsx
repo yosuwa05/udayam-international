@@ -140,11 +140,13 @@ const Footer = () => {
               className="font-inter text-[13px] leading-[2.1]"
               style={{ color: "white" }}
             >
-              <div>
-                {" "}
-                No: 6 - 178 / 1 , Kaniyaanvilai , Palliyadi Post , Kanyakumari
-                Disrtict , Tamilnadu , India – 629169.
-              </div>
+              <address style={{ fontStyle: "normal", lineHeight: "1.8" }}>
+                No. 6, 178/1, Kaniyaanvilai,
+                <br />
+                Palliyadi Post, Kanyakumari,
+                <br />
+                Tamil Nadu - 629169, India
+              </address>
               <div> +91 72997 71111</div>
               <div> 04651 - 225 236</div>
             </div>

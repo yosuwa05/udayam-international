@@ -139,7 +139,7 @@ const Navbar: React.FC = () => {
           </div>
           <div className="hidden items-center gap-2 opacity-90 lg:flex">
             <img src={locationIcon} />
-            <span>Kaniyaanvilai , Kanyakumari</span>
+            <span>Kaniyaanvilai, Kanyakumari, India</span>
           </div>
         </div>
       </div>

@@ -6,6 +6,8 @@ import {
     getAllTouristPlaces,
     getTouristPlaceById,
     getTourismDashboardStats,
+    toggleFeaturedTouristPlace,
+    getFeaturedTouristPlaces,
 } from "./toursim.service"
 import {
     createTourismDto,
@@ -28,9 +30,14 @@ export const tourismRouter = new Elysia({
     })
     .post("/", createTouristPlace, { ...createTourismDto, beforeHandle: adminOnly })
     .get("/", getAllTouristPlaces, getTourismDto)
+    .get("/featured", getFeaturedTouristPlaces)
     .get("/:id", getTouristPlaceById, tourismParamDto)
     .patch("/:id", updateTouristPlace, {
         ...updateTourismDto,
+        beforeHandle: adminOnly,
+    })
+    .patch("/:id/toggle-featured", toggleFeaturedTouristPlace, {
+        ...tourismParamDto,
         beforeHandle: adminOnly,
     })
     .delete("/:id", deleteTouristPlace, {

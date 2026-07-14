@@ -39,6 +39,12 @@ export interface ITourism {
     // Inclusions e.g. "Hotel", "Meals", "Houseboat", "Transfers"
     inclusions: string[]
 
+    // Exclusions e.g. "Flights", "Tips", "Entry tickets"
+    exclusions?: string[]
+
+    // Custom display order (lower values displayed first)
+    order?: number
+
     // SEO / detail
     description?: string
     highlights?: string[]
@@ -105,6 +111,8 @@ const tourismSchema = new Schema<ITourism>(
 
         badges: [badgeSchema],
         inclusions: [{ type: String, trim: true }],
+        exclusions: [{ type: String, trim: true }],
+        order: { type: Number, default: 0 },
 
         description: { type: String, trim: true },
         highlights: [{ type: String }],
@@ -132,6 +140,7 @@ tourismSchema.index({ durationCategory: 1 })
 tourismSchema.index({ price: 1 })
 tourismSchema.index({ isActive: 1 })
 tourismSchema.index({ isFeatured: -1, createdAt: -1 })
+tourismSchema.index({ order: 1, createdAt: -1 })
 tourismSchema.index({ title: "text", destination: "text", description: "text" })
 
 export const TourismModel = model<ITourism>("tourism", tourismSchema)

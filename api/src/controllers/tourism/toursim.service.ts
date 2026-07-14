@@ -25,7 +25,7 @@ const parseBool = (val?: string) => {
 export const createTouristPlace = async (
     ctx: Context<{ body: CreateTourismSchema }>
 ) => {
-    const { body, set } = ctx
+    const { body, set }: any = ctx
 
     try {
         // Upload main image
@@ -57,6 +57,7 @@ export const createTouristPlace = async (
 
             badges: body.badges,
             inclusions: body.inclusions,
+            exclusions: body.exclusions,
 
             description: body.description,
             highlights: body.highlights,
@@ -65,6 +66,7 @@ export const createTouristPlace = async (
             isActive: body.isActive ?? true,
             isFeatured: body.isFeatured ?? false,
             label: body.label,
+            order: body.order !== undefined && body.order !== "" ? Number(body.order) : 0,
         })
 
         set.status = 201
@@ -81,7 +83,7 @@ export const createTouristPlace = async (
 export const updateTouristPlace = async (
     ctx: Context<{ body: UpdateTourismSchema; params: { id: string } }>
 ) => {
-    const { body, params, set } = ctx
+    const { body, params, set }: any = ctx
 
     try {
         const existing = await TourismModel.findById(params.id)
@@ -91,6 +93,10 @@ export const updateTouristPlace = async (
         }
 
         const updateData: Record<string, any> = { ...body }
+
+        if (body.order !== undefined) {
+            updateData.order = body.order !== "" ? Number(body.order) : 0
+        }
 
         // Replace cover image if a new one was sent
         if (body.imageUrl) {
@@ -256,12 +262,12 @@ export const getAllTouristPlaces = async (
 
         // ── Sorting ──────────────────────────────────────────────────────────────
         const sortMap: Record<string, Record<string, 1 | -1>> = {
-            price_asc: { price: 1 },
-            price_desc: { price: -1 },
-            newest: { createdAt: -1 },
-            featured: { isFeatured: -1, createdAt: -1 },
+            price_asc: { price: 1, order: 1 },
+            price_desc: { price: -1, order: 1 },
+            newest: { order: 1, createdAt: -1 },
+            featured: { isFeatured: -1, order: 1, createdAt: -1 },
         }
-        const sort = sortMap[query.sortBy ?? "newest"] ?? { createdAt: -1 }
+        const sort = sortMap[query.sortBy ?? "newest"] ?? { order: 1, createdAt: -1 }
 
         const [data, total] = await Promise.all([
             TourismModel.find(filter).sort(sort).skip(skip).limit(limit).lean(),
@@ -305,5 +311,56 @@ export const getTouristPlaceById = async (
         console.error("Get Tourism By ID Error", error)
         set.status = 500
         return { error: "Failed to fetch tourism package", status: false }
+    }
+}
+
+// ─── TOGGLE FEATURED ─────────────────────────────────────────────────────────
+
+export const toggleFeaturedTouristPlace = async (
+    ctx: Context<{ params: { id: string } }>
+) => {
+    const { params, set } = ctx
+
+    try {
+        const existing = await TourismModel.findById(params.id)
+        if (!existing) {
+            set.status = 404
+            return { error: "Tourism package not found", status: false }
+        }
+
+        existing.isFeatured = !existing.isFeatured
+        await existing.save()
+
+        return {
+            message: "Tourism package featured status toggled successfully",
+            data: existing,
+            status: true,
+        }
+    } catch (error: any) {
+        console.error("Toggle Featured Tourism Error", error)
+        set.status = 500
+        return { error: "Failed to toggle featured status", status: false }
+    }
+}
+
+// ─── GET FEATURED ────────────────────────────────────────────────────────────
+
+export const getFeaturedTouristPlaces = async (ctx: Context) => {
+    const { set } = ctx
+
+    try {
+        const data = await TourismModel.find({ isFeatured: true, isActive: true })
+            .sort({ order: 1, createdAt: -1 })
+            .limit(10)
+            .lean()
+
+        return {
+            status: true,
+            data,
+        }
+    } catch (error: any) {
+        console.error("Get Featured Tourism Error", error)
+        set.status = 500
+        return { error: "Failed to fetch featured tourism packages", status: false }
     }
 }

@@ -19,6 +19,7 @@ interface ApiPackage {
   destinationRegion: string
   packageType: "DOMESTIC" | "INTERNATIONAL"
   tripTypes: string[]
+  description: string
   price: number
   strikePrice?: number
   discount?: string
@@ -30,9 +31,11 @@ interface ApiPackage {
   imageUrl: string
   badges: ApiBadge[]
   inclusions: string[]
+  exclusions?: string[]
   isActive: boolean
   isFeatured: boolean
   label?: string
+  order?: number
 }
 
 interface ApiResponse {
@@ -696,10 +699,11 @@ const CardSkeleton: React.FC = () => (
 
 // ─── Package Card ─────────────────────────────────────────────────────────────
 
-export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
-  card,
-  listView,
-}) => {
+export const PCard: React.FC<{
+  card: ApiPackage
+  listView: boolean
+  onViewDetails: (pkg: ApiPackage) => void
+}> = ({ card, listView, onViewDetails }) => {
   const ref = useRef<HTMLDivElement>(null)
   const WHATSAPP_NUMBER = "917299771111"
 
@@ -775,12 +779,14 @@ export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
           src={card.imageUrl}
           alt={card.title}
           loading="lazy"
+          onClick={() => onViewDetails(card)}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
             transition: "transform .7s ease",
             display: "block",
+            cursor: "pointer",
           }}
           onMouseEnter={(e) =>
             ((e.currentTarget as HTMLElement).style.transform = "scale(1.08)")
@@ -830,7 +836,7 @@ export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
           })}
         </div>
         {/* Featured star */}
-        {card.isFeatured && (
+        {/* {card.isFeatured && (
           <div
             style={{
               position: "absolute",
@@ -847,7 +853,7 @@ export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
           >
             ⭐ Featured
           </div>
-        )}
+        )} */}
         {/* Price */}
         <div
           style={{
@@ -899,6 +905,7 @@ export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
           📍 {card.destination}
         </div>
         <div
+          onClick={() => onViewDetails(card)}
           style={{
             fontFamily: "'Libre Baskerville',serif",
             fontSize: "1.05rem",
@@ -906,6 +913,14 @@ export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
             color: "#1B2B6B",
             marginBottom: 10,
             lineHeight: 1.3,
+            cursor: "pointer",
+            transition: "color .2s ease",
+          }}
+          onMouseEnter={(e) => {
+            ;(e.currentTarget as HTMLElement).style.color = "#E53E3E"
+          }}
+          onMouseLeave={(e) => {
+            ;(e.currentTarget as HTMLElement).style.color = "#1B2B6B"
           }}
         >
           {card.title}
@@ -988,38 +1003,65 @@ export const PCard: React.FC<{ card: ApiPackage; listView: boolean }> = ({
               {card.label || ""}
             </span>
           )}
-          <button
-            onClick={handleWhatsAppEnquiry}
-            style={{
-              fontFamily: f,
-              fontSize: ".78rem",
-              fontWeight: 700,
-              background: "#1B2B6B",
-              color: "#fff",
-              padding: "10px 20px",
-              borderRadius: 999,
-              border: "none",
-              cursor: "pointer",
-              transition: "all .25s",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-            onMouseEnter={(e) => {
-              ;(e.currentTarget as HTMLButtonElement).style.background =
-                "#243590"
-              ;(e.currentTarget as HTMLButtonElement).style.transform =
-                "translateX(2px)"
-            }}
-            onMouseLeave={(e) => {
-              ;(e.currentTarget as HTMLButtonElement).style.background =
-                "#1B2B6B"
-              ;(e.currentTarget as HTMLButtonElement).style.transform =
-                "translateX(0)"
-            }}
-          >
-            Enquiry Now →
-          </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              onClick={() => onViewDetails(card)}
+              style={{
+                fontFamily: f,
+                fontSize: ".75rem",
+                fontWeight: 700,
+                background: "transparent",
+                color: "#1B2B6B",
+                border: "1.5px solid #1B2B6B",
+                padding: "8px 14px",
+                borderRadius: 999,
+                cursor: "pointer",
+                transition: "all .25s",
+              }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(27,43,107,0.05)"
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "transparent"
+              }}
+            >
+              Details
+            </button>
+            <button
+              onClick={handleWhatsAppEnquiry}
+              style={{
+                fontFamily: f,
+                fontSize: ".75rem",
+                fontWeight: 700,
+                background: "#1B2B6B",
+                color: "#fff",
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: "none",
+                cursor: "pointer",
+                transition: "all .25s",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "#243590"
+                ;(e.currentTarget as HTMLButtonElement).style.transform =
+                  "translateY(-1px)"
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background =
+                  "#1B2B6B"
+                ;(e.currentTarget as HTMLButtonElement).style.transform =
+                  "translateY(0)"
+              }}
+            >
+              Enquiry →
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1095,6 +1137,619 @@ export const SecHeader: React.FC<{
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const TourismDetailsDrawer: React.FC<{
+  pkg: ApiPackage | null
+  onClose: () => void
+}> = ({ pkg, onClose }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const f = "'Inter',sans-serif"
+
+  useEffect(() => {
+    if (pkg) {
+      setIsOpen(true)
+      document.body.style.overflow = "hidden"
+    } else {
+      setIsOpen(false)
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [pkg])
+
+  if (!pkg) return null
+
+  const handleWhatsAppEnquiry = () => {
+    const message =
+      `🌍 New Travel Package Enquiry\n\n` +
+      `📦 Package: ${pkg.title}\n` +
+      `📍 Destination: ${pkg.destination}\n` +
+      `🗓 Duration: ${pkg.days} Days / ${pkg.nights} Nights\n` +
+      `👥 Pax: ${pkg.minPax}–${pkg.maxPax}\n` +
+      `💰 Price: ₹${pkg.price.toLocaleString("en-IN")}\n\n` +
+      `I am interested in this package. Please share more details.`
+    window.open(
+      `https://wa.me/917299771111?text=${encodeURIComponent(message)}`,
+      "_blank"
+    )
+  }
+
+  const hasExclusions = pkg.exclusions && pkg.exclusions.length > 0
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(15,26,66,0.3)",
+          backdropFilter: "blur(6px)",
+          opacity: isOpen ? 1 : 0,
+          zIndex: 1000,
+          transition: "opacity 0.4s ease-out",
+        }}
+      />
+
+      {/* Drawer Container */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: "min(560px, 100vw)",
+          background: "#fff",
+          boxShadow: "-10px 0 40px rgba(15,26,66,0.15)",
+          zIndex: 1001,
+          display: "flex",
+          flexDirection: "column",
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Header Image & Close */}
+        <div
+          style={{
+            position: "relative",
+            height: 260,
+            flexShrink: 0,
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src={pkg.imageUrl}
+            alt={pkg.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)",
+            }}
+          />
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.9)",
+              border: "none",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              color: "#1B2B6B",
+              transition: "transform 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.transform = "scale(1.1)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            ×
+          </button>
+
+          {/* Badges and destination */}
+          <div
+            style={{ position: "absolute", bottom: 20, left: 24, right: 24 }}
+          >
+            <div
+              style={{
+                fontFamily: f,
+                fontSize: ".7rem",
+                fontWeight: 700,
+                color: "#4ADE80",
+                textTransform: "uppercase",
+                letterSpacing: ".08em",
+                marginBottom: 6,
+              }}
+            >
+              📍 {pkg.destination}
+            </div>
+            <h2
+              style={{
+                fontFamily: "'Libre Baskerville',serif",
+                fontSize: "1.45rem",
+                fontWeight: 700,
+                color: "#fff",
+                margin: 0,
+                lineHeight: 1.25,
+                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              }}
+            >
+              {pkg.title}
+            </h2>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "24px 28px 40px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 28,
+          }}
+        >
+          {/* Key details row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: 12,
+              background: "#F7F5F0",
+              borderRadius: 16,
+              padding: "16px 20px",
+              border: "1px solid #E8E4DC",
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.1rem", marginBottom: 4 }}>🗓</div>
+              <div
+                style={{ fontFamily: f, fontSize: ".72rem", color: "#9494b0" }}
+              >
+                Duration
+              </div>
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".82rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                }}
+              >
+                {pkg.days}D / {pkg.nights}N
+              </div>
+            </div>
+            <div
+              style={{
+                textAlign: "center",
+                borderLeft: "1px solid #E8E4DC",
+                borderRight: "1px solid #E8E4DC",
+              }}
+            >
+              <div style={{ fontSize: "1.1rem", marginBottom: 4 }}>👥</div>
+              <div
+                style={{ fontFamily: f, fontSize: ".72rem", color: "#9494b0" }}
+              >
+                Group Size
+              </div>
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".82rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                }}
+              >
+                {pkg.minPax}–{pkg.maxPax} Pax
+              </div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.1rem", marginBottom: 4 }}>💰</div>
+              <div
+                style={{ fontFamily: f, fontSize: ".72rem", color: "#9494b0" }}
+              >
+                Starting From
+              </div>
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".82rem",
+                  fontWeight: 700,
+                  color: "#2E7D32",
+                }}
+              >
+                ₹{pkg.price.toLocaleString("en-IN")}
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          {pkg.description && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <h3
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                  margin: 0,
+                }}
+              >
+                Overview
+              </h3>
+              <p
+                style={{
+                  fontFamily: f,
+                  fontSize: ".88rem",
+                  color: "#5a5a7a",
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}
+              >
+                {pkg.description}
+              </p>
+            </div>
+          )}
+
+          {/* Highlights */}
+          {pkg.highlights && pkg.highlights.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <h3
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                  margin: 0,
+                }}
+              >
+                Highlights
+              </h3>
+              <ul
+                style={{
+                  margin: 0,
+                  paddingLeft: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                {pkg.highlights.map((hl, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".85rem",
+                      color: "#5a5a7a",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {hl}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Inclusions and Exclusions side by side */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: hasExclusions ? "1fr 1fr" : "1fr",
+                gap: 20,
+              }}
+            >
+              {/* Inclusions */}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "'Libre Baskerville',serif",
+                    fontSize: "1.1rem",
+                    fontWeight: 700,
+                    color: "#2E7D32",
+                    margin: 0,
+                  }}
+                >
+                  What's Included
+                </h3>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
+                  {pkg.inclusions.map((inc, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 8,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#2E7D32",
+                          fontSize: ".9rem",
+                          marginTop: 1,
+                        }}
+                      >
+                        ✓
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".85rem",
+                          color: "#5a5a7a",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {inc}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Exclusions */}
+              {hasExclusions && (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  <h3
+                    style={{
+                      fontFamily: "'Libre Baskerville',serif",
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      color: "#E53E3E",
+                      margin: 0,
+                    }}
+                  >
+                    What's Excluded
+                  </h3>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
+                    {pkg.exclusions!.map((exc, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 8,
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#E53E3E",
+                            fontSize: ".9rem",
+                            marginTop: 1,
+                          }}
+                        >
+                          ✗
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: f,
+                            fontSize: ".85rem",
+                            color: "#5a5a7a",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {exc}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Itinerary */}
+          {pkg.itinerary && pkg.itinerary.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <h3
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                  margin: 0,
+                }}
+              >
+                Itinerary Plan
+              </h3>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 20,
+                  position: "relative",
+                }}
+              >
+                {/* Timeline line */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    bottom: 10,
+                    left: 20,
+                    width: 2,
+                    background: "#E8E4DC",
+                  }}
+                />
+
+                {pkg.itinerary.map((it, i) => (
+                  <div
+                    key={i}
+                    style={{ display: "flex", gap: 20, position: "relative" }}
+                  >
+                    {/* Circle badge */}
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        background: "#1B2B6B",
+                        color: "#fff",
+                        fontFamily: f,
+                        fontSize: ".75rem",
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 1,
+                        flexShrink: 0,
+                        boxShadow: "0 4px 10px rgba(27,43,107,0.15)",
+                      }}
+                    >
+                      D{it.day}
+                    </div>
+                    {/* Itinerary details */}
+                    <div style={{ paddingTop: 6, flex: 1 }}>
+                      <h4
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".9rem",
+                          fontWeight: 700,
+                          color: "#1B2B6B",
+                          margin: "0 0 6px 0",
+                        }}
+                      >
+                        {it.title}
+                      </h4>
+                      <p
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".82rem",
+                          color: "#5a5a7a",
+                          lineHeight: 1.5,
+                          margin: 0,
+                        }}
+                      >
+                        {it.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Action */}
+        <div
+          style={{
+            padding: "20px 28px",
+            borderTop: "1px solid #E8E4DC",
+            background: "#F7F5F0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: f,
+                fontSize: ".7rem",
+                color: "#9494b0",
+                marginBottom: 2,
+              }}
+            >
+              Starting Price
+            </div>
+            <div
+              style={{
+                fontFamily: "'Libre Baskerville',serif",
+                fontSize: "1.45rem",
+                fontWeight: 700,
+                color: "#1B2B6B",
+              }}
+            >
+              ₹{pkg.price.toLocaleString("en-IN")}
+            </div>
+          </div>
+          <button
+            onClick={handleWhatsAppEnquiry}
+            style={{
+              fontFamily: f,
+              fontSize: ".85rem",
+              fontWeight: 700,
+              background: "#1B2B6B",
+              color: "#fff",
+              border: "none",
+              padding: "12px 28px",
+              borderRadius: 999,
+              cursor: "pointer",
+              transition: "background 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#243590")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#1B2B6B")}
+          >
+            Enquiry on WhatsApp →
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+function RotatingCities() {
+  const cities = ["Chennai", "Coimbatore", "Bengaluru", "Kochi"]
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % cities.length)
+    }, 2000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <span
+      style={{ fontFamily: "'Inter',sans-serif" }}
+      className="relative inline-flex h-[1.8em] min-w-[8.5rem] items-center overflow-hidden"
+    >
+      {cities.map((city, i) => (
+        <span
+          key={city}
+          aria-hidden={i !== index}
+          className={`absolute inset-0 flex items-center text-[1rem] font-bold text-green-700 transition-all duration-500 ease-in-out sm:text-[1.15rem] ${
+            i === index
+              ? "translate-y-0 opacity-100"
+              : "translate-y-3 opacity-0"
+          }`}
+        >
+          {city}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 const Tourism = () => {
   // Filter state
   const [search, setSearch] = useState("")
@@ -1106,9 +1761,13 @@ const Tourism = () => {
   const [activeDestRegions, setActiveDestRegions] = useState<string[]>([])
   const [activeTripTypes, setActiveTripTypes] = useState<string[]>([])
   const [sortBy, setSortBy] = useState("newest")
+  const [selectedPackage, setSelectedPackage] = useState<ApiPackage | null>(
+    null
+  )
 
   // UI state
   const [gridView, setGridView] = useState<"grid" | "list">("grid")
+  const [featuredIndex, setFeaturedIndex] = useState(0)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [accumulatedPackages, setAccumulatedPackages] = useState<ApiPackage[]>(
@@ -1210,6 +1869,29 @@ const Tourism = () => {
     queryFn: () => fetchPackages(fetchParams),
     staleTime: 60_000,
   })
+
+  const { data: featuredResponse, isLoading: isFeaturedLoading } = useQuery({
+    queryKey: ["tourism-featured"],
+    queryFn: async () => {
+      const res = await _axios.get("/tourism/featured")
+      return res.data as { status: boolean; data: ApiPackage[] }
+    },
+    staleTime: 60_000,
+  })
+
+  const featuredPackages = featuredResponse?.data ?? []
+
+  const handlePrevFeatured = () => {
+    if (featuredPackages.length === 0) return
+    setFeaturedIndex(
+      (prev) => (prev - 1 + featuredPackages.length) % featuredPackages.length
+    )
+  }
+
+  const handleNextFeatured = () => {
+    if (featuredPackages.length === 0) return
+    setFeaturedIndex((prev) => (prev + 1) % featuredPackages.length)
+  }
 
   // Accumulate pages into a single list for "load more"
   useEffect(() => {
@@ -1712,266 +2394,389 @@ const Tourism = () => {
               </div>
             </div>
 
-            {/* Featured highlight card */}
-            <div
-              className="feat-card-inner"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.2fr 1fr",
-                borderRadius: 22,
-                overflow: "hidden",
-                border: "1px solid #E8E4DC",
-                background: "#fff",
-                marginBottom: 32,
-                transition: "all .38s ease",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement
-                el.style.boxShadow = "0 28px 72px rgba(27,43,107,.12)"
-                el.style.borderColor = "transparent"
-                el.style.transform = "translateY(-5px)"
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement
-                el.style.boxShadow = "none"
-                el.style.borderColor = "#E8E4DC"
-                el.style.transform = "translateY(0)"
-              }}
-            >
-              <div
-                className="feat-card-img"
-                style={{ position: "relative", minHeight: 340 }}
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1491555103944-7c647fd857e6?w=900&auto=format&fit=crop&q=80"
-                  alt="Switzerland"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    position: "absolute",
-                    inset: 0,
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background:
-                      "linear-gradient(to right,transparent 60%,rgba(15,26,66,.05))",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 18,
-                    left: 18,
-                    display: "flex",
-                    gap: 7,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: f,
-                      fontSize: ".65rem",
-                      fontWeight: 700,
-                      padding: "4px 11px",
-                      borderRadius: 999,
-                      background: "rgba(27,43,107,0.85)",
-                      color: "#fff",
-                    }}
-                  >
-                    International
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: f,
-                      fontSize: ".65rem",
-                      fontWeight: 700,
-                      padding: "4px 11px",
-                      borderRadius: 999,
-                      background: "#E53E3E",
-                      color: "#fff",
-                    }}
-                  >
-                    🔥 Bestseller
-                  </span>
-                </div>
-              </div>
+            {isFeaturedLoading ? (
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  padding: isMobile ? "28px 24px" : "40px 36px",
+                  height: 380,
+                  background: "#F0EDE8",
+                  borderRadius: 22,
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  marginBottom: 32,
                 }}
-              >
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 7,
-                    fontFamily: f,
-                    fontSize: ".65rem",
-                    fontWeight: 700,
-                    color: "#2E7D32",
-                    background: "#e8f5e9",
-                    padding: "5px 13px",
-                    borderRadius: 999,
-                    letterSpacing: ".08em",
-                    textTransform: "uppercase" as const,
-                    marginBottom: 16,
-                    width: "fit-content",
-                  }}
-                >
-                  ✦ Featured Package
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'Libre Baskerville',serif",
-                    fontSize: "1.6rem",
-                    fontWeight: 700,
-                    color: "#1B2B6B",
-                    lineHeight: 1.2,
-                    marginBottom: 12,
-                  }}
-                >
-                  Swiss Alps &{" "}
-                  <em style={{ fontStyle: "italic", color: "#2E7D32" }}>
-                    Zurich
-                  </em>{" "}
-                  Splendour
-                </div>
-                <p
-                  style={{
-                    fontFamily: "'Raleway',sans-serif",
-                    fontSize: ".9rem",
-                    lineHeight: 1.75,
-                    color: "#5a5a7a",
-                    marginBottom: 20,
-                  }}
-                >
-                  Glide through crystal-clear lakes, snow-kissed peaks, and
-                  charming Alpine villages on this 8-day Swiss masterpiece.
-                </p>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 8,
-                    marginBottom: 24,
-                  }}
-                >
-                  {[
-                    ["✈", "Return Flights"],
-                    ["🏨", "4-Star Hotels"],
-                    ["🍽", "Daily Breakfast"],
-                    ["🚌", "All Transfers"],
-                    ["📸", "Expert Guide"],
-                    ["🛡", "Travel Insurance"],
-                  ].map(([ico, txt]) => (
+              />
+            ) : featuredPackages.length > 0 ? (
+              (() => {
+                const featuredPkg = featuredPackages[featuredIndex]
+                return (
+                  <>
+                    {/* Featured highlight card */}
                     <div
-                      key={txt}
+                      className="feat-card-inner"
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        fontFamily: "'Raleway',sans-serif",
-                        fontSize: ".82rem",
-                        color: "#5a5a7a",
+                        display: "grid",
+                        gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1fr",
+                        borderRadius: 22,
+                        overflow: "hidden",
+                        border: "1px solid #E8E4DC",
+                        background: "#fff",
+                        marginBottom: 20,
+                        transition: "all .38s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLElement
+                        el.style.boxShadow = "0 28px 72px rgba(27,43,107,.12)"
+                        el.style.borderColor = "transparent"
+                        el.style.transform = "translateY(-5px)"
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLElement
+                        el.style.boxShadow = "none"
+                        el.style.borderColor = "#E8E4DC"
+                        el.style.transform = "translateY(0)"
                       }}
                     >
-                      <span style={{ color: "#2E7D32" }}>{ico}</span>
-                      {txt}
+                      <div
+                        className="feat-card-img"
+                        style={{
+                          position: "relative",
+                          minHeight: isMobile ? 220 : 340,
+                        }}
+                      >
+                        <img
+                          src={featuredPkg.imageUrl}
+                          alt={featuredPkg.title}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            position: "absolute",
+                            inset: 0,
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            background:
+                              "linear-gradient(to right,transparent 60%,rgba(15,26,66,.05))",
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 18,
+                            left: 18,
+                            display: "flex",
+                            gap: 7,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: f,
+                              fontSize: ".65rem",
+                              fontWeight: 700,
+                              padding: "4px 11px",
+                              borderRadius: 999,
+                              background: "rgba(27,43,107,0.85)",
+                              color: "#fff",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {featuredPkg.packageType.toLowerCase()}
+                          </span>
+                          {featuredPkg.badges.map((b, i) => {
+                            const s = BADGE_STYLES[b.variant] || {
+                              bg: "#ccc",
+                              color: "#fff",
+                            }
+                            return (
+                              <span
+                                key={i}
+                                style={{
+                                  fontFamily: f,
+                                  fontSize: ".65rem",
+                                  fontWeight: 700,
+                                  padding: "4px 11px",
+                                  borderRadius: 999,
+                                  letterSpacing: ".05em",
+                                  background: s.bg,
+                                  color: s.color,
+                                }}
+                              >
+                                {b.text}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          padding: isMobile ? "24px 20px" : "40px 36px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 7,
+                            fontFamily: f,
+                            fontSize: ".65rem",
+                            fontWeight: 700,
+                            color: "#2E7D32",
+                            background: "#e8f5e9",
+                            padding: "5px 13px",
+                            borderRadius: 999,
+                            letterSpacing: ".08em",
+                            textTransform: "uppercase" as const,
+                            marginBottom: 16,
+                            width: "fit-content",
+                          }}
+                        >
+                          ✦ Featured Package
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: "'Libre Baskerville',serif",
+                            fontSize: "1.6rem",
+                            fontWeight: 700,
+                            color: "#1B2B6B",
+                            lineHeight: 1.2,
+                            marginBottom: 12,
+                          }}
+                        >
+                          {featuredPkg.title}
+                        </div>
+                        <p
+                          style={{
+                            fontFamily: "'Raleway',sans-serif",
+                            fontSize: ".9rem",
+                            lineHeight: 1.75,
+                            color: "#5a5a7a",
+                            marginBottom: 20,
+                          }}
+                        >
+                          {featuredPkg.description ||
+                            `Explore ${featuredPkg.destination} on this beautiful ${featuredPkg.days}-day tour.`}
+                        </p>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: 8,
+                            marginBottom: 24,
+                          }}
+                        >
+                          {featuredPkg.inclusions.slice(0, 6).map((txt) => (
+                            <div
+                              key={txt}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontFamily: "'Raleway',sans-serif",
+                                fontSize: ".82rem",
+                                color: "#5a5a7a",
+                              }}
+                            >
+                              <span style={{ color: "#2E7D32" }}>✦</span>
+                              {txt}
+                            </div>
+                          ))}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-end",
+                            gap: 10,
+                            marginBottom: 20,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontFamily: f,
+                                fontSize: ".7rem",
+                                color: "#9494b0",
+                                marginBottom: 4,
+                              }}
+                            >
+                              Starting from
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "'Libre Baskerville',serif",
+                                fontSize: "2rem",
+                                fontWeight: 700,
+                                color: "#1B2B6B",
+                              }}
+                            >
+                              ₹{featuredPkg.price.toLocaleString("en-IN")}
+                            </div>
+                          </div>
+                          {featuredPkg.strikePrice && (
+                            <div
+                              style={{
+                                fontFamily: f,
+                                fontSize: ".88rem",
+                                color: "#9494b0",
+                                textDecoration: "line-through",
+                                marginBottom: 6,
+                              }}
+                            >
+                              ₹{featuredPkg.strikePrice.toLocaleString("en-IN")}{" "}
+                              &nbsp;
+                              {featuredPkg.discount && (
+                                <span
+                                  style={{
+                                    color: "#E53E3E",
+                                    fontWeight: 700,
+                                    fontSize: ".82rem",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  {featuredPkg.discount} % OFF
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            const message =
+                              `🌍 New Travel Package Enquiry\n\n` +
+                              `📦 Package: ${featuredPkg.title}\n` +
+                              `📍 Destination: ${featuredPkg.destination}\n` +
+                              `🗓 Duration: ${featuredPkg.days} Days / ${featuredPkg.nights} Nights\n` +
+                              `👥 Pax: ${featuredPkg.minPax}–${featuredPkg.maxPax}\n` +
+                              `💰 Price: ₹${featuredPkg.price.toLocaleString("en-IN")}\n\n` +
+                              `I am interested in this package. Please share more details.`
+                            window.open(
+                              `https://wa.me/917299771111?text=${encodeURIComponent(message)}`,
+                              "_blank"
+                            )
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            fontFamily: f,
+                            fontSize: ".85rem",
+                            fontWeight: 700,
+                            background: "#1B2B6B",
+                            color: "#fff",
+                            padding: "13px 28px",
+                            borderRadius: 999,
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "all .25s",
+                            width: "fit-content",
+                          }}
+                          onMouseEnter={(e) => {
+                            ;(e.currentTarget as HTMLElement).style.background =
+                              "#243590"
+                            ;(e.currentTarget as HTMLElement).style.transform =
+                              "translateY(-2px)"
+                          }}
+                          onMouseLeave={(e) => {
+                            ;(e.currentTarget as HTMLElement).style.background =
+                              "#1B2B6B"
+                            ;(e.currentTarget as HTMLElement).style.transform =
+                              "translateY(0)"
+                          }}
+                        >
+                          Enquiry Now →
+                        </button>
+                      </div>
                     </div>
-                  ))}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-end",
-                    gap: 10,
-                    marginBottom: 20,
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontFamily: f,
-                        fontSize: ".7rem",
-                        color: "#9494b0",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Starting from
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "'Libre Baskerville',serif",
-                        fontSize: "2rem",
-                        fontWeight: 700,
-                        color: "#1B2B6B",
-                      }}
-                    >
-                      ₹1,24,999
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: f,
-                      fontSize: ".88rem",
-                      color: "#9494b0",
-                      textDecoration: "line-through",
-                      marginBottom: 6,
-                    }}
-                  >
-                    ₹1,47,999 &nbsp;
-                    <span
-                      style={{
-                        color: "#E53E3E",
-                        fontWeight: 700,
-                        fontSize: ".82rem",
-                        textDecoration: "none",
-                      }}
-                    >
-                      15% off
-                    </span>
-                  </div>
-                </div>
-                <a
-                  href="#"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontFamily: f,
-                    fontSize: ".85rem",
-                    fontWeight: 700,
-                    background: "#1B2B6B",
-                    color: "#fff",
-                    padding: "13px 28px",
-                    borderRadius: 999,
-                    textDecoration: "none",
-                    transition: "all .25s",
-                    width: "fit-content",
-                  }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background =
-                      "#243590"
-                    ;(e.currentTarget as HTMLElement).style.transform =
-                      "translateY(-2px)"
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background =
-                      "#1B2B6B"
-                    ;(e.currentTarget as HTMLElement).style.transform =
-                      "translateY(0)"
-                  }}
-                >
-                  View Package →
-                </a>
-              </div>
-            </div>
+
+                    {/* Carousel navigation controls below card */}
+                    {featuredPackages.length > 1 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 16,
+                          marginBottom: 32,
+                        }}
+                      >
+                        <button
+                          onClick={handlePrevFeatured}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            border: "1.5px solid #E8E4DC",
+                            background: "#fff",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#1B2B6B",
+                            fontSize: "1rem",
+                            fontWeight: 700,
+                            transition: "all 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = "#1B2B6B"
+                            e.currentTarget.style.background = "#F7F5F0"
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "#E8E4DC"
+                            e.currentTarget.style.background = "#fff"
+                          }}
+                        >
+                          ←
+                        </button>
+                        <span
+                          style={{
+                            fontFamily: "'Inter',sans-serif",
+                            fontSize: "0.8rem",
+                            color: "#9494b0",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {featuredIndex + 1} / {featuredPackages.length}
+                        </span>
+                        <button
+                          onClick={handleNextFeatured}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            border: "1.5px solid #E8E4DC",
+                            background: "#fff",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#1B2B6B",
+                            fontSize: "1rem",
+                            fontWeight: 700,
+                            transition: "all 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = "#1B2B6B"
+                            e.currentTarget.style.background = "#F7F5F0"
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "#E8E4DC"
+                            e.currentTarget.style.background = "#fff"
+                          }}
+                        >
+                          →
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )
+              })()
+            ) : null}
 
             {/* Promo Strip */}
             <div
@@ -2058,6 +2863,17 @@ const Tourism = () => {
               count={total}
             />
 
+            {/* Services Available Section */}
+            <div className="flex items-center justify-center bg-[#F7F5F0] py-5 text-center">
+              <span
+                style={{ fontFamily: "'Libre Baskerville',serif" }}
+                className="text-[1rem] font-semibold tracking-wide text-[#1B2B6B] sm:text-[1.15rem]"
+              >
+                Services Available At: &nbsp;
+              </span>
+
+              <RotatingCities />
+            </div>
             {/* Error state */}
             {isError && (
               <div
@@ -2112,7 +2928,12 @@ const Tourism = () => {
                 }}
               >
                 {accumulatedPackages.map((c) => (
-                  <PCard key={c._id} card={c} listView={gridView === "list"} />
+                  <PCard
+                    key={c._id}
+                    card={c}
+                    listView={gridView === "list"}
+                    onViewDetails={setSelectedPackage}
+                  />
                 ))}
               </div>
             )}
@@ -2260,6 +3081,11 @@ const Tourism = () => {
           </main>
         </div>
       </div>
+      {/* Premium Package Details Drawer */}
+      <TourismDetailsDrawer
+        pkg={selectedPackage}
+        onClose={() => setSelectedPackage(null)}
+      />
     </>
   )
 }

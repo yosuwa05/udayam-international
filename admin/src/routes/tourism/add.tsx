@@ -32,8 +32,7 @@ function RouteComponent() {
         'discount',
         'label',
         'description',
-        'isActive',
-        'isFeatured',
+        'order',
       ]
       for (const key of scalars) {
         const val = values[key]
@@ -50,6 +49,7 @@ function RouteComponent() {
       form.append('tripTypes', JSON.stringify(values.tripTypes))
       form.append('badges', JSON.stringify(values.badges))
       form.append('inclusions', JSON.stringify(values.inclusions))
+      form.append('exclusions', JSON.stringify(values.exclusions))
       if (values.highlights?.length) {
         form.append('highlights', JSON.stringify(values.highlights))
       }

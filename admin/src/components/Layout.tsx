@@ -5,6 +5,7 @@ import {
   X,
   LayoutDashboard,
   MapIcon,
+  MessageSquare,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
@@ -39,6 +40,7 @@ interface NavLink {
 const allLinks: NavLink[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Tourism', href: '/tourism', icon: MapIcon },
+  { name: 'Testimonials', href: '/testimonials', icon: MessageSquare },
 ]
 
 interface LayoutProps {
@@ -87,7 +89,7 @@ export default function Layout({ session, userType }: LayoutProps) {
   }, [])
 
   const logoutMutation = useMutation({
-    mutationFn: async () => (await _axios.post('/admin/auth/logout')).data,
+    mutationFn: async () => (await _axios.post('/admin-auth/logout')).data,
     onSuccess: () => {
       toast.success('Logged out successfully')
       queryClient.invalidateQueries({ queryKey: ['session'] })
