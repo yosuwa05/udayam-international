@@ -2348,6 +2348,17 @@ const Tourism = () => {
             }}
           >
             {/* View toggle */}
+            {/* Services Available Section */}
+            <div className="flex items-center justify-center bg-[#F7F5F0] py-5 text-center">
+              <span
+                style={{ fontFamily: "'Libre Baskerville',serif" }}
+                className="text-[1rem] font-semibold tracking-wide text-[#1B2B6B] sm:text-[1.15rem]"
+              >
+                Services Available At: &nbsp;
+              </span>
+
+              <RotatingCities />
+            </div>
             <div
               style={{
                 display: "flex",
@@ -2618,25 +2629,34 @@ const Tourism = () => {
                               ₹{featuredPkg.price.toLocaleString("en-IN")}
                             </div>
                           </div>
-                          {featuredPkg.strikePrice && (
+                          {(featuredPkg.strikePrice ||
+                            featuredPkg.discount) && (
                             <div
                               style={{
                                 fontFamily: f,
                                 fontSize: ".88rem",
                                 color: "#9494b0",
-                                textDecoration: "line-through",
                                 marginBottom: 6,
                               }}
                             >
-                              ₹{featuredPkg.strikePrice.toLocaleString("en-IN")}{" "}
-                              &nbsp;
+                              {featuredPkg.strikePrice && (
+                                <span
+                                  style={{ textDecoration: "line-through" }}
+                                >
+                                  ₹
+                                  {featuredPkg.strikePrice.toLocaleString(
+                                    "en-IN"
+                                  )}
+                                </span>
+                              )}
+                              {featuredPkg.strikePrice &&
+                                featuredPkg.discount && <>&nbsp;&nbsp;</>}
                               {featuredPkg.discount && (
                                 <span
                                   style={{
                                     color: "#E53E3E",
                                     fontWeight: 700,
                                     fontSize: ".82rem",
-                                    textDecoration: "none",
                                   }}
                                 >
                                   {featuredPkg.discount} % OFF
@@ -2645,52 +2665,95 @@ const Tourism = () => {
                             </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => {
-                            const message =
-                              `🌍 New Travel Package Enquiry\n\n` +
-                              `📦 Package: ${featuredPkg.title}\n` +
-                              `📍 Destination: ${featuredPkg.destination}\n` +
-                              `🗓 Duration: ${featuredPkg.days} Days / ${featuredPkg.nights} Nights\n` +
-                              `👥 Pax: ${featuredPkg.minPax}–${featuredPkg.maxPax}\n` +
-                              `💰 Price: ₹${featuredPkg.price.toLocaleString("en-IN")}\n\n` +
-                              `I am interested in this package. Please share more details.`
-                            window.open(
-                              `https://wa.me/917299771111?text=${encodeURIComponent(message)}`,
-                              "_blank"
-                            )
-                          }}
+                        <div
                           style={{
-                            display: "inline-flex",
+                            display: "flex",
+                            gap: 12,
                             alignItems: "center",
-                            gap: 8,
-                            fontFamily: f,
-                            fontSize: ".85rem",
-                            fontWeight: 700,
-                            background: "#1B2B6B",
-                            color: "#fff",
-                            padding: "13px 28px",
-                            borderRadius: 999,
-                            border: "none",
-                            cursor: "pointer",
-                            transition: "all .25s",
-                            width: "fit-content",
-                          }}
-                          onMouseEnter={(e) => {
-                            ;(e.currentTarget as HTMLElement).style.background =
-                              "#243590"
-                            ;(e.currentTarget as HTMLElement).style.transform =
-                              "translateY(-2px)"
-                          }}
-                          onMouseLeave={(e) => {
-                            ;(e.currentTarget as HTMLElement).style.background =
-                              "#1B2B6B"
-                            ;(e.currentTarget as HTMLElement).style.transform =
-                              "translateY(0)"
+                            flexWrap: "wrap",
                           }}
                         >
-                          Enquiry Now →
-                        </button>
+                          <button
+                            onClick={() => setSelectedPackage(featuredPkg)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 8,
+                              fontFamily: f,
+                              fontSize: ".85rem",
+                              fontWeight: 700,
+                              background: "transparent",
+                              color: "#1B2B6B",
+                              border: "1.5px solid #1B2B6B",
+                              padding: "12px 28px",
+                              borderRadius: 999,
+                              cursor: "pointer",
+                              transition: "all .25s",
+                            }}
+                            onMouseEnter={(e) => {
+                              ;(
+                                e.currentTarget as HTMLElement
+                              ).style.background = "rgba(27,43,107,0.05)"
+                            }}
+                            onMouseLeave={(e) => {
+                              ;(
+                                e.currentTarget as HTMLElement
+                              ).style.background = "transparent"
+                            }}
+                          >
+                            Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              const message =
+                                `🌍 New Travel Package Enquiry\n\n` +
+                                `📦 Package: ${featuredPkg.title}\n` +
+                                `📍 Destination: ${featuredPkg.destination}\n` +
+                                `🗓 Duration: ${featuredPkg.days} Days / ${featuredPkg.nights} Nights\n` +
+                                `👥 Pax: ${featuredPkg.minPax}–${featuredPkg.maxPax}\n` +
+                                `💰 Price: ₹${featuredPkg.price.toLocaleString("en-IN")}\n\n` +
+                                `I am interested in this package. Please share more details.`
+                              window.open(
+                                `https://wa.me/917299771111?text=${encodeURIComponent(message)}`,
+                                "_blank"
+                              )
+                            }}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 8,
+                              fontFamily: f,
+                              fontSize: ".85rem",
+                              fontWeight: 700,
+                              background: "#1B2B6B",
+                              color: "#fff",
+                              padding: "13px 28px",
+                              borderRadius: 999,
+                              border: "none",
+                              cursor: "pointer",
+                              transition: "all .25s",
+                              width: "fit-content",
+                            }}
+                            onMouseEnter={(e) => {
+                              ;(
+                                e.currentTarget as HTMLElement
+                              ).style.background = "#243590"
+                              ;(
+                                e.currentTarget as HTMLElement
+                              ).style.transform = "translateY(-2px)"
+                            }}
+                            onMouseLeave={(e) => {
+                              ;(
+                                e.currentTarget as HTMLElement
+                              ).style.background = "#1B2B6B"
+                              ;(
+                                e.currentTarget as HTMLElement
+                              ).style.transform = "translateY(0)"
+                            }}
+                          >
+                            Enquiry Now →
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -2863,17 +2926,6 @@ const Tourism = () => {
               count={total}
             />
 
-            {/* Services Available Section */}
-            <div className="flex items-center justify-center bg-[#F7F5F0] py-5 text-center">
-              <span
-                style={{ fontFamily: "'Libre Baskerville',serif" }}
-                className="text-[1rem] font-semibold tracking-wide text-[#1B2B6B] sm:text-[1.15rem]"
-              >
-                Services Available At: &nbsp;
-              </span>
-
-              <RotatingCities />
-            </div>
             {/* Error state */}
             {isError && (
               <div
