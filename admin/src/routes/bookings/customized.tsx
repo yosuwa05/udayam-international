@@ -21,19 +21,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Search, Eye, Calendar, User, Tag, Sparkles } from 'lucide-react'
+import { Search, Eye, Calendar, User, Sparkles } from 'lucide-react'
 
-export const Route = createFileRoute('/bookings/')({
-  beforeLoad: ({ navigate }) => {
-    throw navigate({ to: '/bookings/standard', replace: true })
-  },
-  component: BookingsIndexComponent,
+export const Route = createFileRoute('/bookings/customized')({
+  component: CustomizedBookingsComponent,
 })
 
 type Booking = {
   _id: string
   bookingNumber: string
-  bookingType: 'STANDARD' | 'CUSTOMIZED'
+  bookingType: 'CUSTOMIZED'
   packageId?: {
     title: string
     destination: string
@@ -51,12 +48,6 @@ type Booking = {
     numberOfPersons: number
     travelDate: string
     travelType: string
-  }
-  pricingDetails: {
-    originalAmount: number
-    discountAmount: number
-    finalAmount: number
-    currency: string
   }
   status: string
   quotation?: {
@@ -77,16 +68,14 @@ type PaginationMeta = {
 
 type FilterState = {
   search: string
-  bookingType: string
   status: string
 }
 
-function BookingsIndexComponent() {
+function CustomizedBookingsComponent() {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    bookingType: 'ALL',
     status: 'ALL',
   })
 
@@ -98,13 +87,13 @@ function BookingsIndexComponent() {
   const queryParams = {
     page: page.toString(),
     limit: limit.toString(),
+    bookingType: 'CUSTOMIZED',
     ...(filters.search && { search: filters.search }),
-    ...(filters.bookingType !== 'ALL' && { bookingType: filters.bookingType }),
     ...(filters.status !== 'ALL' && { status: filters.status }),
   }
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['admin-bookings', queryParams],
+    queryKey: ['admin-customized-bookings', queryParams],
     queryFn: async () => {
       const res = await _axios.get('/booking/admin/list', { params: queryParams })
       return res.data as { data: Booking[]; pagination: PaginationMeta }
@@ -123,11 +112,9 @@ function BookingsIndexComponent() {
     })
   }
 
-  const getStatusBadgeStyle = (status: string, bookingType: string) => {
+  const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case 'BOOKED':
-      case 'CONFIRMED':
-      case 'PAYMENT_SUCCESS':
       case 'COMPLETED':
         return 'bg-green-50 text-green-700 border-green-200'
       case 'ENQUIRY_RECEIVED':
@@ -137,9 +124,7 @@ function BookingsIndexComponent() {
         return 'bg-blue-50 text-blue-700 border-blue-200'
       case 'PAYMENT_PENDING':
         return 'bg-yellow-50 text-yellow-700 border-yellow-200'
-      case 'CANCELLED':
       case 'ENQUIRY_CANCELLED':
-      case 'PAYMENT_FAILED':
         return 'bg-red-50 text-red-600 border-red-200'
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200'
@@ -151,9 +136,9 @@ function BookingsIndexComponent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tourism Bookings & Enquiries</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Customized Bookings</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage online standard package bookings, process custom enquiries, and issue quotations
+            Manage custom enquiries, prepare quotations, and record offline or custom payments
           </p>
         </div>
       </div>
@@ -171,46 +156,32 @@ function BookingsIndexComponent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Booking Type Filter */}
-          <Select
-            value={filters.bookingType}
-            onValueChange={(v) => setFilter('bookingType', v)}
-          >
-            <SelectTrigger className="h-9 w-44 text-sm bg-background">
-              <SelectValue placeholder="Package Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Package Types</SelectItem>
-              <SelectItem value="STANDARD">Standard (Online)</SelectItem>
-              <SelectItem value="CUSTOMIZED">Customized (Enquiry)</SelectItem>
-            </SelectContent>
-          </Select>
-
           {/* Status Filter */}
           <Select
             value={filters.status}
             onValueChange={(v) => setFilter('status', v)}
           >
-            <SelectTrigger className="h-9 w-44 text-sm bg-background">
+            <SelectTrigger className="h-9 w-48 text-sm bg-background">
               <SelectValue placeholder="Booking Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Statuses</SelectItem>
               <SelectItem value="ENQUIRY_RECEIVED">Enquiry Received</SelectItem>
+              <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
               <SelectItem value="QUOTATION_SHARED">Quotation Shared</SelectItem>
               <SelectItem value="PAYMENT_PENDING">Payment Pending</SelectItem>
               <SelectItem value="BOOKED">Booked / Confirmed</SelectItem>
               <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              <SelectItem value="ENQUIRY_CANCELLED">Enquiry Cancelled</SelectItem>
             </SelectContent>
           </Select>
 
-          {(filters.search || filters.bookingType !== 'ALL' || filters.status !== 'ALL') && (
+          {(filters.search || filters.status !== 'ALL') && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                setFilters({ search: '', bookingType: 'ALL', status: 'ALL' })
+                setFilters({ search: '', status: 'ALL' })
                 setPage(1)
               }}
               className="text-xs h-9"
@@ -255,7 +226,7 @@ function BookingsIndexComponent() {
             ) : bookings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                  No bookings or enquiries match your filter criteria.
+                  No customized bookings match your filter criteria.
                 </TableCell>
               </TableRow>
             ) : (
@@ -265,22 +236,8 @@ function BookingsIndexComponent() {
                   <TableCell className="font-mono text-xs font-semibold">
                     <div className="space-y-1">
                       <div className="text-primary font-bold">{booking.bookingNumber}</div>
-                      <span
-                        className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border ${
-                          booking.bookingType === 'CUSTOMIZED'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}
-                      >
-                        {booking.bookingType === 'CUSTOMIZED' ? (
-                          <>
-                            <Sparkles className="w-3 h-3" /> Custom
-                          </>
-                        ) : (
-                          <>
-                            <Tag className="w-3 h-3" /> Standard
-                          </>
-                        )}
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border bg-purple-50 text-purple-700 border-purple-200">
+                        <Sparkles className="w-3 h-3" /> Custom
                       </span>
                     </div>
                   </TableCell>
@@ -317,16 +274,7 @@ function BookingsIndexComponent() {
 
                   {/* Pricing */}
                   <TableCell className="text-sm font-semibold">
-                    {booking.bookingType === 'STANDARD' ? (
-                      <div>
-                        <div>₹{booking.pricingDetails?.finalAmount?.toLocaleString('en-IN')}</div>
-                        {booking.pricingDetails?.discountAmount > 0 && (
-                          <div className="text-[10px] text-green-600 font-normal">
-                            Discount: -₹{booking.pricingDetails.discountAmount.toLocaleString('en-IN')}
-                          </div>
-                        )}
-                      </div>
-                    ) : booking.quotation?.amount ? (
+                    {booking.quotation?.amount ? (
                       <div>
                         <div className="text-blue-700 font-bold">
                           ₹{booking.quotation.amount.toLocaleString('en-IN')}
@@ -344,8 +292,7 @@ function BookingsIndexComponent() {
                   <TableCell>
                     <span
                       className={`text-xs px-2.5 py-1 rounded-full font-medium border inline-block ${getStatusBadgeStyle(
-                        booking.status,
-                        booking.bookingType
+                        booking.status
                       )}`}
                     >
                       {booking.status.replace(/_/g, ' ')}
@@ -354,7 +301,7 @@ function BookingsIndexComponent() {
 
                   {/* Actions */}
                   <TableCell className="text-right">
-                    <Link to="/bookings/$id" params={{ id: booking._id }}>
+                    <Link to="/bookings/$id" params={{ id: booking._id }} search={{ type: 'customized' }}>
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs cursor-pointer">
                         <Eye className="w-3.5 h-3.5" /> View
                       </Button>

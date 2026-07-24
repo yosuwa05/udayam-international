@@ -12,8 +12,7 @@ import {
     getBookingDetails,
     updateCustomizedQuotation,
     updateBookingStatus,
-    setCustomizedFinalAmount,
-    addCustomizedPaymentTransaction,
+    recordCustomizedTransaction,
 } from "./booking.service"
 import { adminOnly, userOnly, userAndAdminOnly } from "@lib/authGuard"
 
@@ -38,5 +37,4 @@ export const bookingRouter = new Elysia({
     .get("/admin/:id", getBookingDetails, { beforeHandle: adminOnly })
     .patch("/admin/:id/quotation", updateCustomizedQuotation, { beforeHandle: adminOnly })
     .patch("/admin/:id/status", updateBookingStatus, { beforeHandle: adminOnly })
-    .patch("/admin/:id/final-amount", setCustomizedFinalAmount, { beforeHandle: adminOnly })
-    .post("/admin/:id/transactions", addCustomizedPaymentTransaction, { beforeHandle: adminOnly })
+    .post("/admin/:id/transaction", recordCustomizedTransaction, { beforeHandle: adminOnly })

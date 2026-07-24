@@ -60,16 +60,12 @@ export interface IQuotation {
     validUntil?: Date
 }
 
-export type PaymentMethod = "CASH" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | "OTHER"
-
-export interface IPaymentTransaction {
-    _id?: Types.ObjectId
+export interface ICustomizedTransaction {
     amount: number
-    method: PaymentMethod
-    referenceNumber?: string
+    paymentMode: "CASH" | "BANK_TRANSFER" | "UPI" | "ONLINE" | "OTHER"
+    transactionDate: Date
     notes?: string
-    recordedBy: Types.ObjectId
-    recordedAt: Date
+    createdAt?: Date
 }
 
 export interface IBooking {
@@ -83,10 +79,7 @@ export interface IBooking {
     paymentId?: Types.ObjectId
     status: BookingStatus
     quotation?: IQuotation
-    /** Admin-confirmed final package price for customized bookings. Locked once first transaction is recorded. */
-    finalPackageAmount?: number
-    /** Embedded payment transaction history for customized bookings */
-    paymentTransactions: IPaymentTransaction[]
+    transactions?: ICustomizedTransaction[]
     createdAt?: Date
     updatedAt?: Date
 }
@@ -134,20 +127,18 @@ const quotationSchema = new Schema<IQuotation>(
     { _id: false }
 )
 
-const paymentTransactionSchema = new Schema<IPaymentTransaction>(
+const customizedTransactionSchema = new Schema<ICustomizedTransaction>(
     {
         amount: { type: Number, required: true, min: 0.01 },
-        method: {
+        paymentMode: {
             type: String,
-            enum: ["CASH", "UPI", "BANK_TRANSFER", "CHEQUE", "OTHER"],
+            enum: ["CASH", "BANK_TRANSFER", "UPI", "ONLINE", "OTHER"],
             required: true,
         },
-        referenceNumber: { type: String, trim: true },
+        transactionDate: { type: Date, required: true, default: Date.now },
         notes: { type: String, trim: true },
-        recordedBy: { type: Schema.Types.ObjectId, ref: "admin", required: true },
-        recordedAt: { type: Date, default: Date.now },
     },
-    { _id: true }
+    { timestamps: { createdAt: true, updatedAt: false }, _id: false }
 )
 
 const bookingSchema = new Schema<IBooking>(
@@ -185,8 +176,7 @@ const bookingSchema = new Schema<IBooking>(
             ],
         },
         quotation: { type: quotationSchema },
-        finalPackageAmount: { type: Number, min: 0 },
-        paymentTransactions: { type: [paymentTransactionSchema], default: [] },
+        transactions: { type: [customizedTransactionSchema], default: [] },
     },
     { timestamps: true }
 )

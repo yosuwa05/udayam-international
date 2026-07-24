@@ -1,24 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import {
-  ArrowLeft,
-  User,
-  Phone,
-  Mail,
-  Calendar,
-  Sparkles,
-  Tag,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  FileText,
-  Lock,
-  Plus,
-  IndianRupee,
-  Receipt,
-  TrendingUp,
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ArrowLeft, User, Phone, Mail, Calendar, Sparkles, Tag, CheckCircle2, Clock, DollarSign, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -35,6 +18,11 @@ import { toast } from 'sonner'
 import { _axios } from '@/lib/axios'
 
 export const Route = createFileRoute('/bookings/$id')({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      type: (search.type as string) || '',
+    }
+  },
   component: BookingDetailsComponent,
 })
 
@@ -65,14 +53,6 @@ const CUSTOMIZED_STATUSES = [
   'ENQUIRY_CANCELLED',
 ]
 
-const PAYMENT_METHODS = [
-  { value: 'CASH', label: '💵 Cash' },
-  { value: 'UPI', label: '📲 UPI' },
-  { value: 'BANK_TRANSFER', label: '🏦 Bank Transfer / NEFT / RTGS' },
-  { value: 'CHEQUE', label: '📄 Cheque' },
-  { value: 'OTHER', label: '🔄 Other' },
-]
-
 function BookingDetailsComponent() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
@@ -81,26 +61,16 @@ function BookingDetailsComponent() {
   // Quotation form state
   const [quoteAmount, setQuoteAmount] = useState('')
   const [quoteNotes, setQuoteNotes] = useState('')
-  const [quoteValidUntil, setQuoteValidUntil] = useState('')
 
   // Status update state
   const [selectedStatus, setSelectedStatus] = useState('')
   const [statusNotes, setStatusNotes] = useState('')
 
-  // Final Package Amount state
-  const [finalAmountInput, setFinalAmountInput] = useState('')
+  // Record transaction form state
+  const [txAmount, setTxAmount] = useState('')
+  const [txMode, setTxMode] = useState('UPI')
 
-  // Add Transaction form state
-  const [txnAmount, setTxnAmount] = useState('')
-  const [txnMethod, setTxnMethod] = useState('')
-  const [txnRef, setTxnRef] = useState('')
-  const [txnNotes, setTxnNotes] = useState('')
-
-  const {
-    data: bookingData,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: bookingData, isLoading, isError } = useQuery({
     queryKey: ['admin-booking-detail', id],
     queryFn: async () => {
       const res = await _axios.get(`/booking/admin/${id}`)
@@ -109,19 +79,31 @@ function BookingDetailsComponent() {
     enabled: !!id,
   })
 
+  // Pre-fill quotation and status forms
+  useEffect(() => {
+    if (bookingData) {
+      if (bookingData.quotation?.amount) {
+        setQuoteAmount(bookingData.quotation.amount.toString())
+      } else if (bookingData.pricingDetails?.finalAmount) {
+        setQuoteAmount(bookingData.pricingDetails.finalAmount.toString())
+      }
+      setQuoteNotes(bookingData.quotation?.notes || '')
+      setSelectedStatus(bookingData.status || '')
+    }
+  }, [bookingData])
+
   // Quotation Mutation
   const quotationMutation = useMutation({
-    mutationFn: async () =>
-      _axios.patch(`/booking/admin/${id}/quotation`, {
+    mutationFn: async () => {
+      return _axios.patch(`/booking/admin/${id}/quotation`, {
         amount: Number(quoteAmount),
         notes: quoteNotes,
-        validUntil: quoteValidUntil || undefined,
-      }),
+      })
+    },
     onSuccess: () => {
       toast.success('Quotation updated and shared successfully!')
       queryClient.invalidateQueries({ queryKey: ['admin-booking-detail', id] })
       queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-bookings-customized'] })
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.error || 'Failed to update quotation')
@@ -130,62 +112,36 @@ function BookingDetailsComponent() {
 
   // Status Mutation
   const statusMutation = useMutation({
-    mutationFn: async () =>
-      _axios.patch(`/booking/admin/${id}/status`, {
+    mutationFn: async () => {
+      return _axios.patch(`/booking/admin/${id}/status`, {
         status: selectedStatus,
         notes: statusNotes,
-      }),
+      })
+    },
     onSuccess: () => {
       toast.success('Booking status updated successfully!')
       setStatusNotes('')
       queryClient.invalidateQueries({ queryKey: ['admin-booking-detail', id] })
       queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-bookings-customized'] })
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.error || 'Failed to update status')
     },
   })
 
-  // Final Package Amount Mutation
-  const finalAmountMutation = useMutation({
-    mutationFn: async () =>
-      _axios.patch(`/booking/admin/${id}/final-amount`, {
-        finalPackageAmount: Number(finalAmountInput),
-      }),
+  // Transaction Mutation
+  const transactionMutation = useMutation({
+    mutationFn: async () => {
+      return _axios.post(`/booking/admin/${id}/transaction`, {
+        amount: Number(txAmount),
+        paymentMode: txMode,
+      })
+    },
     onSuccess: () => {
-      toast.success('Final package amount saved!')
-      setFinalAmountInput('')
+      toast.success('Payment transaction recorded successfully!')
+      setTxAmount('')
       queryClient.invalidateQueries({ queryKey: ['admin-booking-detail', id] })
-      queryClient.invalidateQueries({ queryKey: ['admin-bookings-customized'] })
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.error || 'Failed to save final amount')
-    },
-  })
-
-  // Add Transaction Mutation
-  const addTransactionMutation = useMutation({
-    mutationFn: async () =>
-      _axios.post(`/booking/admin/${id}/transactions`, {
-        amount: Number(txnAmount),
-        method: txnMethod,
-        referenceNumber: txnRef || undefined,
-        notes: txnNotes || undefined,
-      }),
-    onSuccess: (res) => {
-      const d = res.data?.data
-      toast.success(
-        d
-          ? `₹${Number(txnAmount).toLocaleString('en-IN')} recorded. Balance: ₹${d.balance.toLocaleString('en-IN')}`
-          : 'Payment transaction recorded!'
-      )
-      setTxnAmount('')
-      setTxnMethod('')
-      setTxnRef('')
-      setTxnNotes('')
-      queryClient.invalidateQueries({ queryKey: ['admin-booking-detail', id] })
-      queryClient.invalidateQueries({ queryKey: ['admin-bookings-customized'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.error || 'Failed to record transaction')
@@ -206,17 +162,7 @@ function BookingDetailsComponent() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-3">
         <p className="text-muted-foreground">Booking record could not be found.</p>
-        <Button
-          variant="outline"
-          onClick={() =>
-            navigate({
-              to:
-                bookingData?.bookingType === 'CUSTOMIZED'
-                  ? '/bookings/customized'
-                  : '/bookings/standard',
-            })
-          }
-        >
+        <Button variant="outline" onClick={() => navigate({ to: '/bookings' })}>
           Back to Bookings
         </Button>
       </div>
@@ -224,16 +170,7 @@ function BookingDetailsComponent() {
   }
 
   const booking = bookingData
-  const availableStatuses =
-    booking.bookingType === 'CUSTOMIZED' ? CUSTOMIZED_STATUSES : STANDARD_STATUSES
-  const isCustomized = booking.bookingType === 'CUSTOMIZED'
-  const transactions: any[] = booking.paymentTransactions ?? []
-  const hasTransactions = transactions.length > 0
-  const totalPaid = transactions.reduce((s: number, t: any) => s + (t.amount ?? 0), 0)
-  const balance =
-    booking.finalPackageAmount !== undefined
-      ? booking.finalPackageAmount - totalPaid
-      : null
+  const availableStatuses = booking.bookingType === 'CUSTOMIZED' ? CUSTOMIZED_STATUSES : STANDARD_STATUSES
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-'
@@ -263,28 +200,22 @@ function BookingDetailsComponent() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              navigate({
-                to: isCustomized ? '/bookings/customized' : '/bookings/standard',
-              })
-            }
+            onClick={() => navigate({ to: '/bookings' })}
             className="cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold font-mono text-primary">
-                {booking.bookingNumber}
-              </h1>
+              <h1 className="text-2xl font-bold font-mono text-primary">{booking.bookingNumber}</h1>
               <span
                 className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase border inline-flex items-center gap-1 ${
-                  isCustomized
+                  booking.bookingType === 'CUSTOMIZED'
                     ? 'bg-purple-50 text-purple-700 border-purple-200'
                     : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 }`}
               >
-                {isCustomized ? <Sparkles size={12} /> : <Tag size={12} />}
+                {booking.bookingType === 'CUSTOMIZED' ? <Sparkles size={12} /> : <Tag size={12} />}
                 {booking.bookingType}
               </span>
             </div>
@@ -303,7 +234,7 @@ function BookingDetailsComponent() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* LEFT COLUMN */}
+        {/* LEFT COLUMN: Customer Info & Package Details */}
         <div className="md:col-span-2 space-y-6">
           {/* Package Info */}
           <div className="rounded-2xl border bg-card p-5 space-y-3">
@@ -311,20 +242,10 @@ function BookingDetailsComponent() {
               <span>📦</span> Package Details
             </h3>
             <div className="bg-muted/30 p-4 rounded-xl space-y-2 border">
-              <div className="text-base font-bold text-primary">
-                {booking.packageId?.title || 'Tour Package'}
-              </div>
+              <div className="text-base font-bold text-primary">{booking.packageId?.title || 'Tour Package'}</div>
               <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <div>
-                  📍 Destination:{' '}
-                  <strong className="text-foreground">{booking.packageId?.destination}</strong>
-                </div>
-                <div>
-                  🗓 Duration:{' '}
-                  <strong className="text-foreground">
-                    {booking.packageId?.days}D / {booking.packageId?.nights}N
-                  </strong>
-                </div>
+                <div>📍 Destination: <strong className="text-foreground">{booking.packageId?.destination}</strong></div>
+                <div>🗓 Duration: <strong className="text-foreground">{booking.packageId?.days}D / {booking.packageId?.nights}N</strong></div>
               </div>
             </div>
           </div>
@@ -337,34 +258,27 @@ function BookingDetailsComponent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-muted/20 p-4 rounded-xl border">
               <div>
-                <div className="text-muted-foreground">Primary Contact Name:</div>
-                <div className="font-semibold text-sm mt-0.5">
-                  {booking.travellerInfo?.fullName}
-                </div>
+                <div className="text-muted-foreground flex items-center gap-1">Primary Contact Name:</div>
+                <div className="font-semibold text-sm mt-0.5">{booking.travellerInfo?.fullName}</div>
               </div>
               <div>
                 <div className="text-muted-foreground flex items-center gap-1">
                   <Phone size={12} /> Mobile Number:
                 </div>
-                <div className="font-mono font-semibold text-sm mt-0.5">
-                  {booking.travellerInfo?.mobileNumber}
-                </div>
+                <div className="font-mono font-semibold text-sm mt-0.5">{booking.travellerInfo?.mobileNumber}</div>
               </div>
               <div>
                 <div className="text-muted-foreground flex items-center gap-1">
                   <Mail size={12} /> Email Address:
                 </div>
-                <div className="font-semibold text-sm mt-0.5">
-                  {booking.travellerInfo?.email}
-                </div>
+                <div className="font-semibold text-sm mt-0.5">{booking.travellerInfo?.email}</div>
               </div>
               <div>
                 <div className="text-muted-foreground flex items-center gap-1">
                   <Calendar size={12} /> Travel Date & Style:
                 </div>
                 <div className="font-semibold text-sm mt-0.5">
-                  {formatDate(booking.travellerInfo?.travelDate)} (
-                  {booking.travellerInfo?.travelType})
+                  {formatDate(booking.travellerInfo?.travelDate)} ({booking.travellerInfo?.travelType})
                 </div>
               </div>
             </div>
@@ -379,140 +293,170 @@ function BookingDetailsComponent() {
             )}
 
             {/* Travellers List */}
-            {booking.travellerInfo?.travellers &&
-              booking.travellerInfo.travellers.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-semibold text-muted-foreground">
-                    Individual Travellers ({booking.travellerInfo.travellers.length} Pax):
-                  </div>
-                  <div className="border rounded-xl overflow-hidden text-xs">
-                    <table className="w-full text-left">
-                      <thead className="bg-muted/50 border-b text-muted-foreground">
-                        <tr>
-                          <th className="p-2.5">#</th>
-                          <th className="p-2.5">Name</th>
-                          <th className="p-2.5">Age</th>
-                          <th className="p-2.5">Gender</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {booking.travellerInfo.travellers.map((t: any, i: number) => (
-                          <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
-                            <td className="p-2.5 text-muted-foreground">{i + 1}</td>
-                            <td className="p-2.5 font-medium">{t.name || '-'}</td>
-                            <td className="p-2.5">{t.age} years</td>
-                            <td className="p-2.5 uppercase font-mono">{t.gender}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+            {booking.travellerInfo?.travellers && booking.travellerInfo.travellers.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-muted-foreground">
+                  Individual Travellers ({booking.travellerInfo.travellers.length} Pax):
                 </div>
-              )}
-          </div>
-
-          {/* ── CUSTOMIZED: Payment Transactions Panel ── */}
-          {isCustomized && (
-            <div className="rounded-2xl border bg-card p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Receipt className="w-4 h-4 text-purple-600" /> Payment Transactions
-                </h3>
-                {booking.finalPackageAmount && (
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex flex-col items-end">
-                      <span className="text-muted-foreground">Package Amount</span>
-                      <span className="font-bold text-sm text-foreground">
-                        ₹{booking.finalPackageAmount.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-muted-foreground">Paid</span>
-                      <span className="font-bold text-sm text-green-700">
-                        ₹{totalPaid.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    {balance !== null && (
-                      <div className="flex flex-col items-end">
-                        <span className="text-muted-foreground">Balance Due</span>
-                        <span
-                          className={`font-bold text-sm ${balance > 0 ? 'text-amber-600' : 'text-green-600'}`}
-                        >
-                          ₹{balance.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Progress bar */}
-              {booking.finalPackageAmount && booking.finalPackageAmount > 0 && (
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] text-muted-foreground">
-                    <span>Payment progress</span>
-                    <span>
-                      {Math.min(100, Math.round((totalPaid / booking.finalPackageAmount) * 100))}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-green-500 transition-all duration-500"
-                      style={{
-                        width: `${Math.min(100, (totalPaid / booking.finalPackageAmount) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Transactions table */}
-              {hasTransactions ? (
                 <div className="border rounded-xl overflow-hidden text-xs">
                   <table className="w-full text-left">
                     <thead className="bg-muted/50 border-b text-muted-foreground">
                       <tr>
                         <th className="p-2.5">#</th>
-                        <th className="p-2.5">Date</th>
-                        <th className="p-2.5">Amount</th>
-                        <th className="p-2.5">Method</th>
-                        <th className="p-2.5">Reference</th>
-                        <th className="p-2.5">Notes</th>
+                        <th className="p-2.5">Name</th>
+                        <th className="p-2.5">Age</th>
+                        <th className="p-2.5">Gender</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {transactions.map((t: any, i: number) => (
-                        <tr key={t._id || i} className="border-b last:border-0 hover:bg-muted/20">
+                      {booking.travellerInfo.travellers.map((t: any, i: number) => (
+                        <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
                           <td className="p-2.5 text-muted-foreground">{i + 1}</td>
-                          <td className="p-2.5 font-mono whitespace-nowrap">
-                            {formatDateTime(t.recordedAt)}
-                          </td>
-                          <td className="p-2.5 font-bold text-green-700">
-                            ₹{t.amount?.toLocaleString('en-IN')}
-                          </td>
-                          <td className="p-2.5">
-                            <span className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">
-                              {t.method}
-                            </span>
-                          </td>
-                          <td className="p-2.5 font-mono text-muted-foreground">
-                            {t.referenceNumber || '—'}
-                          </td>
-                          <td className="p-2.5 text-muted-foreground max-w-[140px] truncate">
-                            {t.notes || '—'}
-                          </td>
+                          <td className="p-2.5 font-medium">{t.name || '-'}</td>
+                          <td className="p-2.5">{t.age} years</td>
+                          <td className="p-2.5 uppercase font-mono">{t.gender}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground italic">
-                  No payment transactions recorded yet.
-                </p>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+
+          {/* Payment Transaction History & Progress */}
+          {booking.bookingType === 'CUSTOMIZED' && (() => {
+            const finalAmount = booking.pricingDetails?.finalAmount || 0
+            const totalPaid = (booking.transactions || [])
+              .reduce((sum: number, t: any) => sum + t.amount, 0)
+            const pendingAmount = Math.max(0, finalAmount - totalPaid)
+            const percentagePaid = finalAmount > 0 ? Math.round((totalPaid / finalAmount) * 100) : 0
+
+            return (
+              <div className="rounded-2xl border bg-card p-5 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <span>💳</span> Payment Transaction History
+                  </h3>
+                  {finalAmount > 0 && (
+                    <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                      Progress: {percentagePaid}% Paid
+                    </span>
+                  )}
+                </div>
+
+                {/* Progress Stats Summary */}
+                {finalAmount > 0 && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3 text-center bg-muted/20 p-3 rounded-xl border">
+                      <div>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold">Total Amount</div>
+                        <div className="text-xs font-semibold text-primary">₹{finalAmount.toLocaleString('en-IN')}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold text-emerald-600">Paid</div>
+                        <div className="text-xs font-semibold text-emerald-700">₹{totalPaid.toLocaleString('en-IN')}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold text-amber-600">Pending</div>
+                        <div className="text-xs font-semibold text-amber-700">₹{pendingAmount.toLocaleString('en-IN')}</div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1">
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div
+                          className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, percentagePaid)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Transaction list table */}
+                {booking.transactions && booking.transactions.length > 0 ? (
+                  <div className="border rounded-xl overflow-hidden text-xs">
+                    <table className="w-full text-left">
+                      <thead className="bg-muted/50 border-b text-muted-foreground">
+                        <tr>
+                          <th className="p-2.5">Date</th>
+                          <th className="p-2.5">Payment Mode</th>
+                          <th className="p-2.5">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {booking.transactions.map((t: any, i: number) => (
+                          <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
+                            <td className="p-2.5 whitespace-nowrap">{formatDate(t.transactionDate)}</td>
+                            <td className="p-2.5 font-medium">{t.paymentMode}</td>
+                            <td className="p-2.5 font-semibold text-emerald-700">₹{t.amount.toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No payment transactions recorded yet.</p>
+                )}
+
+                {/* Simplified Record Transaction Form */}
+                {pendingAmount > 0 ? (
+                  <div className="bg-muted/20 p-4 rounded-xl border space-y-3">
+                    <h4 className="text-xs font-bold text-foreground">Record Payment Entry</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="txAmount" className="text-[10px] font-semibold text-muted-foreground">Amount (₹) *</Label>
+                        <Input
+                          id="txAmount"
+                          type="number"
+                          min={0.01}
+                          max={pendingAmount}
+                          step="any"
+                          placeholder={`Max: ₹${pendingAmount.toLocaleString('en-IN')}`}
+                          value={txAmount}
+                          onChange={(e) => setTxAmount(e.target.value)}
+                          className="h-8 text-xs bg-background"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="txMode" className="text-[10px] font-semibold text-muted-foreground">Payment Mode *</Label>
+                        <Select value={txMode} onValueChange={setTxMode}>
+                          <SelectTrigger id="txMode" className="h-8 text-xs bg-background">
+                            <SelectValue placeholder="Mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="UPI">UPI</SelectItem>
+                            <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                            <SelectItem value="CASH">Cash</SelectItem>
+                            <SelectItem value="ONLINE">Online</SelectItem>
+                            <SelectItem value="OTHER">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => transactionMutation.mutate()}
+                      disabled={transactionMutation.isPending || !txAmount || Number(txAmount) <= 0 || Number(txAmount) > pendingAmount}
+                      className="w-full h-8 text-xs gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <CheckCircle2 size={12} />
+                      {transactionMutation.isPending ? 'Recording...' : 'Record Payment'}
+                    </Button>
+                  </div>
+                ) : finalAmount > 0 ? (
+                  <div className="bg-green-50 border border-green-200 text-green-800 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 justify-center">
+                    <span>✅</span> Package Fully Paid
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3.5 rounded-xl text-xs flex items-center gap-1.5 justify-center">
+                    <span>⚠️</span> Please set quotation amount to record payments.
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Status Audit History Timeline */}
           <div className="rounded-2xl border bg-card p-5 space-y-4">
@@ -531,25 +475,19 @@ function BookingDetailsComponent() {
                       </div>
                       <div className="text-muted-foreground">{formatDateTime(item.createdAt)}</div>
                     </div>
-                    {item.notes && (
-                      <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border">
-                        {item.notes}
-                      </div>
-                    )}
+                    {item.notes && <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border">{item.notes}</div>}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground italic">
-                No status changes recorded yet.
-              </p>
+              <p className="text-xs text-muted-foreground italic">No status changes recorded yet.</p>
             )}
           </div>
         </div>
 
-        {/* RIGHT COLUMN */}
+        {/* RIGHT COLUMN: Pricing & Actions */}
         <div className="space-y-6">
-          {/* Pricing & Payment */}
+          {/* Pricing & Coupon Card */}
           <div className="rounded-2xl border bg-card p-5 space-y-4">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-primary" /> Pricing & Payment
@@ -577,9 +515,7 @@ function BookingDetailsComponent() {
                 <div className="font-bold text-blue-800 flex items-center gap-1">
                   <Tag size={12} /> Coupon Applied:
                 </div>
-                <div className="font-mono text-blue-900 font-semibold">
-                  {booking.couponId.couponCode}
-                </div>
+                <div className="font-mono text-blue-900 font-semibold">{booking.couponId.couponCode}</div>
               </div>
             )}
 
@@ -602,229 +538,64 @@ function BookingDetailsComponent() {
             )}
           </div>
 
-          {/* ── CUSTOMIZED: Final Package Amount Panel ── */}
-          {isCustomized && (
-            <div className="rounded-2xl border bg-card p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <IndianRupee className="w-4 h-4 text-purple-600" /> Final Package Amount
+          {/* Quotation Manager (For Customized Packages) */}
+          {booking.bookingType === 'CUSTOMIZED' && (() => {
+            const hasTransactions = booking.transactions && booking.transactions.length > 0
+            return (
+              <div className="rounded-2xl border bg-card p-5 space-y-4">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-purple-600" /> Prepare Quotation
+                </h3>
+
                 {hasTransactions && (
-                  <span className="ml-auto flex items-center gap-1 text-[10px] text-amber-600 font-medium bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                    <Lock className="w-3 h-3" /> Locked
-                  </span>
+                  <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl text-xs space-y-1">
+                    <p className="font-semibold flex items-center gap-1">
+                      <span>⚠️</span> Price Locked
+                    </p>
+                    <p>The final package amount cannot be edited because payment transactions have already been recorded.</p>
+                  </div>
                 )}
-              </h3>
 
-              {booking.finalPackageAmount && (
-                <div className="bg-purple-50 border border-purple-200 p-3 rounded-xl text-xs">
-                  <div className="text-purple-700 font-semibold text-base">
-                    ₹{booking.finalPackageAmount.toLocaleString('en-IN')}
-                  </div>
-                  <div className="text-purple-500 text-[10px] mt-0.5">
-                    Confirmed package price
-                  </div>
-                </div>
-              )}
-
-              {hasTransactions ? (
-                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-2">
-                  <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  The final package amount is locked because payment transactions have already been
-                  recorded.
-                </p>
-              ) : (
                 <div className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="finalAmount" className="text-xs font-semibold">
-                      {booking.finalPackageAmount
-                        ? 'Update Package Amount (₹)'
-                        : 'Set Final Amount (₹) *'}
-                    </Label>
+                    <Label htmlFor="quoteAmount" className="text-xs font-semibold">Quotation Amount (₹) *</Label>
                     <Input
-                      id="finalAmount"
+                      id="quoteAmount"
                       type="number"
                       min={1}
+                      disabled={hasTransactions}
                       placeholder="e.g. 45000"
-                      value={finalAmountInput}
-                      onChange={(e) => setFinalAmountInput(e.target.value)}
-                      className="h-9 text-xs"
-                    />
-                  </div>
-                  <Button
-                    onClick={() => finalAmountMutation.mutate()}
-                    disabled={finalAmountMutation.isPending || !finalAmountInput || Number(finalAmountInput) <= 0}
-                    className="w-full h-9 text-xs gap-1.5 cursor-pointer bg-purple-700 hover:bg-purple-800 text-white"
-                  >
-                    <CheckCircle2 size={14} />
-                    {finalAmountMutation.isPending
-                      ? 'Saving...'
-                      : booking.finalPackageAmount
-                        ? 'Update Amount'
-                        : 'Confirm Final Amount'}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── CUSTOMIZED: Add Transaction Panel ── */}
-          {isCustomized && (
-            <div className="rounded-2xl border bg-card p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Plus className="w-4 h-4 text-purple-600" /> Record Payment
-              </h3>
-
-              {!booking.finalPackageAmount ? (
-                <p className="text-xs text-muted-foreground italic">
-                  Set the final package amount above before recording payment transactions.
-                </p>
-              ) : balance !== null && balance <= 0 ? (
-                <div className="bg-green-50 border border-green-200 p-3 rounded-xl text-xs text-green-700 flex items-center gap-2 font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Full payment received! No balance remaining.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="txnAmount" className="text-xs font-semibold">
-                      Amount Received (₹) *
-                    </Label>
-                    <Input
-                      id="txnAmount"
-                      type="number"
-                      min={1}
-                      max={balance ?? undefined}
-                      placeholder={balance !== null ? `Max ₹${balance.toLocaleString('en-IN')}` : 'Amount'}
-                      value={txnAmount}
-                      onChange={(e) => setTxnAmount(e.target.value)}
+                      value={quoteAmount}
+                      onChange={(e) => setQuoteAmount(e.target.value)}
                       className="h-9 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="txnMethod" className="text-xs font-semibold">
-                      Payment Method *
-                    </Label>
-                    <Select value={txnMethod} onValueChange={setTxnMethod}>
-                      <SelectTrigger id="txnMethod" className="h-9 text-xs bg-background cursor-pointer">
-                        <SelectValue placeholder="Select method..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PAYMENT_METHODS.map((m) => (
-                          <SelectItem key={m.value} value={m.value} className="cursor-pointer text-xs">
-                            {m.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="txnRef" className="text-xs font-semibold">
-                      Reference Number (Optional)
-                    </Label>
-                    <Input
-                      id="txnRef"
-                      type="text"
-                      placeholder="UTR / Cheque No / Transaction ID"
-                      value={txnRef}
-                      onChange={(e) => setTxnRef(e.target.value)}
-                      className="h-9 text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="txnNotes" className="text-xs font-semibold">
-                      Notes (Optional)
-                    </Label>
+                    <Label htmlFor="quoteNotes" className="text-xs font-semibold">Quotation Notes / Terms</Label>
                     <Textarea
-                      id="txnNotes"
-                      rows={2}
-                      placeholder="Any additional notes about this payment..."
-                      value={txnNotes}
-                      onChange={(e) => setTxnNotes(e.target.value)}
+                      id="quoteNotes"
+                      rows={3}
+                      disabled={hasTransactions}
+                      placeholder="Include flight details, hotel categories, inclusions..."
+                      value={quoteNotes}
+                      onChange={(e) => setQuoteNotes(e.target.value)}
                       className="text-xs"
                     />
                   </div>
 
                   <Button
-                    onClick={() => addTransactionMutation.mutate()}
-                    disabled={
-                      addTransactionMutation.isPending ||
-                      !txnAmount ||
-                      Number(txnAmount) <= 0 ||
-                      !txnMethod
-                    }
-                    className="w-full h-9 text-xs gap-1.5 cursor-pointer bg-green-700 hover:bg-green-800 text-white"
+                    onClick={() => quotationMutation.mutate()}
+                    disabled={quotationMutation.isPending || !quoteAmount || hasTransactions}
+                    className="w-full h-9 text-xs gap-1.5 cursor-pointer bg-purple-700 hover:bg-purple-800 text-white"
                   >
-                    <TrendingUp size={14} />
-                    {addTransactionMutation.isPending ? 'Recording...' : 'Record Payment'}
+                    <CheckCircle2 size={14} />
+                    {quotationMutation.isPending ? 'Saving...' : 'Save & Share Quotation'}
                   </Button>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Quotation Manager (For Customized Packages) */}
-          {isCustomized && (
-            <div className="rounded-2xl border bg-card p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <FileText className="w-4 h-4 text-purple-600" /> Prepare Quotation
-              </h3>
-
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="quoteAmount" className="text-xs font-semibold">
-                    Quotation Amount (₹) *
-                  </Label>
-                  <Input
-                    id="quoteAmount"
-                    type="number"
-                    min={1}
-                    placeholder="e.g. 45000"
-                    value={quoteAmount}
-                    onChange={(e) => setQuoteAmount(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="quoteValidUntil" className="text-xs font-semibold">
-                    Valid Until (Optional)
-                  </Label>
-                  <Input
-                    id="quoteValidUntil"
-                    type="date"
-                    value={quoteValidUntil}
-                    onChange={(e) => setQuoteValidUntil(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="quoteNotes" className="text-xs font-semibold">
-                    Quotation Notes / Terms
-                  </Label>
-                  <Textarea
-                    id="quoteNotes"
-                    rows={3}
-                    placeholder="Include flight details, hotel categories, inclusions..."
-                    value={quoteNotes}
-                    onChange={(e) => setQuoteNotes(e.target.value)}
-                    className="text-xs"
-                  />
-                </div>
-
-                <Button
-                  onClick={() => quotationMutation.mutate()}
-                  disabled={quotationMutation.isPending || !quoteAmount}
-                  className="w-full h-9 text-xs gap-1.5 cursor-pointer bg-purple-700 hover:bg-purple-800 text-white"
-                >
-                  <CheckCircle2 size={14} />
-                  {quotationMutation.isPending ? 'Saving...' : 'Save & Share Quotation'}
-                </Button>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Booking Status Manager */}
           <div className="rounded-2xl border bg-card p-5 space-y-4">
@@ -834,16 +605,14 @@ function BookingDetailsComponent() {
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="status" className="text-xs font-semibold">
-                  Select New Status *
-                </Label>
+                <Label htmlFor="status" className="text-xs font-semibold">Select New Status *</Label>
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger id="status" className="h-9 text-xs bg-background cursor-pointer">
+                  <SelectTrigger id="status" className="h-9 text-xs bg-background">
                     <SelectValue placeholder="Choose status..." />
                   </SelectTrigger>
                   <SelectContent>
                     {availableStatuses.map((st) => (
-                      <SelectItem key={st} value={st} className="cursor-pointer">
+                      <SelectItem key={st} value={st}>
                         {st.replace(/_/g, ' ')}
                       </SelectItem>
                     ))}
@@ -852,9 +621,7 @@ function BookingDetailsComponent() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="statusNotes" className="text-xs font-semibold">
-                  Status Change Notes
-                </Label>
+                <Label htmlFor="statusNotes" className="text-xs font-semibold">Status Change Notes</Label>
                 <Textarea
                   id="statusNotes"
                   rows={2}

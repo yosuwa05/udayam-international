@@ -927,7 +927,7 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
     const adminId = store.id
 
     try {
-        const { amount, notes, validUntil, status } = body
+        const { amount, notes, status } = body
         if (amount === undefined || amount <= 0) {
             set.status = 400
             return { status: false, error: "Valid quotation amount is required" }
@@ -944,6 +944,11 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
             return { status: false, error: "Quotations can only be updated for customized bookings" }
         }
 
+        if (booking.transactions && booking.transactions.length > 0) {
+            set.status = 400
+            return { status: false, error: "Final package amount cannot be updated after payment transactions have been recorded" }
+        }
+
         const oldStatus = booking.status
         const nextStatus = status || "QUOTATION_SHARED"
 
@@ -951,7 +956,6 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
             amount: Number(amount),
             notes,
             sharedAt: new Date(),
-            validUntil: validUntil ? new Date(validUntil) : undefined,
         }
         booking.pricingDetails.originalAmount = Number(amount)
         booking.pricingDetails.finalAmount = Number(amount)
@@ -1022,24 +1026,23 @@ export const updateBookingStatus = async (ctx: Context<{ params: { id: string } 
     }
 }
 
-// ─── 11. ADMIN: Set Final Package Amount for Customized Booking ───────────────
+// ─── 11. ADMIN: Record Customized Payment Transaction Endpoint ────────────────
 
-export const setCustomizedFinalAmount = async (ctx: Context<{ params: { id: string } }>) => {
+export const recordCustomizedTransaction = async (ctx: Context<{ params: { id: string } }>) => {
     const { params, body, set, store }: any = ctx
     const adminId = store.id
 
     try {
-        const { finalPackageAmount } = body
+        const { amount, paymentMode, notes } = body
 
-        if (finalPackageAmount === undefined || finalPackageAmount === null) {
+        if (amount === undefined || amount <= 0) {
             set.status = 400
-            return { status: false, error: "finalPackageAmount is required" }
+            return { status: false, error: "Amount must be greater than zero" }
         }
 
-        const amount = Number(finalPackageAmount)
-        if (isNaN(amount) || amount <= 0) {
+        if (!paymentMode || !["CASH", "BANK_TRANSFER", "UPI", "ONLINE", "OTHER"].includes(paymentMode)) {
             set.status = 400
-            return { status: false, error: "finalPackageAmount must be a positive number" }
+            return { status: false, error: "Valid payment mode is required" }
         }
 
         const booking = await BookingModel.findById(params.id)
@@ -1050,153 +1053,62 @@ export const setCustomizedFinalAmount = async (ctx: Context<{ params: { id: stri
 
         if (booking.bookingType !== "CUSTOMIZED") {
             set.status = 400
-            return { status: false, error: "Final package amount can only be set for customized bookings" }
+            return { status: false, error: "Transactions can only be recorded for customized bookings" }
         }
 
-        // Lock: once any payment transaction exists, the amount cannot be changed
-        if (booking.paymentTransactions && booking.paymentTransactions.length > 0) {
-            set.status = 403
-            return {
-                status: false,
-                error: "Final package amount cannot be changed after payment transactions have been recorded",
-            }
-        }
-
-        booking.finalPackageAmount = amount
-        booking.pricingDetails.finalAmount = amount
-        booking.pricingDetails.originalAmount = amount
-        await booking.save()
-
-        await BookingStatusHistoryModel.create({
-            bookingId: booking._id,
-            fromStatus: booking.status,
-            toStatus: booking.status,
-            changedBy: new Types.ObjectId(adminId),
-            notes: `Final package amount set to ₹${amount.toLocaleString("en-IN")} by admin`,
-        })
-
-        return {
-            status: true,
-            message: "Final package amount saved successfully",
-            data: { finalPackageAmount: booking.finalPackageAmount },
-        }
-    } catch (error: any) {
-        console.error("Set Final Package Amount Error", error)
-        set.status = 500
-        return { status: false, error: "Failed to set final package amount" }
-    }
-}
-
-// ─── 12. ADMIN: Add Payment Transaction to Customized Booking ────────────────
-
-const VALID_PAYMENT_METHODS = ["CASH", "UPI", "BANK_TRANSFER", "CHEQUE", "OTHER"]
-
-export const addCustomizedPaymentTransaction = async (ctx: Context<{ params: { id: string } }>) => {
-    const { params, body, set, store }: any = ctx
-    const adminId = store.id
-
-    try {
-        const { amount, method, referenceNumber, notes } = body
-
-        // Validate required fields
-        if (amount === undefined || amount === null) {
+        const finalAmount = booking.pricingDetails?.finalAmount || 0
+        if (finalAmount <= 0) {
             set.status = 400
-            return { status: false, error: "Transaction amount is required" }
-        }
-        const txnAmount = Number(amount)
-        if (isNaN(txnAmount) || txnAmount <= 0) {
-            set.status = 400
-            return { status: false, error: "Transaction amount must be a positive number" }
+            return { status: false, error: "Please set the final package amount before recording payment transactions" }
         }
 
-        if (!method || !VALID_PAYMENT_METHODS.includes(method)) {
+        // Calculate total paid amount
+        const totalPaid = (booking.transactions || [])
+            .reduce((sum: number, t: any) => sum + t.amount, 0)
+
+        const pendingAmount = finalAmount - totalPaid
+        if (Number(amount) > pendingAmount) {
             set.status = 400
             return {
                 status: false,
-                error: `Payment method must be one of: ${VALID_PAYMENT_METHODS.join(", ")}`,
+                error: `Payment amount ₹${Number(amount).toLocaleString("en-IN")} exceeds the remaining pending amount of ₹${pendingAmount.toLocaleString("en-IN")}`,
             }
         }
 
-        const booking = await BookingModel.findById(params.id)
-        if (!booking) {
-            set.status = 404
-            return { status: false, error: "Booking not found" }
-        }
-
-        if (booking.bookingType !== "CUSTOMIZED") {
-            set.status = 400
-            return { status: false, error: "Payment transactions can only be added to customized bookings" }
-        }
-
-        // Ensure final package amount is set first
-        if (!booking.finalPackageAmount || booking.finalPackageAmount <= 0) {
-            set.status = 400
-            return {
-                status: false,
-                error: "Please set the final package amount before recording payment transactions",
-            }
-        }
-
-        // Prevent duplicate reference numbers on the same booking
-        if (referenceNumber && referenceNumber.trim()) {
-            const refTrimmed = referenceNumber.trim()
-            const dupRef = booking.paymentTransactions.some(
-                (t: any) => t.referenceNumber && t.referenceNumber.toLowerCase() === refTrimmed.toLowerCase()
-            )
-            if (dupRef) {
-                set.status = 400
-                return {
-                    status: false,
-                    error: `A transaction with reference number "${refTrimmed}" already exists for this booking`,
-                }
-            }
-        }
-
-        // Prevent over-payment (sum + new amount > finalPackageAmount)
-        const totalPaid = booking.paymentTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
-        if (totalPaid + txnAmount > booking.finalPackageAmount) {
-            set.status = 400
-            return {
-                status: false,
-                error: `This transaction (₹${txnAmount.toLocaleString("en-IN")}) would exceed the final package amount of ₹${booking.finalPackageAmount.toLocaleString("en-IN")}. Total already recorded: ₹${totalPaid.toLocaleString("en-IN")}`,
-            }
-        }
-
-        // Append the transaction
+        // Append transaction
         const newTransaction = {
-            amount: txnAmount,
-            method,
-            referenceNumber: referenceNumber?.trim() || undefined,
+            amount: Number(amount),
+            paymentMode,
+            transactionDate: new Date(),
             notes: notes?.trim() || undefined,
-            recordedBy: new Types.ObjectId(adminId),
-            recordedAt: new Date(),
         }
-        booking.paymentTransactions.push(newTransaction as any)
 
+        if (!booking.transactions) {
+            booking.transactions = []
+        }
+        booking.transactions.push(newTransaction as any)
+
+        // If the pending amount is fully paid, we can optionally check but let's keep status update manual or auto.
+        // It says "defaulty create date in backend show the pending and percentage and progress".
         await booking.save()
 
-        // Log to status history for the timeline
+        // Create Status History entry (timeline record)
         await BookingStatusHistoryModel.create({
             bookingId: booking._id,
             fromStatus: booking.status,
             toStatus: booking.status,
             changedBy: new Types.ObjectId(adminId),
-            notes: `Payment recorded: ₹${txnAmount.toLocaleString("en-IN")} via ${method}${referenceNumber ? ` (Ref: ${referenceNumber.trim()})` : ""}. Total paid: ₹${(totalPaid + txnAmount).toLocaleString("en-IN")} / ₹${booking.finalPackageAmount.toLocaleString("en-IN")}`,
+            notes: `Recorded payment entry of ₹${Number(amount).toLocaleString("en-IN")} via ${paymentMode}.${notes ? ` Notes: ${notes}` : ""}`,
         })
 
         return {
             status: true,
-            message: "Payment transaction recorded successfully",
-            data: {
-                transaction: booking.paymentTransactions[booking.paymentTransactions.length - 1],
-                totalPaid: totalPaid + txnAmount,
-                finalPackageAmount: booking.finalPackageAmount,
-                balance: booking.finalPackageAmount - (totalPaid + txnAmount),
-            },
+            message: "Payment recorded successfully",
+            data: booking,
         }
     } catch (error: any) {
-        console.error("Add Payment Transaction Error", error)
+        console.error("Record Transaction Error", error)
         set.status = 500
-        return { status: false, error: "Failed to record payment transaction" }
+        return { status: false, error: "Failed to record transaction" }
     }
 }
