@@ -2,7 +2,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { _axios } from "@/lib/axios"
+import { useAuth } from "@/lib/useAuth"
+import LoginModal from "./LoginModal"
+import TourismBookingModal from "./TourismBookingModal"
+import { toast } from "sonner"
 import Carsoule from "./Carsoule"
+import { CouponShowcase } from "./CouponShowcase"
 import img1 from "../assets/1.png"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -18,6 +23,7 @@ interface ApiPackage {
   destination: string
   destinationRegion: string
   packageType: "DOMESTIC" | "INTERNATIONAL"
+  bookingType?: "STANDARD" | "CUSTOMIZED"
   tripTypes: string[]
   description: string
   price: number
@@ -36,6 +42,7 @@ interface ApiPackage {
   isFeatured: boolean
   label?: string
   order?: number
+  itinerary?: { day: number; title: string; description: string }[]
 }
 
 interface ApiResponse {
@@ -703,18 +710,23 @@ export const PCard: React.FC<{
   card: ApiPackage
   listView: boolean
   onViewDetails: (pkg: ApiPackage) => void
-}> = ({ card, listView, onViewDetails }) => {
+  onBookNow: (pkg: ApiPackage) => void
+}> = ({ card, listView, onViewDetails, onBookNow }) => {
   const ref = useRef<HTMLDivElement>(null)
   const WHATSAPP_NUMBER = "917299771111"
 
   const handleWhatsAppEnquiry = () => {
+    const priceLine =
+      card.bookingType === "CUSTOMIZED"
+        ? ""
+        : `💰 Price: ₹${card.price.toLocaleString("en-IN")}\n\n`
     const message =
       `🌍 New Travel Package Enquiry\n\n` +
       `📦 Package: ${card.title}\n` +
       `📍 Destination: ${card.destination}\n` +
       `🗓 Duration: ${card.days} Days / ${card.nights} Nights\n` +
       `👥 Pax: ${card.minPax}–${card.maxPax}\n` +
-      `💰 Price: ₹${card.price.toLocaleString("en-IN")}\n\n` +
+      priceLine +
       `I am interested in this package. Please share more details.`
     window.open(
       `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
@@ -855,38 +867,40 @@ export const PCard: React.FC<{
           </div>
         )} */}
         {/* Price */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 14,
-            right: 14,
-            textAlign: "right",
-          }}
-        >
-          {card.strikePrice && (
-            <div
-              style={{
-                fontFamily: f,
-                fontSize: ".68rem",
-                color: "rgba(255,255,255,.55)",
-                textDecoration: "line-through",
-              }}
-            >
-              {fmtPrice(card.strikePrice)}
-            </div>
-          )}
+        {card.bookingType !== "CUSTOMIZED" && (
           <div
             style={{
-              fontFamily: "'Libre Baskerville',serif",
-              fontSize: "1.3rem",
-              fontWeight: 700,
-              color: "#fff",
-              lineHeight: 1,
+              position: "absolute",
+              bottom: 14,
+              right: 14,
+              textAlign: "right",
             }}
           >
-            {fmtPrice(card.price)}
+            {card.strikePrice && (
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".68rem",
+                  color: "rgba(255,255,255,.55)",
+                  textDecoration: "line-through",
+                }}
+              >
+                {fmtPrice(card.strikePrice)}
+              </div>
+            )}
+            <div
+              style={{
+                fontFamily: "'Libre Baskerville',serif",
+                fontSize: "1.3rem",
+                fontWeight: 700,
+                color: "#fff",
+                lineHeight: 1,
+              }}
+            >
+              {fmtPrice(card.price)}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Body */}
@@ -974,7 +988,21 @@ export const PCard: React.FC<{
             borderTop: "1px solid #E8E4DC",
           }}
         >
-          {card.discount ? (
+          {card.bookingType === "CUSTOMIZED" ? (
+            <span
+              style={{
+                fontFamily: f,
+                fontSize: ".72rem",
+                fontWeight: 700,
+                color: "#D97706",
+                background: "rgba(217,119,6,.08)",
+                padding: "4px 10px",
+                borderRadius: 999,
+              }}
+            >
+              Customized
+            </span>
+          ) : card.discount ? (
             <span
               style={{
                 fontFamily: f,
@@ -1030,7 +1058,7 @@ export const PCard: React.FC<{
               Details
             </button>
             <button
-              onClick={handleWhatsAppEnquiry}
+              onClick={() => onBookNow(card)}
               style={{
                 fontFamily: f,
                 fontSize: ".75rem",
@@ -1059,7 +1087,7 @@ export const PCard: React.FC<{
                   "translateY(0)"
               }}
             >
-              Enquiry →
+              {card.bookingType === "CUSTOMIZED" ? "Enquire Now" : "Book Now"}
             </button>
           </div>
         </div>
@@ -1140,7 +1168,8 @@ export const SecHeader: React.FC<{
 const TourismDetailsDrawer: React.FC<{
   pkg: ApiPackage | null
   onClose: () => void
-}> = ({ pkg, onClose }) => {
+  onBookNow: (pkg: ApiPackage) => void
+}> = ({ pkg, onClose, onBookNow }) => {
   const [isOpen, setIsOpen] = useState(false)
   const f = "'Inter',sans-serif"
 
@@ -1160,13 +1189,17 @@ const TourismDetailsDrawer: React.FC<{
   if (!pkg) return null
 
   const handleWhatsAppEnquiry = () => {
+    const priceLine =
+      pkg.bookingType === "CUSTOMIZED"
+        ? ""
+        : `💰 Price: ₹${pkg.price.toLocaleString("en-IN")}\n\n`
     const message =
       `🌍 New Travel Package Enquiry\n\n` +
       `📦 Package: ${pkg.title}\n` +
       `📍 Destination: ${pkg.destination}\n` +
       `🗓 Duration: ${pkg.days} Days / ${pkg.nights} Nights\n` +
       `👥 Pax: ${pkg.minPax}–${pkg.maxPax}\n` +
-      `💰 Price: ₹${pkg.price.toLocaleString("en-IN")}\n\n` +
+      priceLine +
       `I am interested in this package. Please share more details.`
     window.open(
       `https://wa.me/917299771111?text=${encodeURIComponent(message)}`,
@@ -1361,22 +1394,53 @@ const TourismDetailsDrawer: React.FC<{
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "1.1rem", marginBottom: 4 }}>💰</div>
-              <div
-                style={{ fontFamily: f, fontSize: ".72rem", color: "#9494b0" }}
-              >
-                Starting From
-              </div>
-              <div
-                style={{
-                  fontFamily: f,
-                  fontSize: ".82rem",
-                  fontWeight: 700,
-                  color: "#2E7D32",
-                }}
-              >
-                ₹{pkg.price.toLocaleString("en-IN")}
-              </div>
+              {pkg.bookingType === "CUSTOMIZED" ? (
+                <>
+                  <div style={{ fontSize: "1.1rem", marginBottom: 4 }}>📝</div>
+                  <div
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".72rem",
+                      color: "#9494b0",
+                    }}
+                  >
+                    Package Type
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".82rem",
+                      fontWeight: 700,
+                      color: "#D97706",
+                    }}
+                  >
+                    Customized
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: "1.1rem", marginBottom: 4 }}>💰</div>
+                  <div
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".72rem",
+                      color: "#9494b0",
+                    }}
+                  >
+                    Starting From
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".82rem",
+                      fontWeight: 700,
+                      color: "#2E7D32",
+                    }}
+                  >
+                    ₹{pkg.price ? pkg.price.toLocaleString("en-IN") : "0"}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1667,30 +1731,58 @@ const TourismDetailsDrawer: React.FC<{
             flexShrink: 0,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontFamily: f,
-                fontSize: ".7rem",
-                color: "#9494b0",
-                marginBottom: 2,
-              }}
-            >
-              Starting Price
+          {pkg.bookingType === "CUSTOMIZED" ? (
+            <div>
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".7rem",
+                  color: "#9494b0",
+                  marginBottom: 2,
+                }}
+              >
+                Package Type
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: "1.45rem",
+                  fontWeight: 700,
+                  color: "#D97706",
+                }}
+              >
+                Customized
+              </div>
             </div>
-            <div
-              style={{
-                fontFamily: "'Libre Baskerville',serif",
-                fontSize: "1.45rem",
-                fontWeight: 700,
-                color: "#1B2B6B",
-              }}
-            >
-              ₹{pkg.price.toLocaleString("en-IN")}
+          ) : (
+            <div>
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".7rem",
+                  color: "#9494b0",
+                  marginBottom: 2,
+                }}
+              >
+                Starting Price
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: "1.45rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                }}
+              >
+                ₹{pkg.price ? pkg.price.toLocaleString("en-IN") : "0"}
+              </div>
             </div>
-          </div>
+          )}
           <button
-            onClick={handleWhatsAppEnquiry}
+            onClick={() => {
+              onClose()
+              onBookNow(pkg)
+            }}
             style={{
               fontFamily: f,
               fontSize: ".85rem",
@@ -1709,13 +1801,14 @@ const TourismDetailsDrawer: React.FC<{
             onMouseEnter={(e) => (e.currentTarget.style.background = "#243590")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "#1B2B6B")}
           >
-            Enquiry on WhatsApp →
+            {pkg.bookingType === "CUSTOMIZED" ? "Enquire Now" : "Book Now"} →
           </button>
         </div>
       </div>
     </>
   )
 }
+
 function RotatingCities() {
   const cities = ["Chennai", "Coimbatore", "Bengaluru", "Kochi"]
   const [index, setIndex] = useState(0)
@@ -1751,6 +1844,19 @@ function RotatingCities() {
 }
 
 const Tourism = () => {
+  const { user } = useAuth()
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [bookingPackage, setBookingPackage] = useState<ApiPackage | null>(null)
+
+  const handleBookNow = (pkg: ApiPackage) => {
+    if (!user) {
+      toast.info("Please sign in to continue with your booking")
+      setLoginModalOpen(true)
+      return
+    }
+    setBookingPackage(pkg)
+  }
+
   // Filter state
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -2379,7 +2485,7 @@ const Tourism = () => {
               >
                 <span style={{ color: "#2E7D32" }}>Featured</span> Packages
               </div>
-              <div style={{ display: "flex", gap: 6 }}>
+              {/* <div style={{ display: "flex", gap: 6 }}>
                 {(["grid", "list"] as const).map((v) => (
                   <button
                     key={v}
@@ -2402,7 +2508,7 @@ const Tourism = () => {
                     {v === "grid" ? "⊞" : "☰"}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             {isFeaturedLoading ? (
@@ -2607,62 +2713,89 @@ const Tourism = () => {
                             flexWrap: "wrap",
                           }}
                         >
-                          <div>
-                            <div
-                              style={{
-                                fontFamily: f,
-                                fontSize: ".7rem",
-                                color: "#9494b0",
-                                marginBottom: 4,
-                              }}
-                            >
-                              Starting from
+                          {featuredPkg.bookingType === "CUSTOMIZED" ? (
+                            <div>
+                              <div
+                                style={{
+                                  fontFamily: f,
+                                  fontSize: ".7rem",
+                                  color: "#9494b0",
+                                  marginBottom: 4,
+                                }}
+                              >
+                                Package Type
+                              </div>
+                              <div
+                                style={{
+                                  fontFamily: "'Libre Baskerville',serif",
+                                  fontSize: "2rem",
+                                  fontWeight: 700,
+                                  color: "#D97706",
+                                }}
+                              >
+                                Customized
+                              </div>
                             </div>
-                            <div
-                              style={{
-                                fontFamily: "'Libre Baskerville',serif",
-                                fontSize: "2rem",
-                                fontWeight: 700,
-                                color: "#1B2B6B",
-                              }}
-                            >
-                              ₹{featuredPkg.price.toLocaleString("en-IN")}
-                            </div>
-                          </div>
-                          {(featuredPkg.strikePrice ||
-                            featuredPkg.discount) && (
-                            <div
-                              style={{
-                                fontFamily: f,
-                                fontSize: ".88rem",
-                                color: "#9494b0",
-                                marginBottom: 6,
-                              }}
-                            >
-                              {featuredPkg.strikePrice && (
-                                <span
-                                  style={{ textDecoration: "line-through" }}
-                                >
-                                  ₹
-                                  {featuredPkg.strikePrice.toLocaleString(
-                                    "en-IN"
-                                  )}
-                                </span>
-                              )}
-                              {featuredPkg.strikePrice &&
-                                featuredPkg.discount && <>&nbsp;&nbsp;</>}
-                              {featuredPkg.discount && (
-                                <span
+                          ) : (
+                            <>
+                              <div>
+                                <div
                                   style={{
-                                    color: "#E53E3E",
-                                    fontWeight: 700,
-                                    fontSize: ".82rem",
+                                    fontFamily: f,
+                                    fontSize: ".7rem",
+                                    color: "#9494b0",
+                                    marginBottom: 4,
                                   }}
                                 >
-                                  {featuredPkg.discount} % OFF
-                                </span>
+                                  Starting from
+                                </div>
+                                <div
+                                  style={{
+                                    fontFamily: "'Libre Baskerville',serif",
+                                    fontSize: "2rem",
+                                    fontWeight: 700,
+                                    color: "#1B2B6B",
+                                  }}
+                                >
+                                  ₹{featuredPkg.price.toLocaleString("en-IN")}
+                                </div>
+                              </div>
+                              {(featuredPkg.strikePrice ||
+                                featuredPkg.discount) && (
+                                <div
+                                  style={{
+                                    fontFamily: f,
+                                    fontSize: ".88rem",
+                                    color: "#9494b0",
+                                    marginBottom: 6,
+                                  }}
+                                >
+                                  {featuredPkg.strikePrice && (
+                                    <span
+                                      style={{ textDecoration: "line-through" }}
+                                    >
+                                      ₹
+                                      {featuredPkg.strikePrice.toLocaleString(
+                                        "en-IN"
+                                      )}
+                                    </span>
+                                  )}
+                                  {featuredPkg.strikePrice &&
+                                    featuredPkg.discount && <>&nbsp;&nbsp;</>}
+                                  {featuredPkg.discount && (
+                                    <span
+                                      style={{
+                                        color: "#E53E3E",
+                                        fontWeight: 700,
+                                        fontSize: ".82rem",
+                                      }}
+                                    >
+                                      {featuredPkg.discount} % OFF
+                                    </span>
+                                  )}
+                                </div>
                               )}
-                            </div>
+                            </>
                           )}
                         </div>
                         <div
@@ -2704,20 +2837,7 @@ const Tourism = () => {
                             Details
                           </button>
                           <button
-                            onClick={() => {
-                              const message =
-                                `🌍 New Travel Package Enquiry\n\n` +
-                                `📦 Package: ${featuredPkg.title}\n` +
-                                `📍 Destination: ${featuredPkg.destination}\n` +
-                                `🗓 Duration: ${featuredPkg.days} Days / ${featuredPkg.nights} Nights\n` +
-                                `👥 Pax: ${featuredPkg.minPax}–${featuredPkg.maxPax}\n` +
-                                `💰 Price: ₹${featuredPkg.price.toLocaleString("en-IN")}\n\n` +
-                                `I am interested in this package. Please share more details.`
-                              window.open(
-                                `https://wa.me/917299771111?text=${encodeURIComponent(message)}`,
-                                "_blank"
-                              )
-                            }}
+                            onClick={() => handleBookNow(featuredPkg)}
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -2751,7 +2871,10 @@ const Tourism = () => {
                               ).style.transform = "translateY(0)"
                             }}
                           >
-                            Enquiry Now →
+                            {featuredPkg.bookingType === "CUSTOMIZED"
+                              ? "Enquire Now"
+                              : "Book Now"}{" "}
+                            →
                           </button>
                         </div>
                       </div>
@@ -2841,83 +2964,8 @@ const Tourism = () => {
               })()
             ) : null}
 
-            {/* Promo Strip */}
-            <div
-              className="promo-strip-inner"
-              style={{
-                background: "linear-gradient(135deg,#2E7D32 0%,#43A047 100%)",
-                borderRadius: 18,
-                padding: isMobile ? "24px 20px" : "28px 36px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 24,
-                marginBottom: 36,
-                flexWrap: "wrap",
-              }}
-            >
-              <div>
-                <h3
-                  style={{
-                    fontFamily: "'Libre Baskerville',serif",
-                    fontSize: "1.2rem",
-                    fontWeight: 700,
-                    color: "#fff",
-                    marginBottom: 4,
-                  }}
-                >
-                  🎉 Group Discount Alert!
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "'Raleway',sans-serif",
-                    fontSize: ".85rem",
-                    color: "rgba(255,255,255,.7)",
-                  }}
-                >
-                  Travel with 6+ people and get flat 20% off on any package.
-                </p>
-              </div>
-              <div
-                style={{
-                  fontFamily: f,
-                  fontSize: "1.1rem",
-                  fontWeight: 700,
-                  color: "#fff",
-                  letterSpacing: ".12em",
-                  padding: "10px 20px",
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,.18)",
-                  border: "1.5px dashed rgba(255,255,255,.4)",
-                }}
-              >
-                HORIZONS25
-              </div>
-              <a
-                href="#"
-                style={{
-                  fontFamily: f,
-                  fontSize: ".82rem",
-                  fontWeight: 700,
-                  background: "#fff",
-                  color: "#2E7D32",
-                  padding: "12px 24px",
-                  borderRadius: 999,
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.transform =
-                    "translateY(-2px)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.transform =
-                    "translateY(0)")
-                }
-              >
-                Claim Offer →
-              </a>
-            </div>
+            {/* Promo Showcase */}
+            <CouponShowcase />
 
             {/* ─── Dynamic Packages Grid ─────────────────────────────────────── */}
             <SecHeader
@@ -2985,6 +3033,7 @@ const Tourism = () => {
                     card={c}
                     listView={gridView === "list"}
                     onViewDetails={setSelectedPackage}
+                    onBookNow={handleBookNow}
                   />
                 ))}
               </div>
@@ -3137,6 +3186,18 @@ const Tourism = () => {
       <TourismDetailsDrawer
         pkg={selectedPackage}
         onClose={() => setSelectedPackage(null)}
+        onBookNow={handleBookNow}
+      />
+      {/* Login Modal (enforced when not logged in) */}
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+      />
+      {/* Booking & Enquiry Modal */}
+      <TourismBookingModal
+        isOpen={!!bookingPackage}
+        pkg={bookingPackage}
+        onClose={() => setBookingPackage(null)}
       />
     </>
   )

@@ -62,13 +62,16 @@ function TestimonialsIndexComponent() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['testimonials-admin', queryParams],
     queryFn: async () => {
-      const res = await _axios.get('/testimonials/admin', { params: queryParams })
+      const res = await _axios.get('/testimonials/admin', {
+        params: queryParams,
+      })
       return res.data as { data: Testimonial[]; pagination: PaginationMeta }
     },
   })
 
   const toggleMutation = useMutation({
-    mutationFn: (id: string) => _axios.patch(`/testimonials/${id}/toggle-active`),
+    mutationFn: (id: string) =>
+      _axios.patch(`/testimonials/${id}/toggle-active`),
     onSuccess: () => {
       toast.success('Testimonial status updated')
       queryClient.invalidateQueries({ queryKey: ['testimonials-admin'] })
@@ -86,13 +89,15 @@ function TestimonialsIndexComponent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Testimonials</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Testimonials
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage client testimonials displayed on the homepage
           </p>
         </div>
         <Link to="/testimonials/add">
-          <Button className="gap-2">
+          <Button className="gap-2 cursor-pointer">
             <Plus className="w-4 h-4" />
             Add Testimonial
           </Button>
@@ -108,13 +113,19 @@ function TestimonialsIndexComponent() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="h-9 w-40 text-sm">
+          <SelectTrigger className="h-9 w-40 text-sm cursor-pointer">
             <SelectValue placeholder="Filter by Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="true">Active Only</SelectItem>
-            <SelectItem value="false">Inactive Only</SelectItem>
+            <SelectItem className="cursor-pointer" value="all">
+              All Status
+            </SelectItem>
+            <SelectItem className="cursor-pointer" value="true">
+              Active Only
+            </SelectItem>
+            <SelectItem className="cursor-pointer" value="false">
+              Inactive Only
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -177,13 +188,17 @@ function TestimonialsIndexComponent() {
                       {t.avatarInitial || t.name.charAt(0).toUpperCase()}
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium text-sm">{t.name}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    {t.name}
+                  </TableCell>
                   <TableCell className="text-sm">
                     <span className="text-amber-500 font-semibold">
                       {'★'.repeat(t.rating)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{t.trip}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {t.trip}
+                  </TableCell>
                   <TableCell className="text-sm py-3 max-w-md truncate">
                     {t.text}
                   </TableCell>

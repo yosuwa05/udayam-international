@@ -4,6 +4,8 @@ import { _axios } from '@/lib/axios'
 import { toast } from 'sonner'
 import { TestimonialForm } from '@/components/TestimonialForm'
 import type { TestimonialFormValues } from '@/components/TestimonialForm'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/testimonials/add')({
   component: AddTestimonialComponent,
@@ -14,7 +16,8 @@ function AddTestimonialComponent() {
   const queryClient = useQueryClient()
 
   const addMutation = useMutation({
-    mutationFn: (data: TestimonialFormValues) => _axios.post('/testimonials', data),
+    mutationFn: (data: TestimonialFormValues) =>
+      _axios.post('/testimonials', data),
     onSuccess: () => {
       toast.success('Testimonial created successfully')
       queryClient.invalidateQueries({ queryKey: ['testimonials-admin'] })
@@ -28,8 +31,20 @@ function AddTestimonialComponent() {
   return (
     <div className="p-6 max-w-4xl space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Add Testimonial</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-pointer"
+            onClick={() => navigate({ to: '/tourism' })}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Add Testimonial
+          </h1>
+        </div>
+        <p className="text-sm text-muted-foreground mt-0.5 px-10">
           Add a new client review/testimonial.
         </p>
       </div>

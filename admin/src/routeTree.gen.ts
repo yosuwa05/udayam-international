@@ -11,12 +11,19 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as TourismIndexRouteImport } from './routes/tourism/index'
 import { Route as TestimonialsIndexRouteImport } from './routes/testimonials/index'
+import { Route as CouponsIndexRouteImport } from './routes/coupons/index'
+import { Route as BookingsIndexRouteImport } from './routes/bookings/index'
 import { Route as TourismAddRouteImport } from './routes/tourism/add'
 import { Route as TestimonialsAddRouteImport } from './routes/testimonials/add'
+import { Route as CouponsAddRouteImport } from './routes/coupons/add'
+import { Route as BookingsIdRouteImport } from './routes/bookings/$id'
+import { Route as BookingsCustomizedIndexRouteImport } from './routes/bookings/customized/index'
 import { Route as TourismIdEditRouteImport } from './routes/tourism/$id/edit'
 import { Route as TestimonialsIdEditRouteImport } from './routes/testimonials/$id/edit'
+import { Route as CouponsIdEditRouteImport } from './routes/coupons/$id/edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -26,6 +33,11 @@ const LoginRoute = LoginRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsersIndexRoute = UsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TourismIndexRoute = TourismIndexRouteImport.update({
@@ -38,6 +50,16 @@ const TestimonialsIndexRoute = TestimonialsIndexRouteImport.update({
   path: '/testimonials/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CouponsIndexRoute = CouponsIndexRouteImport.update({
+  id: '/coupons/',
+  path: '/coupons/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsIndexRoute = BookingsIndexRouteImport.update({
+  id: '/bookings/',
+  path: '/bookings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TourismAddRoute = TourismAddRouteImport.update({
   id: '/tourism/add',
   path: '/tourism/add',
@@ -46,6 +68,21 @@ const TourismAddRoute = TourismAddRouteImport.update({
 const TestimonialsAddRoute = TestimonialsAddRouteImport.update({
   id: '/testimonials/add',
   path: '/testimonials/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CouponsAddRoute = CouponsAddRouteImport.update({
+  id: '/coupons/add',
+  path: '/coupons/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsIdRoute = BookingsIdRouteImport.update({
+  id: '/bookings/$id',
+  path: '/bookings/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsCustomizedIndexRoute = BookingsCustomizedIndexRouteImport.update({
+  id: '/bookings/customized/',
+  path: '/bookings/customized/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TourismIdEditRoute = TourismIdEditRouteImport.update({
@@ -58,80 +95,134 @@ const TestimonialsIdEditRoute = TestimonialsIdEditRouteImport.update({
   path: '/testimonials/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CouponsIdEditRoute = CouponsIdEditRouteImport.update({
+  id: '/coupons/$id/edit',
+  path: '/coupons/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/bookings/$id': typeof BookingsIdRoute
+  '/coupons/add': typeof CouponsAddRoute
   '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
+  '/bookings/': typeof BookingsIndexRoute
+  '/coupons/': typeof CouponsIndexRoute
   '/testimonials/': typeof TestimonialsIndexRoute
   '/tourism/': typeof TourismIndexRoute
+  '/users/': typeof UsersIndexRoute
+  '/coupons/$id/edit': typeof CouponsIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
+  '/bookings/customized/': typeof BookingsCustomizedIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/bookings/$id': typeof BookingsIdRoute
+  '/coupons/add': typeof CouponsAddRoute
   '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
+  '/bookings': typeof BookingsIndexRoute
+  '/coupons': typeof CouponsIndexRoute
   '/testimonials': typeof TestimonialsIndexRoute
   '/tourism': typeof TourismIndexRoute
+  '/users': typeof UsersIndexRoute
+  '/coupons/$id/edit': typeof CouponsIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
+  '/bookings/customized': typeof BookingsCustomizedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/bookings/$id': typeof BookingsIdRoute
+  '/coupons/add': typeof CouponsAddRoute
   '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
+  '/bookings/': typeof BookingsIndexRoute
+  '/coupons/': typeof CouponsIndexRoute
   '/testimonials/': typeof TestimonialsIndexRoute
   '/tourism/': typeof TourismIndexRoute
+  '/users/': typeof UsersIndexRoute
+  '/coupons/$id/edit': typeof CouponsIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
+  '/bookings/customized/': typeof BookingsCustomizedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
+    | '/bookings/$id'
+    | '/coupons/add'
     | '/testimonials/add'
     | '/tourism/add'
+    | '/bookings/'
+    | '/coupons/'
     | '/testimonials/'
     | '/tourism/'
+    | '/users/'
+    | '/coupons/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
+    | '/bookings/customized/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/bookings/$id'
+    | '/coupons/add'
     | '/testimonials/add'
     | '/tourism/add'
+    | '/bookings'
+    | '/coupons'
     | '/testimonials'
     | '/tourism'
+    | '/users'
+    | '/coupons/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
+    | '/bookings/customized'
   id:
     | '__root__'
     | '/'
     | '/login'
+    | '/bookings/$id'
+    | '/coupons/add'
     | '/testimonials/add'
     | '/tourism/add'
+    | '/bookings/'
+    | '/coupons/'
     | '/testimonials/'
     | '/tourism/'
+    | '/users/'
+    | '/coupons/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
+    | '/bookings/customized/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  BookingsIdRoute: typeof BookingsIdRoute
+  CouponsAddRoute: typeof CouponsAddRoute
   TestimonialsAddRoute: typeof TestimonialsAddRoute
   TourismAddRoute: typeof TourismAddRoute
+  BookingsIndexRoute: typeof BookingsIndexRoute
+  CouponsIndexRoute: typeof CouponsIndexRoute
   TestimonialsIndexRoute: typeof TestimonialsIndexRoute
   TourismIndexRoute: typeof TourismIndexRoute
+  UsersIndexRoute: typeof UsersIndexRoute
+  CouponsIdEditRoute: typeof CouponsIdEditRoute
   TestimonialsIdEditRoute: typeof TestimonialsIdEditRoute
   TourismIdEditRoute: typeof TourismIdEditRoute
+  BookingsCustomizedIndexRoute: typeof BookingsCustomizedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/users/': {
+      id: '/users/'
+      path: '/users'
+      fullPath: '/users/'
+      preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tourism/': {
       id: '/tourism/'
       path: '/tourism'
@@ -162,6 +260,20 @@ declare module '@tanstack/react-router' {
       path: '/testimonials'
       fullPath: '/testimonials/'
       preLoaderRoute: typeof TestimonialsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coupons/': {
+      id: '/coupons/'
+      path: '/coupons'
+      fullPath: '/coupons/'
+      preLoaderRoute: typeof CouponsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings/': {
+      id: '/bookings/'
+      path: '/bookings'
+      fullPath: '/bookings/'
+      preLoaderRoute: typeof BookingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tourism/add': {
@@ -178,6 +290,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestimonialsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coupons/add': {
+      id: '/coupons/add'
+      path: '/coupons/add'
+      fullPath: '/coupons/add'
+      preLoaderRoute: typeof CouponsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings/$id': {
+      id: '/bookings/$id'
+      path: '/bookings/$id'
+      fullPath: '/bookings/$id'
+      preLoaderRoute: typeof BookingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings/customized/': {
+      id: '/bookings/customized/'
+      path: '/bookings/customized'
+      fullPath: '/bookings/customized/'
+      preLoaderRoute: typeof BookingsCustomizedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tourism/$id/edit': {
       id: '/tourism/$id/edit'
       path: '/tourism/$id/edit'
@@ -192,18 +325,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestimonialsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coupons/$id/edit': {
+      id: '/coupons/$id/edit'
+      path: '/coupons/$id/edit'
+      fullPath: '/coupons/$id/edit'
+      preLoaderRoute: typeof CouponsIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  BookingsIdRoute: BookingsIdRoute,
+  CouponsAddRoute: CouponsAddRoute,
   TestimonialsAddRoute: TestimonialsAddRoute,
   TourismAddRoute: TourismAddRoute,
+  BookingsIndexRoute: BookingsIndexRoute,
+  CouponsIndexRoute: CouponsIndexRoute,
   TestimonialsIndexRoute: TestimonialsIndexRoute,
   TourismIndexRoute: TourismIndexRoute,
+  UsersIndexRoute: UsersIndexRoute,
+  CouponsIdEditRoute: CouponsIdEditRoute,
   TestimonialsIdEditRoute: TestimonialsIdEditRoute,
   TourismIdEditRoute: TourismIdEditRoute,
+  BookingsCustomizedIndexRoute: BookingsCustomizedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

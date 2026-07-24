@@ -423,7 +423,7 @@ const Home = () => {
                     const isActive = i === testiIndex
                     return (
                       <div
-                        key={t._id || i}
+                        key={i}
                         className="flex flex-shrink-0 justify-center px-2 transition-all duration-500 md:px-3"
                         style={{
                           width: `${cardWidth}%`,

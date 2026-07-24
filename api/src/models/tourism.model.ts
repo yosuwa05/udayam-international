@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose"
 
 export type PackageType = "DOMESTIC" | "INTERNATIONAL"
+export type BookingType = "STANDARD" | "CUSTOMIZED"
 export type TripType = "HONEYMOON" | "FAMILY" | "ADVENTURE" | "SOLO" | "GROUP" | "PILGRIMAGE"
 export type DurationCategory = "1-3" | "4-7" | "8-14" | "15+"
 export type DestinationRegion = "INDIA" | "EUROPE" | "SOUTH_EAST_ASIA" | "MIDDLE_EAST" | "AMERICAS" | "AFRICA" | "OCEANIA"
@@ -14,45 +15,38 @@ export interface ITourism {
     destination: string
     destinationRegion: DestinationRegion
     packageType: PackageType
+    bookingType: BookingType
     tripTypes: TripType[]
 
-    // Pricing
-    price: number
+
+    price?: number
     strikePrice?: number
     discount?: string
 
-    // Duration
     days: number
     nights: number
     durationCategory: DurationCategory
 
-    // Group size
     minPax: number
     maxPax: number
 
-    // Media
     imageUrl: string
 
-    // Display badges
     badges: IBadge[]
 
-    // Inclusions e.g. "Hotel", "Meals", "Houseboat", "Transfers"
     inclusions: string[]
 
-    // Exclusions e.g. "Flights", "Tips", "Entry tickets"
     exclusions?: string[]
 
-    // Custom display order (lower values displayed first)
     order?: number
 
-    // SEO / detail
     description?: string
     highlights?: string[]
     itinerary?: { day: number; title: string; description: string }[]
 
     isActive: boolean
     isFeatured: boolean
-    label?: string // e.g. "Top Pick", "Sale", "New"
+    label?: string
 
     createdAt?: Date
     updatedAt?: Date
@@ -84,6 +78,12 @@ const tourismSchema = new Schema<ITourism>(
             enum: ["DOMESTIC", "INTERNATIONAL"],
             required: true,
         },
+        bookingType: {
+            type: String,
+            enum: ["STANDARD", "CUSTOMIZED"],
+            default: "STANDARD",
+            required: true,
+        },
         tripTypes: [
             {
                 type: String,
@@ -91,7 +91,13 @@ const tourismSchema = new Schema<ITourism>(
             },
         ],
 
-        price: { type: Number, required: true, min: 0 },
+        price: {
+            type: Number,
+            required: function(this: any) {
+                return this.bookingType === "STANDARD";
+            },
+            min: 0,
+        },
         strikePrice: { type: Number, min: 0 },
         discount: { type: String, trim: true },
 

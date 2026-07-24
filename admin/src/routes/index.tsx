@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { _axios } from '@/lib/axios'
-import { PlaneTakeoff, Map, Package, Activity, Ban } from 'lucide-react'
+import { PlaneTakeoff, Map, Package } from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: Home })
 

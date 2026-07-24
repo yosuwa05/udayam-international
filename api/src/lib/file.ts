@@ -56,7 +56,7 @@ export const saveFile = async (
             })
         );
 
-        const bucketRegion = process.env.REGION as string // Replace with your bucket's region
+        const bucketRegion = APP_CONSTANTS.REGION as string // Replace with your bucket's region
         const baseUrl = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com`;
         const fullUrl = `${baseUrl}/${filename}`;
 

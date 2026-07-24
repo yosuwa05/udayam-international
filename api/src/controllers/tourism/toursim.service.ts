@@ -5,6 +5,17 @@ import { DurationCategory, TourismModel } from "@models/tourism.model"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const parseJsonField = (field: any) => {
+    if (typeof field === "string") {
+        try {
+            return JSON.parse(field)
+        } catch {
+            return field
+        }
+    }
+    return field
+}
+
 /** Derive duration bucket from number of days for indexed filtering */
 const getDurationCategory = (days: number): DurationCategory => {
     if (days <= 3) return "1-3"
@@ -35,16 +46,15 @@ export const createTouristPlace = async (
             return { error: "Failed to upload cover image", status: false }
         }
 
-        const place = await TourismModel.create({
+        const bookingType = (body.bookingType ?? "STANDARD").toUpperCase()
+        
+        const placeData: any = {
             title: body.title,
             destination: body.destination,
             destinationRegion: body.destinationRegion,
             packageType: body.packageType,
-            tripTypes: body.tripTypes,
-
-            price: body.price,
-            strikePrice: body.strikePrice,
-            discount: body.discount,
+            bookingType,
+            tripTypes: parseJsonField(body.tripTypes),
 
             days: body.days,
             nights: body.nights,
@@ -55,19 +65,27 @@ export const createTouristPlace = async (
 
             imageUrl: imageResult.filename,
 
-            badges: body.badges,
-            inclusions: body.inclusions,
-            exclusions: body.exclusions,
+            badges: parseJsonField(body.badges),
+            inclusions: parseJsonField(body.inclusions),
+            exclusions: parseJsonField(body.exclusions),
 
             description: body.description,
-            highlights: body.highlights,
-            itinerary: body.itinerary,
+            highlights: parseJsonField(body.highlights),
+            itinerary: parseJsonField(body.itinerary),
 
             isActive: body.isActive ?? true,
             isFeatured: body.isFeatured ?? false,
             label: body.label,
             order: body.order !== undefined && body.order !== "" ? Number(body.order) : 0,
-        })
+        }
+
+        if (bookingType === "STANDARD") {
+            placeData.price = body.price
+            placeData.strikePrice = body.strikePrice
+            placeData.discount = body.discount
+        }
+
+        const place = await TourismModel.create(placeData)
 
         set.status = 201
         return { message: "Tourism package created successfully", data: place, status: true }
@@ -94,8 +112,20 @@ export const updateTouristPlace = async (
 
         const updateData: Record<string, any> = { ...body }
 
+        // Parse array/object fields if they are sent as JSON strings
+        const jsonFields = ["tripTypes", "badges", "inclusions", "exclusions", "highlights", "itinerary"]
+        for (const field of jsonFields) {
+            if (body[field] !== undefined) {
+                updateData[field] = parseJsonField(body[field])
+            }
+        }
+
         if (body.order !== undefined) {
             updateData.order = body.order !== "" ? Number(body.order) : 0
+        }
+
+        if (body.bookingType !== undefined) {
+            updateData.bookingType = body.bookingType.toUpperCase()
         }
 
         // Replace cover image if a new one was sent
@@ -116,9 +146,28 @@ export const updateTouristPlace = async (
             updateData.durationCategory = getDurationCategory(body.days)
         }
 
+        // Handle price removal if customized
+        const finalBookingType = updateData.bookingType ?? existing.bookingType
+        const updateObj: Record<string, any> = {}
+
+        if (finalBookingType === "CUSTOMIZED") {
+            // Unset pricing fields
+            updateObj.$unset = {
+                price: "",
+                strikePrice: "",
+                discount: "",
+            }
+            // Delete them from $set so we don't accidentally set them to undefined/null or validation fails
+            delete updateData.price
+            delete updateData.strikePrice
+            delete updateData.discount
+        }
+
+        updateObj.$set = updateData
+
         const updated = await TourismModel.findByIdAndUpdate(
             params.id,
-            { $set: updateData },
+            updateObj,
             { new: true, runValidators: true }
         )
 
@@ -210,6 +259,11 @@ export const getAllTouristPlaces = async (
             filter.packageType = query.packageType
         }
 
+        // ── Booking type filter (All / Standard / Customized) ────────────────────
+        if (query.bookingType && query.bookingType !== "ALL") {
+            filter.bookingType = query.bookingType.toUpperCase()
+        }
+
         // ── Destination region filter (multi-select checkboxes) ──────────────────
         if (query.destinationRegions) {
             const regions = query.destinationRegions
@@ -241,9 +295,15 @@ export const getAllTouristPlaces = async (
         const minPrice = query.minPrice ? parseFloat(query.minPrice) : undefined
         const maxPrice = query.maxPrice ? parseFloat(query.maxPrice) : undefined
         if (minPrice !== undefined || maxPrice !== undefined) {
-            filter.price = {}
-            if (minPrice !== undefined) filter.price.$gte = minPrice
-            if (maxPrice !== undefined) filter.price.$lte = maxPrice
+            filter.$or = [
+                { bookingType: "CUSTOMIZED" },
+                {
+                    price: {
+                        ...(minPrice !== undefined && { $gte: minPrice }),
+                        ...(maxPrice !== undefined && { $lte: maxPrice }),
+                    }
+                }
+            ]
         }
 
         // ── Visibility filters (admin panel) ─────────────────────────────────────

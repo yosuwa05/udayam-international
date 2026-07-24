@@ -3,7 +3,6 @@ import { useForm, Controller } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -25,8 +24,9 @@ export type TourismFormValues = {
   destination: string
   destinationRegion: string
   packageType: 'DOMESTIC' | 'INTERNATIONAL'
+  bookingType: 'STANDARD' | 'CUSTOMIZED'
   tripTypes: string[]
-  price: number
+  price?: number
   strikePrice?: number
   discount?: string
   days: number
@@ -148,6 +148,7 @@ export function TourismForm({
   } = useForm<TourismFormValues>({
     defaultValues: {
       packageType: 'DOMESTIC',
+      bookingType: 'STANDARD',
       // isActive: true,
       // isFeatured: false,
       minPax: 1,
@@ -172,13 +173,13 @@ export function TourismForm({
   const badges = watch('badges')
   const inclusions = watch('inclusions')
   const exclusions = watch('exclusions') ?? []
-  const highlights = watch('highlights') ?? []
   const itinerary = watch('itinerary') ?? []
-  
+  const bookingType = watch('bookingType')
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    
+
     const MAX_SIZE = 2 * 1024 * 1024 // 2MB
     if (file.size > MAX_SIZE) {
       toast.error('Image size must be less than 2MB')
@@ -227,13 +228,6 @@ export function TourismForm({
       exclusions.filter((_, idx) => idx !== i),
     )
 
-  const addHighlight = () => setValue('highlights', [...highlights, ''])
-  const removeHighlight = (i: number) =>
-    setValue(
-      'highlights',
-      highlights.filter((_, idx) => idx !== i),
-    )
-
   const addItineraryDay = () =>
     setValue('itinerary', [
       ...itinerary,
@@ -246,7 +240,11 @@ export function TourismForm({
     )
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form
+      autoComplete="off"
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-5"
+    >
       {/* Basic info */}
       <Section title="Basic Information">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -281,12 +279,16 @@ export function TourismForm({
               rules={{ required: 'Region is required' }}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
+                  <SelectTrigger className="cursor-pointer">
                     <SelectValue placeholder="Select region" />
                   </SelectTrigger>
                   <SelectContent>
                     {DESTINATION_REGIONS.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
+                      <SelectItem
+                        className="cursor-pointer"
+                        key={r.value}
+                        value={r.value}
+                      >
                         {r.label}
                       </SelectItem>
                     ))}
@@ -314,6 +316,31 @@ export function TourismForm({
                       }`}
                     >
                       {t === 'DOMESTIC' ? '🇮🇳 Domestic' : '✈️ International'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            />
+          </Field>
+
+          <Field label="Booking Type" required>
+            <Controller
+              name="bookingType"
+              control={control}
+              render={({ field }) => (
+                <div className="flex rounded-lg border overflow-hidden">
+                  {(['STANDARD', 'CUSTOMIZED'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => field.onChange(t)}
+                      className={`flex-1 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                        field.value === t
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-muted'
+                      }`}
+                    >
+                      {t === 'STANDARD' ? 'Standard' : 'Customized'}
                     </button>
                   ))}
                 </div>
@@ -389,27 +416,35 @@ export function TourismForm({
       {/* Pricing & Duration */}
       <Section title="Pricing & Duration">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Field label="Price (₹)" required error={errors.price?.message}>
-            <Input
-              type="number"
-              placeholder="18999"
-              {...register('price', {
-                required: 'Price is required',
-                valueAsNumber: true,
-                min: { value: 0, message: 'Must be ≥ 0' },
-              })}
-            />
-          </Field>
-          <Field label="Strike Price (₹)" error={errors.strikePrice?.message}>
-            <Input
-              type="number"
-              placeholder="22499"
-              {...register('strikePrice', { valueAsNumber: true })}
-            />
-          </Field>
-          <Field label="Discount Label">
-            <Input placeholder="e.g. 15% OFF" {...register('discount')} />
-          </Field>
+          {bookingType === 'STANDARD' && (
+            <>
+              <Field label="Price (₹)" required error={errors.price?.message}>
+                <Input
+                  type="number"
+                  placeholder="18999"
+                  {...register('price', {
+                    required:
+                      bookingType === 'STANDARD' ? 'Price is required' : false,
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Must be ≥ 0' },
+                  })}
+                />
+              </Field>
+              <Field
+                label="Strike Price (₹)"
+                error={errors.strikePrice?.message}
+              >
+                <Input
+                  type="number"
+                  placeholder="22499"
+                  {...register('strikePrice', { valueAsNumber: true })}
+                />
+              </Field>
+              <Field label="Discount Label">
+                <Input placeholder="e.g. 15% OFF" {...register('discount')} />
+              </Field>
+            </>
+          )}
           <Field label="Display Order" error={errors.order?.message}>
             <Input
               type="number"
@@ -500,7 +535,8 @@ export function TourismForm({
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Recommended Cover Image Size: 1400 px (Width) × 600 px (Height) · Max Size: 2MB
+          Recommended Cover Image Size: 1400 px (Width) × 600 px (Height) · Max
+          Size: 2MB
         </p>
         <input
           ref={fileInputRef}
@@ -543,7 +579,7 @@ export function TourismForm({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:text-destructive shrink-0"
+                className="text-destructive hover:text-destructive shrink-0 cursor-pointer"
                 onClick={() => removeBadge(i)}
               >
                 <X className="w-4 h-4" />
@@ -554,7 +590,7 @@ export function TourismForm({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
             onClick={addBadge}
           >
             <Plus className="w-3.5 h-3.5" /> Add Badge
@@ -575,7 +611,7 @@ export function TourismForm({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:text-destructive shrink-0"
+                className="text-destructive hover:text-destructive shrink-0 cursor-pointer"
                 onClick={() => removeInclusion(i)}
               >
                 <X className="w-4 h-4" />
@@ -586,7 +622,7 @@ export function TourismForm({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
             onClick={addInclusion}
           >
             <Plus className="w-3.5 h-3.5" /> Add Inclusion
@@ -607,7 +643,7 @@ export function TourismForm({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:text-destructive shrink-0"
+                className="text-destructive hover:text-destructive shrink-0 cursor-pointer"
                 onClick={() => removeExclusion(i)}
               >
                 <X className="w-4 h-4" />
@@ -618,7 +654,7 @@ export function TourismForm({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
             onClick={addExclusion}
           >
             <Plus className="w-3.5 h-3.5" /> Add Exclusion
@@ -627,7 +663,7 @@ export function TourismForm({
       </Section>
 
       {/* Description */}
-      {/* <Section title="Description & Highlights">
+      <Section title="Description">
         <Field label="Description">
           <Textarea
             placeholder="Describe the package experience…"
@@ -635,41 +671,10 @@ export function TourismForm({
             {...register('description')}
           />
         </Field>
-
-        <Field label="Highlights">
-          <div className="space-y-2">
-            {highlights.map((_, i) => (
-              <div key={i} className="flex gap-2">
-                <Input
-                  placeholder="e.g. Sunset cruise on the backwaters"
-                  {...register(`highlights.${i}`)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive shrink-0"
-                  onClick={() => removeHighlight(i)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={addHighlight}
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Highlight
-            </Button>
-          </div>
-        </Field>
-      </Section> */}
+      </Section>
 
       {/* Itinerary */}
-      {/* <Section title="Itinerary (optional)">
+      <Section title="Itinerary (optional)">
         <div className="space-y-3">
           {itinerary.map((_, i) => (
             <div
@@ -684,7 +689,7 @@ export function TourismForm({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-destructive hover:text-destructive"
+                  className="h-7 w-7 text-destructive hover:text-destructive cursor-pointer"
                   onClick={() => removeItineraryDay(i)}
                 >
                   <X className="w-3.5 h-3.5" />
@@ -705,13 +710,13 @@ export function TourismForm({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
             onClick={addItineraryDay}
           >
             <Plus className="w-3.5 h-3.5" /> Add Day
           </Button>
         </div>
-      </Section> */}
+      </Section>
 
       {/* Footer actions */}
       <div className="flex justify-end gap-3 pb-6">
@@ -720,10 +725,15 @@ export function TourismForm({
           variant="outline"
           onClick={onCancel}
           disabled={isSubmitting}
+          className="cursor-pointer"
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="min-w-28">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="min-w-28 cursor-pointer"
+        >
           {isSubmitting ? 'Saving…' : submitLabel}
         </Button>
       </div>

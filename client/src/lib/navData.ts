@@ -8,6 +8,8 @@ export type Page =
     | "education"
     | "recruitment"
     | "contact"
+    | "profile"
+    | "my-bookings"
 
 const pageToPath: Record<Page, string> = {
     home: "/",
@@ -19,6 +21,8 @@ const pageToPath: Record<Page, string> = {
     education: "/education",
     recruitment: "/recruitment",
     contact: "/contact",
+    profile: "/profile",
+    "my-bookings": "/my-bookings",
 }
 
 const navItems: { label: string; page: Page }[] = [

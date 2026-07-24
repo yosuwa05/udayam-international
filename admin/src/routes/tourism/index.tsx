@@ -52,13 +52,15 @@ export const Route = createFileRoute('/tourism/')({
 
 type Badge = { text: string; variant: string }
 type TourismPackage = {
+  [key: string]: any
   _id: string
   title: string
   destination: string
   destinationRegion: string
   packageType: 'DOMESTIC' | 'INTERNATIONAL'
+  bookingType: 'STANDARD' | 'CUSTOMIZED'
   tripTypes: string[]
-  price: number
+  price?: number
   strikePrice?: number
   discount?: string
   days: number
@@ -86,8 +88,10 @@ type PaginationMeta = {
 }
 
 type FilterState = {
+  [key: string]: any
   search: string
   packageType: string
+  bookingType: string
   destinationRegions: string[]
   tripTypes: string[]
   durationCategories: string[]
@@ -147,6 +151,7 @@ function RouteComponent() {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     packageType: 'ALL',
+    bookingType: 'ALL',
     destinationRegions: [],
     tripTypes: [],
     durationCategories: [],
@@ -163,6 +168,7 @@ function RouteComponent() {
     limit: limit.toString(),
     ...(filters.search && { search: filters.search }),
     ...(filters.packageType !== 'ALL' && { packageType: filters.packageType }),
+    ...(filters.bookingType !== 'ALL' && { bookingType: filters.bookingType }),
     ...(filters.destinationRegions.length && {
       destinationRegions: filters.destinationRegions.join(','),
     }),
@@ -176,7 +182,8 @@ function RouteComponent() {
     ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
     ...(filters.sortBy && { sortBy: filters.sortBy }),
     ...(filters.isActive && { isActive: filters.isActive }),
-    ...(filters.isFeatured && filters.isFeatured !== 'all' && { isFeatured: filters.isFeatured }),
+    ...(filters.isFeatured &&
+      filters.isFeatured !== 'all' && { isFeatured: filters.isFeatured }),
   }
 
   const { data, isLoading, isError } = useQuery({
@@ -233,6 +240,7 @@ function RouteComponent() {
     setFilters({
       search: '',
       packageType: 'ALL',
+      bookingType: 'ALL',
       destinationRegions: [],
       tripTypes: [],
       durationCategories: [],
@@ -247,6 +255,7 @@ function RouteComponent() {
 
   const activeFilterCount = [
     filters.packageType !== 'ALL',
+    filters.bookingType !== 'ALL',
     filters.destinationRegions.length > 0,
     filters.tripTypes.length > 0,
     filters.durationCategories.length > 0,
@@ -270,7 +279,7 @@ function RouteComponent() {
           </p>
         </div>
         <Link to="/tourism/add">
-          <Button className="gap-2">
+          <Button className="gap-2 cursor-pointer">
             <Plus className="w-4 h-4" />
             Add Package
           </Button>
@@ -301,7 +310,32 @@ function RouteComponent() {
                   : 'hover:bg-muted'
               }`}
             >
-              {t === 'ALL' ? 'All' : t === 'DOMESTIC' ? 'Domestic' : 'Intl'}
+              {t === 'ALL'
+                ? 'All Types'
+                : t === 'DOMESTIC'
+                  ? 'Domestic'
+                  : 'Intl'}
+            </button>
+          ))}
+        </div>
+
+        {/* Booking type tabs */}
+        <div className="flex rounded-md border overflow-hidden text-sm">
+          {(['ALL', 'STANDARD', 'CUSTOMIZED'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setFilter('bookingType', t)}
+              className={`px-3 py-1.5 transition-colors cursor-pointer ${
+                filters.bookingType === t
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-muted'
+              }`}
+            >
+              {t === 'ALL'
+                ? 'All Booking'
+                : t === 'STANDARD'
+                  ? 'Standard'
+                  : 'Customized'}
             </button>
           ))}
         </div>
@@ -311,14 +345,22 @@ function RouteComponent() {
           value={filters.sortBy}
           onValueChange={(v) => setFilter('sortBy', v)}
         >
-          <SelectTrigger className="h-9 w-36 text-sm">
+          <SelectTrigger className="h-9 w-36 text-sm cursor-pointer">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="featured">Featured</SelectItem>
-            <SelectItem value="price_asc">Price: Low → High</SelectItem>
-            <SelectItem value="price_desc">Price: High → Low</SelectItem>
+            <SelectItem className="cursor-pointer!" value="newest">
+              Newest
+            </SelectItem>
+            <SelectItem className="cursor-pointer!" value="featured">
+              Featured
+            </SelectItem>
+            <SelectItem className="cursor-pointer!" value="price_asc">
+              Price: Low → High
+            </SelectItem>
+            <SelectItem className="cursor-pointer!" value="price_desc">
+              Price: High → Low
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -331,9 +373,15 @@ function RouteComponent() {
             <SelectValue placeholder="Featured" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Packages</SelectItem>
-            <SelectItem value="true">Featured Only</SelectItem>
-            <SelectItem value="false">Non-Featured</SelectItem>
+            <SelectItem className="cursor-pointer!" value="all">
+              All Packages
+            </SelectItem>
+            <SelectItem className="cursor-pointer!" value="true">
+              Featured Only
+            </SelectItem>
+            <SelectItem className="cursor-pointer!" value="false">
+              Non-Featured
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -356,7 +404,7 @@ function RouteComponent() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5 h-9"
+          className="gap-1.5 h-9 cursor-pointer"
           onClick={() => setShowFilters((v) => !v)}
         >
           <SlidersHorizontal className="w-4 h-4" />
@@ -546,9 +594,21 @@ function RouteComponent() {
                     <div className="font-medium text-sm leading-tight">
                       {pkg.title}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                      {pkg.packageType === 'DOMESTIC' ? '🇮🇳' : '✈️'}
-                      {pkg.packageType}
+                    <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span>
+                        {pkg.packageType === 'DOMESTIC' ? '🇮🇳' : '✈️'}{' '}
+                        {pkg.packageType}
+                      </span>
+                      <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                      <span
+                        className={
+                          pkg.bookingType === 'CUSTOMIZED'
+                            ? 'text-amber-600 font-semibold'
+                            : 'text-blue-600 font-medium'
+                        }
+                      >
+                        {pkg.bookingType ?? 'STANDARD'}
+                      </span>
                       {pkg.isFeatured && (
                         <Star className="w-3 h-3 fill-amber-400 text-amber-400 ml-1" />
                       )}
@@ -570,18 +630,26 @@ function RouteComponent() {
                     {pkg.order ?? 0}
                   </TableCell>
                   <TableCell>
-                    <div className="font-semibold text-sm">
-                      ₹{pkg.price.toLocaleString('en-IN')}
-                    </div>
-                    {pkg.strikePrice && (
-                      <div className="text-xs line-through text-muted-foreground">
-                        ₹{pkg.strikePrice.toLocaleString('en-IN')}
-                      </div>
-                    )}
-                    {pkg.discount && (
-                      <span className="text-xs text-green-600 font-medium">
-                        {pkg.discount}
+                    {pkg.bookingType === 'CUSTOMIZED' ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium border border-amber-200">
+                        Customized
                       </span>
+                    ) : (
+                      <>
+                        <div className="font-semibold text-sm">
+                          ₹{pkg.price ? pkg.price.toLocaleString('en-IN') : '0'}
+                        </div>
+                        {pkg.strikePrice && (
+                          <div className="text-xs line-through text-muted-foreground">
+                            ₹{pkg.strikePrice.toLocaleString('en-IN')}
+                          </div>
+                        )}
+                        {pkg.discount && (
+                          <span className="text-xs text-green-600 font-medium">
+                            {pkg.discount}%
+                          </span>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -611,13 +679,13 @@ function RouteComponent() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 hover:bg-muted"
+                      className="h-8 w-8 hover:bg-muted cursor-pointer"
                       onClick={() => toggleFeaturedMutation.mutate(pkg._id)}
                       disabled={toggleFeaturedMutation.isPending}
                       title="Toggle Featured"
                     >
                       <Star
-                        className={`w-4 h-4 transition-colors ${
+                        className={`w-4 h-4 transition-colors cursor-pointer ${
                           pkg.isFeatured
                             ? 'fill-amber-400 text-amber-400'
                             : 'text-muted-foreground'
@@ -628,14 +696,18 @@ function RouteComponent() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Link to="/tourism/$id/edit" params={{ id: pkg._id }}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 cursor-pointer"
+                        >
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
                       </Link>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
                         onClick={() => setDeleteId(pkg._id)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />

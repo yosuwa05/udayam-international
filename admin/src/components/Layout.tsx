@@ -6,6 +6,10 @@ import {
   LayoutDashboard,
   MapIcon,
   MessageSquare,
+  TicketPercent,
+  CalendarCheck,
+  Users,
+  Sparkles,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
@@ -39,8 +43,16 @@ interface NavLink {
 
 const allLinks: NavLink[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  {
+    name: 'Standard Bookings',
+    href: '/bookings/standard',
+    icon: CalendarCheck,
+  },
+  { name: 'Customized Bookings', href: '/bookings/customized', icon: Sparkles },
+  { name: 'Users', href: '/users', icon: Users },
   { name: 'Tourism', href: '/tourism', icon: MapIcon },
   { name: 'Testimonials', href: '/testimonials', icon: MessageSquare },
+  { name: 'Coupons', href: '/coupons', icon: TicketPercent },
 ]
 
 interface LayoutProps {
@@ -76,8 +88,13 @@ export default function Layout({ session, userType }: LayoutProps) {
 
   /* track active segment */
   useEffect(() => {
-    const seg = location.pathname.split('/')[1]
-    setActiveMenu(seg ? `/${seg}` : '/')
+    const parts = location.pathname.split('/').filter(Boolean)
+    // Support nested paths like /bookings/standard and /bookings/customized
+    if (parts.length >= 2) {
+      setActiveMenu(`/${parts[0]}/${parts[1]}`)
+    } else {
+      setActiveMenu(parts[0] ? `/${parts[0]}` : '/')
+    }
   }, [location.pathname])
 
   /* responsive */
@@ -144,18 +161,10 @@ export default function Layout({ session, userType }: LayoutProps) {
               background: 'var(--ui-header-bg)',
             }}
           >
-            {/* <img
-              src="/UdayamLogo.png" // ← Change to your logo
-              className="w-10 h-10 object-contain"
-              alt="Udayam International"
-              loading="lazy"
-            /> */}
-
             {(!collapsed || !isLarge) && (
               <div className="overflow-hidden">
                 <p className="font-bold tracking-wide text-base text-white">
                   UDAYAM
-                  {/* INTERNATIONAL */}
                 </p>
               </div>
             )}
@@ -180,7 +189,7 @@ export default function Layout({ session, userType }: LayoutProps) {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => handleNav(link.href)}
-                      className="w-full flex items-center gap-3 rounded-xl mb-1.5 text-sm font-medium transition-all duration-200"
+                      className="w-full flex items-center gap-3 rounded-xl mb-1.5 text-sm font-medium transition-all duration-200 cursor-pointer"
                       style={{
                         padding: collapsed && isLarge ? '12px 0' : '12px 16px',
                         justifyContent:
@@ -221,7 +230,7 @@ export default function Layout({ session, userType }: LayoutProps) {
             <div className="p-3 border-t border-[var(--ui-sidebar-border)]">
               <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors"
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors cursor-pointer"
                 style={{
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   color: 'var(--ui-sidebar-muted)',
@@ -262,6 +271,7 @@ export default function Layout({ session, userType }: LayoutProps) {
               <button
                 style={{ color: 'var(--ui-header-fg)' }}
                 onClick={() => setMobileOpen(true)}
+                className="cursor-pointer"
               >
                 <Menu size={24} />
               </button>
@@ -272,45 +282,11 @@ export default function Layout({ session, userType }: LayoutProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Search */}
-            {/* <div
-              className="hidden md:flex items-center gap-2 rounded-full px-4 py-2 text-sm"
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: 'var(--ui-header-fg)',
-              }}
-            >
-              <Search size={16} />
-              <input
-                placeholder="Search bookings, customers..."
-                className="bg-transparent border-none outline-none w-52 placeholder:text-slate-400"
-              />
-            </div>
-
-            <button
-              className="p-2.5 rounded-full hover:bg-white/10 transition-colors"
-              style={{ color: 'var(--ui-header-fg)' }}
-            >
-              <Bell size={20} />
-            </button>
-
-            <button
-              className="flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all hover:brightness-110"
-              style={{
-                background: 'var(--ui-accent)',
-                color: '#0f172a',
-              }}
-            >
-              <Plus size={18} />
-              New Booking
-            </button> */}
-
             {/* Logout */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <button
-                  className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/10 rounded-full transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-white/10 rounded-full transition-colors cursor-pointer"
                   style={{ color: 'var(--ui-header-fg)' }}
                 >
                   <LogOut size={18} />
@@ -325,8 +301,13 @@ export default function Layout({ session, userType }: LayoutProps) {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => logoutMutation.mutate()}>
+                  <AlertDialogCancel className="cursor-pointer">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className="cursor-pointer"
+                    onClick={() => logoutMutation.mutate()}
+                  >
                     Logout
                   </AlertDialogAction>
                 </AlertDialogFooter>

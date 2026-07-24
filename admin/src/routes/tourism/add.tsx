@@ -24,16 +24,23 @@ function RouteComponent() {
         'destination',
         'destinationRegion',
         'packageType',
-        'price',
+        'bookingType',
         'days',
         'nights',
         'minPax',
         'maxPax',
-        'discount',
         'label',
         'description',
         'order',
       ]
+
+      if (values.bookingType === 'STANDARD') {
+        scalars.push('price')
+        if (values.discount !== undefined && values.discount !== '') {
+          scalars.push('discount')
+        }
+      }
+
       for (const key of scalars) {
         const val = values[key]
         if (val !== undefined && val !== '') {
@@ -41,7 +48,10 @@ function RouteComponent() {
         }
       }
 
-      if (values.strikePrice !== undefined) {
+      if (
+        values.bookingType === 'STANDARD' &&
+        values.strikePrice !== undefined
+      ) {
         form.append('strikePrice', String(values.strikePrice))
       }
 
@@ -83,6 +93,7 @@ function RouteComponent() {
         <Button
           variant="ghost"
           size="icon"
+          className="cursor-pointer"
           onClick={() => navigate({ to: '/tourism' })}
         >
           <ArrowLeft className="w-4 h-4" />

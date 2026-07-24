@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Home from "./components/Home/Home"
 import AboutUs from "./components/Aboutus"
@@ -13,6 +13,24 @@ import Education from "./components/Education"
 import Recruitment from "./components/Recruiment"
 import Contact from "./components/Contact"
 import IntroScreen from "./components/Introscreen"
+import Profile from "./components/Profile"
+import MyBookings from "./components/MyBookings"
+import { AuthProvider } from "./lib/useAuth"
+import { LoginModalProvider } from "./lib/useLoginModal"
+import LoginModal from "./components/LoginModal"
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    })
+  }, [pathname])
+
+  return null
+}
 
 export function App() {
   const [showIntro, setShowIntro] = useState(true)
@@ -22,12 +40,15 @@ export function App() {
   }
 
   return (
-    <>
-      {showIntro && <IntroScreen onComplete={handleIntroDone} />}
-      <BrowserRouter>
-        <AppShell />
-      </BrowserRouter>
-    </>
+    <AuthProvider>
+      <LoginModalProvider modal={(isOpen, onClose) => <LoginModal isOpen={isOpen} onClose={onClose} />}>
+        {showIntro && <IntroScreen onComplete={handleIntroDone} />}
+        <BrowserRouter>
+          <ScrollToTop />
+          <AppShell />
+        </BrowserRouter>
+      </LoginModalProvider>
+    </AuthProvider>
   )
 }
 
@@ -46,6 +67,8 @@ function AppShell() {
           <Route path="/education" element={<Education />} />
           <Route path="/recruitment" element={<Recruitment />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

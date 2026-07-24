@@ -1,30 +1,38 @@
 import axios from "axios";
-import { toast } from "sonner";
 import { BASE_URL } from "./config";
 
 export const _axios = axios.create({
     baseURL: BASE_URL,
+    withCredentials: true,
 });
 
-_axios.interceptors.request.use((config) => {
-    const adminToken = localStorage.getItem("adminToken");
-    if (adminToken) {
-        config.headers.Authorization = `Bearer ${adminToken}`;
-    }
-    return config;
-});
+if (typeof window !== "undefined") {
+    _axios.interceptors.request.use((config) => {
+        return config;
+    });
 
-_axios.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    (error) => {
-        if (error.response.status === 401) {
-            localStorage.clear();
-            toast.error("Session Expired! Login Again");
-            window.location.href = "/admin/";
-            window.alert("Session Expired! Login Again");
+    _axios.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response) {
+                if (error.response.status === 401) {
+                    return Promise.reject(new Error("Unauthorized"));
+                }
+                if (error.response.status >= 500) {
+                    return Promise.reject(
+                        new Error("Server error, please try again later.")
+                    );
+                }
+                return Promise.reject(
+                    error.response.data || new Error("An error occurred")
+                );
+            } else if (error.request) {
+                return Promise.reject(
+                    new Error("No response from server, check your network.")
+                );
+            } else {
+                return Promise.reject(new Error("Request failed, please try again."));
+            }
         }
-        return Promise.reject(error);
-    }
-);
+    );
+}

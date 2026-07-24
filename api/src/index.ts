@@ -9,15 +9,15 @@ const PORT = APP_CONSTANTS.PORT || 3000;
 const HOST = "localhost"
 
 
-app.get('/health', async ({ set }) => {
-  try {
-    set.status = 200;
-    return { status: "OK" };
-  } catch (error: any) {
-    set.status = 500;
-    return { status: "Error", error: error.message };
-  }
-})
+// app.get('/health', async ({ set }) => {
+//   try {
+//     set.status = 200;
+//     return { status: "OK" };
+//   } catch (error: any) {
+//     set.status = 500;
+//     return { status: "Error", error: error.message };
+//   }
+// })
 
 app.listen({ port: PORT, hostname: HOST, idleTimeout: 120 }, () => {
   console.log(`Listening on http://${HOST}:${PORT}`);

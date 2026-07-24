@@ -1562,7 +1562,7 @@ function BrandCard({ logo, id, name, path }) {
           transform: hovered ? "scaleX(1)" : "scaleX(0)",
         }}
       />
-      <img src={logo} alt="" className="block h-auto w-full rounded-[8px]" />
+      <img src={logo} alt="" loading="lazy" className="block h-auto w-full rounded-[8px]" />
       <div className="text-center text-sm font-bold">{name}</div>
     </div>
   )
@@ -1648,7 +1648,7 @@ function MobileBrandCard({ logo, name, path }) {
       onClick={handleClick}
       className="relative overflow-hidden rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_6px_28px_rgba(27,43,107,0.10)]"
     >
-      <img src={logo} alt="" className="block h-auto w-full rounded-[6px]" />
+      <img src={logo} alt="" loading="lazy" className="block h-auto w-full rounded-[6px]" />
       <div className="text-center text-sm">{name}</div>
     </div>
   )
@@ -1661,10 +1661,6 @@ export default function UdayamEcosystem() {
   const navigate = useNavigate()
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap"
-        rel="stylesheet"
-      />
 
       <style>{`
         @keyframes spin    { from { transform: rotate(0deg);   } to { transform: rotate(360deg);  } }
@@ -1682,7 +1678,7 @@ export default function UdayamEcosystem() {
       >
         {/* Dot background */}
         <div
-          className="pointer-events-none fixed inset-0 z-0 opacity-40"
+          className="pointer-events-none absolute inset-0 z-0 opacity-40"
           style={{
             backgroundImage:
               "radial-gradient(circle, rgba(27,43,107,0.18) 1px, transparent 1px)",

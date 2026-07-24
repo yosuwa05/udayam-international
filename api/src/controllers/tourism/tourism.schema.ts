@@ -146,6 +146,9 @@ export const getTourismDto = {
         packageType: t.Optional(
             t.Union([t.Literal("DOMESTIC"), t.Literal("INTERNATIONAL"), t.Literal("ALL")])
         ),
+        bookingType: t.Optional(
+            t.Union([t.Literal("STANDARD"), t.Literal("CUSTOMIZED"), t.Literal("ALL")])
+        ),
         destinationRegions: t.Optional(t.String()), // comma-separated, e.g. "INDIA,EUROPE"
         tripTypes: t.Optional(t.String()),           // comma-separated
         durationCategories: t.Optional(t.String()),  // comma-separated, e.g. "1-3,4-7"

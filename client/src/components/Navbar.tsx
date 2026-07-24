@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import Homelogo from "../assets/home/HomeLogo.jpeg"
 import TourismLogo from "../assets/UVHolidays.JPG.jpeg"
@@ -13,11 +13,32 @@ import callIcon from "../assets/Call.svg"
 import mailIcon from "../assets/Email.svg"
 import locationIcon from "../assets/Location.svg"
 import { ArrowRight } from "lucide-react"
+import { useAuth } from "@/lib/useAuth"
+import { useLoginModal } from "@/lib/useLoginModal"
+import LogoutModal from "./LogoutModal"
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const { user, logout } = useAuth()
+  const { openLogin } = useLoginModal()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const isActive = (page: Page) => location.pathname === pageToPath[page]
 
@@ -207,7 +228,7 @@ const Navbar: React.FC = () => {
           ))}
         </ul>
 
-        {/* Contact Us button */}
+        {/* Desktop right: Contact Us + Auth ─────────────────────────────── */}
         <div className="hidden items-center gap-2.5 xl:flex">
           <button
             onClick={() => go("contact")}
@@ -219,6 +240,119 @@ const Navbar: React.FC = () => {
           >
             Contact Us <ArrowRight size={16} />
           </button>
+
+          {/* Auth button */}
+          {user ? (
+            /* ── Logged-in avatar + dropdown ── */
+            <div ref={dropdownRef} style={{ position: "relative" }}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                title={user.fullName}
+                style={{
+                  width: 40, height: 40,
+                  borderRadius: "50%",
+                  border: "2px solid #1B2B6B",
+                  cursor: "pointer",
+                  overflow: "hidden",
+                  background: user.profileImage ? "transparent" : "linear-gradient(135deg, #0F1B47, #1B2B6B)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#fff", fontWeight: 700, fontSize: "0.95rem",
+                  fontFamily: "'Inter', sans-serif",
+                  transition: "box-shadow 0.2s",
+                  boxShadow: dropdownOpen ? "0 0 0 3px rgba(27,43,107,0.25)" : "none",
+                }}
+              >
+                {user.profileImage ? (
+                  <img src={user.profileImage} alt={user.fullName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  (user.fullName?.[0] || "U").toUpperCase()
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {dropdownOpen && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 10px)", right: 0,
+                  minWidth: 220,
+                  background: "#fff",
+                  borderRadius: 16,
+                  boxShadow: "0 12px 40px rgba(13,27,62,0.18), 0 2px 8px rgba(13,27,62,0.08)",
+                  border: "1px solid #E8ECFA",
+                  overflow: "hidden",
+                  zIndex: 1000,
+                  animation: "dropIn 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+                }}>
+                  {/* User info */}
+                  <div style={{
+                    padding: "14px 18px",
+                    borderBottom: "1px solid #E8ECFA",
+                    background: "linear-gradient(135deg, #F0F4FF, #fff)",
+                  }}>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.9rem", color: "#0F1B47", fontFamily: "'Inter', sans-serif" }}>
+                      {user.fullName}
+                    </p>
+                    <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "#6B7280", fontFamily: "'Inter', sans-serif" }}>
+                      {user.email || (user.mobile ? `+91 ${user.mobile}` : "")}
+                    </p>
+                  </div>
+                  {/* Menu items */}
+                  {[
+                    { icon: "👤", label: "My Profile", path: "/profile" },
+                    { icon: "📋", label: "My Bookings", path: "/my-bookings" },
+                  ].map(({ icon, label, path }) => (
+                    <button
+                      key={label}
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        navigate(path)
+                      }}
+                      style={dropdownItemStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#F0F4FF")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <span>{icon}</span> {label}
+                    </button>
+                  ))}
+                  <div style={{ height: 1, background: "#E8ECFA", margin: "4px 0" }} />
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false)
+                      setLogoutModalOpen(true)
+                    }}
+                    style={{ ...dropdownItemStyle, color: "#DC2626" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#FEF2F2")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <span>🚪</span> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ── Login button ── */
+            <button
+              onClick={openLogin}
+              style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "8px 18px",
+                background: "linear-gradient(135deg, #0F1B47, #1B2B6B)",
+                color: "#fff", border: "none", borderRadius: 999,
+                fontSize: "0.82rem", fontWeight: 700,
+                fontFamily: "'Inter', sans-serif",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(27,43,107,0.28)",
+                transition: "opacity 0.2s, transform 0.15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-1px)")}
+              onMouseLeave={e => (e.currentTarget.style.transform = "none")}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Login
+            </button>
+          )}
         </div>
 
         {/* Hamburger */}
@@ -281,15 +415,136 @@ const Navbar: React.FC = () => {
             >
               Contact Us <ArrowRight size={16} />
             </button>
+            {user ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 4px 4px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #0F1B47, #1B2B6B)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontWeight: 700, fontSize: "0.9rem",
+                      flexShrink: 0, overflow: "hidden",
+                    }}>
+                      {user.profileImage
+                        ? <img src={user.profileImage} alt={user.fullName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : (user.fullName?.[0] || "U").toUpperCase()
+                      }
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: "0.82rem", color: "#0F1B47", fontFamily: "'Inter', sans-serif" }}>{user.fullName}</p>
+                      <p style={{ margin: 0, fontSize: "0.72rem", color: "#6B7280", fontFamily: "'Inter', sans-serif" }}>
+                        {user.email || (user.mobile ? `+91 ${user.mobile}` : "")}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setLogoutModalOpen(true)
+                    }}
+                    style={{
+                      padding: "6px 14px", background: "#FEF2F2", color: "#DC2626",
+                      border: "1px solid #FECACA", borderRadius: 999,
+                      fontSize: "0.78rem", fontWeight: 600,
+                      fontFamily: "'Inter', sans-serif", cursor: "pointer",
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, pt: 4 }}>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/profile"); }}
+                    style={{
+                      padding: "8px 12px", background: "#E8ECFA", color: "#1B2B6B",
+                      border: "none", borderRadius: 10, fontSize: "0.78rem", fontWeight: 700,
+                      fontFamily: "'Inter', sans-serif", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyCenter: "center", gap: 6,
+                    }}
+                  >
+                    <span>👤</span> My Profile
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/my-bookings"); }}
+                    style={{
+                      padding: "8px 12px", background: "#E8ECFA", color: "#1B2B6B",
+                      border: "none", borderRadius: 10, fontSize: "0.78rem", fontWeight: 700,
+                      fontFamily: "'Inter', sans-serif", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyCenter: "center", gap: 6,
+                    }}
+                  >
+                    <span>📋</span> My Bookings
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setMenuOpen(false); openLogin(); }}
+                style={{
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                  padding: "12px",
+                  background: "linear-gradient(135deg, #0F1B47, #1B2B6B)",
+                  color: "#fff", border: "none", borderRadius: 999,
+                  fontSize: "0.85rem", fontWeight: 700,
+                  fontFamily: "'Inter', sans-serif", cursor: "pointer",
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                Login / Sign Up
+              </button>
+            )}
           </li>
         </ul>
       </div>
 
       <style>{`
         @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes dropIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
       `}</style>
+
+      <LogoutModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        isLoggingOut={isLoggingOut}
+        onConfirm={async () => {
+          setIsLoggingOut(true)
+          try {
+            await logout()
+            navigate("/")
+          } finally {
+            setIsLoggingOut(false)
+            setLogoutModalOpen(false)
+          }
+        }}
+      />
     </>
   )
+}
+
+const dropdownItemStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  padding: "10px 18px",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "0.875rem",
+  fontFamily: "'Inter', sans-serif",
+  color: "#374151",
+  fontWeight: 500,
+  textAlign: "left",
+  transition: "background 0.15s",
 }
 
 export default Navbar
