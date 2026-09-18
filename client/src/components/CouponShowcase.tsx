@@ -883,7 +883,7 @@ export const CouponShowcase: React.FC = () => {
           className="text-[11px] font-bold tracking-[0.15em] uppercase"
           style={{ color: GREEN }}
         >
-          Coupons and Offers
+          Coupons & Offers
         </span>
       </div>
 

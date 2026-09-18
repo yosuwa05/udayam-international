@@ -1792,10 +1792,29 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
             email: email,
             contact: mobileNumber,
           },
+          config: {
+            display: {
+              blocks: {
+                banks: {
+                  name: "Pay via UPI, Cards, or Net Banking",
+                  instruments: [
+                    { method: "upi" },
+                    { method: "card" },
+                    { method: "netbanking" },
+                  ],
+                },
+              },
+              sequence: ["block.banks"],
+              preferences: {
+                show_default_blocks: false,
+              },
+            },
+          },
           theme: {
             color: "#1B2B6B",
           },
         }
+
         const rzp = new window.Razorpay(options)
         rzp.open()
       }
@@ -2811,57 +2830,100 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
               )}
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
                   background: "#F7F5F0",
                   border: "1px solid #E8E4DC",
                   borderRadius: 12,
-                  padding: "12px 14px",
+                  padding: "14px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
                 }}
               >
-                <input
-                  type="checkbox"
-                  id="agree-terms-checkbox"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  style={{
-                    marginTop: 3,
-                    width: 16,
-                    height: 16,
-                    accentColor: "#1B2B6B",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                  }}
-                />
-                <label
-                  htmlFor="agree-terms-checkbox"
-                  style={{
-                    fontFamily: f,
-                    fontSize: ".8rem",
-                    color: "#374151",
-                    lineHeight: 1.5,
-                    cursor: "pointer",
-                  }}
-                >
-                  I understand and agree to the above and have read and accepted
-                  the UV Holidays{" "}
-                  <a
-                    href="/tour-terms-and-conditions"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                {/* Payment & Legal Entity Notice */}
+                <div>
+                  <div
                     style={{
-                      color: "#1B2B6B",
+                      fontFamily: f,
+                      fontSize: ".75rem",
                       fontWeight: 700,
-                      textDecoration: "underline",
+                      color: "#1B2B6B",
+                      textTransform: "uppercase",
+                      letterSpacing: ".05em",
+                      marginBottom: 4,
                     }}
                   >
-                    Terms &amp; Conditions , Payment Schedule and Cancellation &
-                    Refund Policy
-                  </a>{" "}
-                  of this tour booking. *
-                </label>
+                    Payment &amp; Legal Entity Notice
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".78rem",
+                      color: "#4B5563",
+                      lineHeight: 1.45,
+                      margin: 0,
+                    }}
+                  >
+                    UV Holidays is a tourism brand of Udayam International.
+                    Payments for bookings made through UV Holidays are processed
+                    by Udayam International, and invoices, receipts and payment
+                    records may be issued or displayed in the name of Udayam
+                    International.
+                  </p>
+                </div>
+
+                {/* Terms Checkbox */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    paddingTop: 10,
+                    borderTop: "1px dashed #E2E8F0",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    id="agree-terms-checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    style={{
+                      marginTop: 3,
+                      width: 16,
+                      height: 16,
+                      accentColor: "#1B2B6B",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <label
+                    htmlFor="agree-terms-checkbox"
+                    style={{
+                      fontFamily: f,
+                      fontSize: ".8rem",
+                      color: "#374151",
+                      lineHeight: 1.5,
+                      cursor: "pointer",
+                    }}
+                  >
+                    I understand and agree to the above and have read and
+                    accepted the UV Holidays{" "}
+                    <a
+                      href="/tour-terms-and-conditions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: "#1B2B6B",
+                        fontWeight: 700,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Terms &amp; Conditions, Payment Schedule, Cancellation &amp;
+                      Refund Policy and Privacy Policy
+                    </a>
+                    . *
+                  </label>
+                </div>
               </div>
               {/* Submit Buttons */}
               <div

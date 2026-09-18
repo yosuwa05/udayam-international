@@ -33,7 +33,9 @@ interface StandardBookingsSearch {
 }
 
 export const Route = createFileRoute('/bookings/standard')({
-  validateSearch: (search: Record<string, unknown>): StandardBookingsSearch => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): StandardBookingsSearch => ({
     page: search.page ? Number(search.page) : 1,
     limit: search.limit ? Number(search.limit) : 10,
     search: typeof search.search === 'string' ? search.search : undefined,
@@ -137,7 +139,9 @@ function StandardBookingsComponent() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-standard-bookings', queryParams],
     queryFn: async () => {
-      const res = await _axios.get('/booking/admin/list', { params: queryParams })
+      const res = await _axios.get('/booking/admin/list', {
+        params: queryParams,
+      })
       return res.data as { data: Booking[]; pagination: PaginationMeta }
     },
   })
@@ -208,7 +212,9 @@ function StandardBookingsComponent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Standard Bookings</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Standard Bookings
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage online standard package bookings and payment statuses
           </p>
@@ -236,7 +242,9 @@ function StandardBookingsComponent() {
             <SelectContent>
               <SelectItem value="ALL">All Statuses</SelectItem>
               <SelectItem value="PAYMENT_PENDING">Payment Pending</SelectItem>
-              <SelectItem value="PAYMENT_PROCESSING">Payment Processing</SelectItem>
+              <SelectItem value="PAYMENT_PROCESSING">
+                Payment Processing
+              </SelectItem>
               <SelectItem value="PAYMENT_SUCCESS">Payment Success</SelectItem>
               <SelectItem value="BOOKED">Booked</SelectItem>
               <SelectItem value="CONFIRMED">Confirmed</SelectItem>
@@ -245,22 +253,30 @@ function StandardBookingsComponent() {
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
               <SelectItem value="PAYMENT_FAILED">Payment Failed</SelectItem>
               <SelectItem value="REFUND_PENDING">Refund Pending</SelectItem>
-              <SelectItem value="REFUND_PROCESSING">Refund Processing</SelectItem>
-              <SelectItem value="PARTIALLY_REFUNDED">Partially Refunded</SelectItem>
+              <SelectItem value="REFUND_PROCESSING">
+                Refund Processing
+              </SelectItem>
+              <SelectItem value="PARTIALLY_REFUNDED">
+                Partially Refunded
+              </SelectItem>
               <SelectItem value="REFUNDED">Refunded</SelectItem>
             </SelectContent>
           </Select>
 
           {/* Date Range Filters */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium">From:</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              From:
+            </span>
             <Input
               type="date"
               value={filters.startDate}
               onChange={(e) => setFilter('startDate', e.target.value)}
               className="h-9 w-36 text-xs bg-background cursor-pointer"
             />
-            <span className="text-xs text-muted-foreground font-medium">To:</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              To:
+            </span>
             <Input
               type="date"
               value={filters.endDate}
@@ -273,22 +289,22 @@ function StandardBookingsComponent() {
             filters.status !== 'ALL' ||
             filters.startDate ||
             filters.endDate) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  navigate({
-                    search: (prev) => ({
-                      page: 1,
-                      limit: prev.limit,
-                    }),
-                  })
-                }}
-                className="text-xs h-9"
-              >
-                Clear Filters
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                navigate({
+                  search: (prev) => ({
+                    page: 1,
+                    limit: prev.limit,
+                  }),
+                })
+              }}
+              className="text-xs h-9"
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
       </div>
 
@@ -300,7 +316,7 @@ function StandardBookingsComponent() {
               <TableHead>Booking #</TableHead>
               <TableHead>Package & Destination</TableHead>
               <TableHead>Traveller Contact</TableHead>
-              <TableHead>Date of Booking</TableHead>
+              <TableHead>Date of Enquiry</TableHead>
               <TableHead>Travel Date & Pax</TableHead>
               <TableHead>Pricing</TableHead>
               <TableHead>Status</TableHead>
@@ -320,13 +336,19 @@ function StandardBookingsComponent() {
               ))
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-12 text-muted-foreground"
+                >
                   Failed to load bookings. Please try again.
                 </TableCell>
               </TableRow>
             ) : bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-12 text-muted-foreground"
+                >
                   No standard bookings match your filter criteria.
                 </TableCell>
               </TableRow>
@@ -336,7 +358,9 @@ function StandardBookingsComponent() {
                   {/* Booking # & Type */}
                   <TableCell className="font-mono text-xs font-semibold">
                     <div className="space-y-1">
-                      <div className="text-primary font-bold">{booking.bookingNumber}</div>
+                      <div className="text-primary font-bold">
+                        {booking.bookingNumber}
+                      </div>
                       <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
                         <Tag className="w-3 h-3" /> Standard
                       </span>
@@ -379,7 +403,9 @@ function StandardBookingsComponent() {
                       {formatDate(booking.travellerInfo.travelDate)}
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span>👥 {booking.travellerInfo.numberOfPersons} Persons</span>
+                      <span>
+                        👥 {booking.travellerInfo.numberOfPersons} Persons
+                      </span>
                       {booking.travellerInfo.travelType && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                           {formatTripType(booking.travellerInfo.travelType)}
@@ -391,10 +417,18 @@ function StandardBookingsComponent() {
                   {/* Pricing */}
                   <TableCell className="text-sm font-semibold">
                     <div>
-                      <div>₹{booking.pricingDetails.finalAmount.toLocaleString('en-IN')}</div>
+                      <div>
+                        ₹
+                        {booking.pricingDetails.finalAmount.toLocaleString(
+                          'en-IN',
+                        )}
+                      </div>
                       {booking.pricingDetails.discountAmount > 0 && (
                         <div className="text-[10px] text-green-600 font-normal">
-                          Discount: -₹{booking.pricingDetails.discountAmount.toLocaleString('en-IN')}
+                          Discount: -₹
+                          {booking.pricingDetails.discountAmount.toLocaleString(
+                            'en-IN',
+                          )}
                         </div>
                       )}
                     </div>
@@ -404,7 +438,7 @@ function StandardBookingsComponent() {
                   <TableCell>
                     <span
                       className={`text-xs px-2.5 py-1 rounded-full font-medium border inline-block ${getStatusBadgeStyle(
-                        booking.status
+                        booking.status,
                       )}`}
                     >
                       {booking.status.replace(/_/g, ' ')}

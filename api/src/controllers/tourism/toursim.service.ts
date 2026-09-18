@@ -5,6 +5,7 @@ import { DurationCategory, TourismModel } from "@models/tourism.model"
 import { PaymentModel } from "@models/payment.model"
 import { UserModel } from "@models/user.model"
 import { BookingModel } from "@models/booking.model"
+import { CouponModel } from "@models/coupon.model"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -307,13 +308,11 @@ export const getTourismDashboardStats = async (ctx: Context) => {
     try {
         // 1. Fetch KPI metrics including Standard & Customized Revenue breakdowns
         const [
-            totalBookings,
             standardRevenueResult,
             customizedRevenueResult,
             totalUsers,
             activePackages
         ] = await Promise.all([
-            PaymentModel.countDocuments({ status: "SUCCESS" }),
             BookingModel.aggregate([
                 {
                     $match: {
@@ -364,6 +363,7 @@ export const getTourismDashboardStats = async (ctx: Context) => {
         const standardBookingsCount = standardRevenueResult[0]?.count || 0
         const customizedRevenue = customizedRevenueResult[0]?.total || 0
         const customizedBookingsCount = customizedRevenueResult[0]?.count || 0
+        const totalBookings = standardBookingsCount + customizedBookingsCount
         const totalRevenue = standardRevenue + customizedRevenue
 
         // 2. Fetch packages categories for pie chart matching
@@ -373,31 +373,33 @@ export const getTourismDashboardStats = async (ctx: Context) => {
         const internationalPackages = await TourismModel.find({ packageType: "INTERNATIONAL", isDeleted: false }).select("_id").lean()
         const internationalIds = internationalPackages.map(p => p._id)
 
-        // 3. Count successful bookings by type/category
-        const [domesticCount, internationalCount, standardCount, customizedCount] = await Promise.all([
+        // 3. Count successful bookings by type/category consistently
+        const standardQuery = {
+            bookingType: "STANDARD",
+            status: { $in: ["PAYMENT_SUCCESS", "BOOKED", "CONFIRMED", "TRAVEL_STARTED", "COMPLETED"] }
+        }
+        const customizedQuery = {
+            bookingType: "CUSTOMIZED",
+            status: { $nin: ["ENQUIRY_CANCELLED", "CANCELLED"] },
+            $or: [
+                { "quotation.amount": { $gt: 0 } },
+                { "pricingDetails.finalAmount": { $gt: 0 } }
+            ]
+        }
+
+        const [domesticCount, internationalCount] = await Promise.all([
             BookingModel.countDocuments({
                 packageId: { $in: domesticIds },
-                $or: [
-                    { bookingType: "STANDARD", status: { $in: ["PAYMENT_SUCCESS", "BOOKED", "CONFIRMED", "TRAVEL_STARTED", "COMPLETED"] } },
-                    { bookingType: "CUSTOMIZED", status: { $in: ["BOOKED", "COMPLETED"] } }
-                ]
+                $or: [standardQuery, customizedQuery]
             }),
             BookingModel.countDocuments({
                 packageId: { $in: internationalIds },
-                $or: [
-                    { bookingType: "STANDARD", status: { $in: ["PAYMENT_SUCCESS", "BOOKED", "CONFIRMED", "TRAVEL_STARTED", "COMPLETED"] } },
-                    { bookingType: "CUSTOMIZED", status: { $in: ["BOOKED", "COMPLETED"] } }
-                ]
-            }),
-            BookingModel.countDocuments({
-                bookingType: "STANDARD",
-                status: { $in: ["PAYMENT_SUCCESS", "BOOKED", "CONFIRMED", "TRAVEL_STARTED", "COMPLETED"] }
-            }),
-            BookingModel.countDocuments({
-                bookingType: "CUSTOMIZED",
-                status: { $in: ["BOOKED", "COMPLETED"] }
+                $or: [standardQuery, customizedQuery]
             })
         ])
+
+        const standardCount = standardBookingsCount
+        const customizedCount = customizedBookingsCount
 
         // 4. Fetch the 10 most recent bookings
         const recentBookings = await BookingModel.find()
@@ -610,6 +612,18 @@ export const toggleActiveTouristPlace = async (
 
         existing.isActive = !existing.isActive
         await existing.save()
+
+        // If the package was deactivated, remove it from all coupon packageIds
+        if (!existing.isActive) {
+            await CouponModel.updateMany(
+                {
+                    isDeleted: false,
+                    applicableFor: "SELECTED",
+                    packageIds: existing._id,
+                },
+                { $pull: { packageIds: existing._id } }
+            )
+        }
 
         return {
             message: `Tourism package status updated to ${existing.isActive ? "active" : "inactive"}`,

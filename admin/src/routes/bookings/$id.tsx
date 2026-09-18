@@ -11,7 +11,7 @@ import {
   Tag,
   CheckCircle2,
   Clock,
-  DollarSign,
+  IndianRupee,
   FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -338,7 +338,9 @@ function BookingDetailsComponent() {
           <span className="text-xs text-muted-foreground font-medium">
             Status:
           </span>
-          <span className={`text-xs px-3 py-1 rounded-full font-semibold border ${getStatusBadgeStyle(booking.status)}`}>
+          <span
+            className={`text-xs px-3 py-1 rounded-full font-semibold border ${getStatusBadgeStyle(booking.status)}`}
+          >
             {booking.status.replace(/_/g, ' ')}
           </span>
         </div>
@@ -706,7 +708,7 @@ function BookingDetailsComponent() {
           {/* Pricing & Coupon Card */}
           <div className="rounded-2xl border bg-card p-5 space-y-4">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary" /> Pricing & Payment
+              <IndianRupee className="w-4 h-4 text-primary" /> Pricing & Payment
             </h3>
 
             <div className="space-y-2 text-xs border-b pb-3">

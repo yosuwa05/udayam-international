@@ -254,7 +254,7 @@ function RegionsIndexComponent() {
         />
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* <Select
+          <Select
             value={filters.isActive}
             onValueChange={(v) => setFilter('isActive', v)}
           >
@@ -266,7 +266,7 @@ function RegionsIndexComponent() {
               <SelectItem value="true">Active Only</SelectItem>
               <SelectItem value="false">Inactive Only</SelectItem>
             </SelectContent>
-          </Select> */}
+          </Select>
 
           {(filters.search || filters.isActive !== 'all') && (
             <Button

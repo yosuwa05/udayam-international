@@ -286,7 +286,7 @@ function CustomizedBookingsComponent() {
               <TableHead>Booking #</TableHead>
               <TableHead>Package & Destination</TableHead>
               <TableHead>Traveller Contact</TableHead>
-              <TableHead>Date of Booking</TableHead>
+              <TableHead>Date of Enquiry</TableHead>
               <TableHead>Travel Date & Pax</TableHead>
               <TableHead>Pricing / Quote</TableHead>
               <TableHead>Status</TableHead>

@@ -5,7 +5,7 @@ import { _axios } from '@/lib/axios'
 import {
   TrendingUp,
   Users,
-  DollarSign,
+  IndianRupee,
   Eye,
   Tag,
   Sparkles,
@@ -39,6 +39,8 @@ function Home() {
   const [hoveredSlice, setHoveredSlice] = useState<number | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
   const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false)
+  const [isBookingsModalOpen, setIsBookingsModalOpen] = useState(false)
+  const [chartViewMode, setChartViewMode] = useState<'type' | 'region'>('type')
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget
@@ -187,33 +189,50 @@ function Home() {
   }
   const recentBookings = stats.recentBookings || []
 
-  // Prepare chart data
-  const chartCategories = [
-    {
-      name: 'Domestic Packages',
-      value: pieData.domestic,
-      color: '#3B82F6',
-      icon: <Map className="w-4 h-4 text-blue-500" />,
-    },
-    {
-      name: 'International Packages',
-      value: pieData.international,
-      color: '#10B981',
-      icon: <PlaneTakeoff className="w-4 h-4 text-emerald-500" />,
-    },
-    {
-      name: 'Standard Packages',
-      value: pieData.standard,
-      color: '#8B5CF6',
-      icon: <Tag className="w-4 h-4 text-violet-500" />,
-    },
-    {
-      name: 'Customized Packages',
-      value: pieData.customized,
-      color: '#F59E0B',
-      icon: <Sparkles className="w-4 h-4 text-amber-500" />,
-    },
-  ]
+  const totalBookingsCount = kpis.totalBookings || 0
+  const standardBookingsCount = kpis.standardBookingsCount || 0
+  const customizedBookingsCount = kpis.customizedBookingsCount || 0
+
+  const stdBookingPct =
+    totalBookingsCount > 0
+      ? Math.round((standardBookingsCount / totalBookingsCount) * 100)
+      : 0
+  const custBookingPct =
+    totalBookingsCount > 0
+      ? Math.round((customizedBookingsCount / totalBookingsCount) * 100)
+      : 0
+
+  // Prepare chart data based on view mode
+  const chartCategories =
+    chartViewMode === 'type'
+      ? [
+          {
+            name: 'Standard Packages',
+            value: pieData.standard,
+            color: '#8B5CF6',
+            icon: <Tag className="w-4 h-4 text-violet-500" />,
+          },
+          {
+            name: 'Customized Packages',
+            value: pieData.customized,
+            color: '#F59E0B',
+            icon: <Sparkles className="w-4 h-4 text-amber-500" />,
+          },
+        ]
+      : [
+          {
+            name: 'Domestic Packages',
+            value: pieData.domestic,
+            color: '#3B82F6',
+            icon: <Map className="w-4 h-4 text-blue-500" />,
+          },
+          {
+            name: 'International Packages',
+            value: pieData.international,
+            color: '#10B981',
+            icon: <PlaneTakeoff className="w-4 h-4 text-emerald-500" />,
+          },
+        ]
 
   const chartTotal =
     chartCategories.reduce((sum, item) => sum + item.value, 0) || 1
@@ -244,11 +263,18 @@ function Home() {
           bgColor="bg-blue-50"
           borderColor="border-blue-100"
           description="Successful bookings count"
+          onClick={() => setIsBookingsModalOpen(true)}
+          isClickable={true}
+          badge={
+            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100/90 text-blue-800 border border-blue-200 cursor-pointer shadow-2xs">
+              View split <ChevronRight className="w-2.5 h-2.5" />
+            </span>
+          }
         />
         <KPIStatCard
           title="Total Revenue"
           value={formatCurrency(kpis.totalRevenue)}
-          icon={<DollarSign className="w-5 h-5 text-emerald-600" />}
+          icon={<IndianRupee className="w-5 h-5 text-emerald-600" />}
           bgColor="bg-emerald-50"
           borderColor="border-emerald-100"
           description="Standard + Custom quotes"
@@ -283,12 +309,46 @@ function Home() {
         {/* Left Column: Doughnut Chart Card */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col justify-between lg:col-span-1 chart-container relative">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Bookings by Package Type
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Distribution of successful bookings
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Bookings Breakdown
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {chartViewMode === 'type'
+                    ? 'By package type'
+                    : 'By destination region'}
+                </p>
+              </div>
+              <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/80 text-[11px] font-semibold">
+                <button
+                  onClick={() => {
+                    setChartViewMode('type')
+                    setHoveredSlice(null)
+                  }}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    chartViewMode === 'type'
+                      ? 'bg-white text-slate-900 shadow-xs font-bold'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Type
+                </button>
+                <button
+                  onClick={() => {
+                    setChartViewMode('region')
+                    setHoveredSlice(null)
+                  }}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    chartViewMode === 'region'
+                      ? 'bg-white text-slate-900 shadow-xs font-bold'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Region
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="relative flex items-center justify-center my-6">
@@ -370,8 +430,8 @@ function Home() {
                 Bookings: {chartCategories[hoveredSlice].value} (
                 {chartTotal > 0
                   ? Math.round(
-                    (chartCategories[hoveredSlice].value / chartTotal) * 100,
-                  )
+                      (chartCategories[hoveredSlice].value / chartTotal) * 100,
+                    )
                   : 0}
                 %)
               </div>
@@ -388,10 +448,11 @@ function Home() {
               return (
                 <div
                   key={cat.name}
-                  className={`flex items-center justify-between p-2 rounded-xl transition-colors ${isHovered
-                    ? 'bg-slate-50 border border-slate-100'
-                    : 'border border-transparent'
-                    }`}
+                  className={`flex items-center justify-between p-2 rounded-xl transition-colors ${
+                    isHovered
+                      ? 'bg-slate-50 border border-slate-100'
+                      : 'border border-transparent'
+                  }`}
                   onMouseEnter={() => setHoveredSlice(idx)}
                   onMouseLeave={() => setHoveredSlice(null)}
                 >
@@ -575,20 +636,205 @@ function Home() {
         </div>
       </div>
 
+      {/* Total Bookings Breakdown Modal */}
+      <Dialog open={isBookingsModalOpen} onOpenChange={setIsBookingsModalOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl bg-white border border-slate-200/80 shadow-2xl">
+          <DialogHeader className="space-y-1.5 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shadow-2xs">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold text-slate-900">
+                  Total Bookings Breakdown
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                  Consolidated bookings count from Standard Packages and
+                  Customized Quotes
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Hero Total Card */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-slate-50 border border-blue-100/90 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-800 uppercase tracking-wider">
+                  Consolidated Total Bookings
+                </span>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200/60 font-mono">
+                  {totalBookingsCount} Total Bookings
+                </span>
+              </div>
+
+              <div className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                {totalBookingsCount}{' '}
+                <span className="text-base font-medium text-slate-500">
+                  Bookings
+                </span>
+              </div>
+
+              {/* Visual Split Bar */}
+              <div className="space-y-1.5 pt-1">
+                <div className="h-3 w-full bg-slate-200/70 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${stdBookingPct}%`,
+                    }}
+                    title={`Standard: ${stdBookingPct}%`}
+                  />
+                  <div
+                    className="bg-purple-500 h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${custBookingPct}%`,
+                    }}
+                    title={`Customized: ${custBookingPct}%`}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
+                  <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                    Standard: {stdBookingPct}% ({standardBookingsCount}{' '}
+                    bookings)
+                  </span>
+                  <span className="flex items-center gap-1.5 text-purple-700 font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
+                    Customized: {custBookingPct}% ({customizedBookingsCount}{' '}
+                    bookings)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Comparison Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Standard Bookings Card */}
+              <div className="p-4 rounded-2xl bg-white border border-emerald-100 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600">
+                        <Tag className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-800">
+                        Standard Bookings
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-2xl font-bold text-emerald-950 font-sans tracking-tight">
+                      {standardBookingsCount}
+                    </div>
+                    <div className="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1">
+                      <span>
+                        {' '}
+                        Total : {formatCurrency(kpis.standardRevenue)}{' '}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Direct bookings processed through standard fixed-price
+                    packages.
+                  </p>
+                </div>
+
+                <Link
+                  to="/bookings/standard"
+                  onClick={() => setIsBookingsModalOpen(false)}
+                  className="pt-2"
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs font-semibold border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 justify-between group cursor-pointer"
+                  >
+                    <span>View Standard Bookings</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Customized Bookings Card */}
+              <div className="p-4 rounded-2xl bg-white border border-purple-100 shadow-sm hover:shadow-md transition-all space-y-3 relative overflow-hidden flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-lg bg-purple-50 border border-purple-100 text-purple-600">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-800">
+                        Customized Bookings
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-2xl font-bold text-purple-950 font-sans tracking-tight">
+                      {customizedBookingsCount}
+                    </div>
+                    <div className="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1">
+                      <span>
+                        Total : {formatCurrency(kpis.customizedRevenue)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Custom itinerary enquiries with active quotations and
+                    confirmed status.
+                  </p>
+                </div>
+
+                <Link
+                  to="/bookings/customized"
+                  onClick={() => setIsBookingsModalOpen(false)}
+                  className="pt-2"
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs font-semibold border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800 justify-between group cursor-pointer"
+                  >
+                    <span>View Customized Bookings</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsBookingsModalOpen(false)}
+              className="cursor-pointer"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Total Revenue Breakdown Modal */}
       <Dialog open={isRevenueModalOpen} onOpenChange={setIsRevenueModalOpen}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl bg-white border border-slate-200/80 shadow-2xl">
           <DialogHeader className="space-y-1.5 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-2xs">
-                <DollarSign className="w-5 h-5" />
+                <IndianRupee className="w-5 h-5" />
               </div>
               <div>
                 <DialogTitle className="text-xl font-bold text-slate-900">
                   Total Revenue Breakdown
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                  Consolidated revenue from Standard Bookings and Customized Quotations
+                  Consolidated revenue from Standard Bookings and Customized
+                  Quotations
                 </DialogDescription>
               </div>
             </div>
@@ -631,11 +877,13 @@ function Home() {
                 <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
                   <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                    Standard: {standardPercentage}% ({formatCurrency(kpis.standardRevenue)})
+                    Standard: {standardPercentage}% (
+                    {formatCurrency(kpis.standardRevenue)})
                   </span>
                   <span className="flex items-center gap-1.5 text-purple-700 font-semibold">
                     <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
-                    Customized: {customizedPercentage}% ({formatCurrency(kpis.customizedRevenue)})
+                    Customized: {customizedPercentage}% (
+                    {formatCurrency(kpis.customizedRevenue)})
                   </span>
                 </div>
               </div>
@@ -665,14 +913,19 @@ function Home() {
                       {formatCurrency(kpis.standardRevenue)}
                     </div>
                     <div className="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1">
-                      <span>{kpis.standardBookingsCount || 0} Successful Bookings</span>
-                      <span>•</span>
-                      <span className="text-emerald-600 font-bold">{standardPercentage}% Share</span>
+                      <span>
+                        {kpis.standardBookingsCount || 0} Successful Bookings
+                      </span>
+                      {/* <span>•</span>
+                      <span className="text-emerald-600 font-bold">
+                        {standardPercentage}% Share
+                      </span> */}
                     </div>
                   </div>
 
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Direct bookings processed through standard fixed-price tourism packages.
+                    Direct bookings processed through standard fixed-price
+                    tourism packages.
                   </p>
                 </div>
 
@@ -714,14 +967,19 @@ function Home() {
                       {formatCurrency(kpis.customizedRevenue)}
                     </div>
                     <div className="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1">
-                      <span>{kpis.customizedBookingsCount || 0} Quoted / Confirmed</span>
-                      <span>•</span>
-                      <span className="text-purple-600 font-bold">{customizedPercentage}% Share</span>
+                      <span>
+                        {kpis.customizedBookingsCount || 0} Quoted / Confirmed
+                      </span>
+                      {/* <span>•</span>
+                      <span className="text-purple-600 font-bold">
+                        {customizedPercentage}% Share
+                      </span> */}
                     </div>
                   </div>
 
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Custom itinerary requests with shared quotations and custom negotiated pricing.
+                    Custom itinerary requests with shared quotations and custom
+                    negotiated pricing.
                   </p>
                 </div>
 
@@ -757,9 +1015,9 @@ function Home() {
                   {formatCurrency(kpis.totalRevenue)}
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">
+              {/* <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">
                 Formula
-              </span>
+              </span> */}
             </div>
           </div>
 
@@ -803,10 +1061,11 @@ function KPIStatCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between transition-all duration-300 ${isClickable
-        ? 'cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-emerald-200 hover:ring-2 hover:ring-emerald-500/10 group'
-        : 'hover:shadow-md hover:-translate-y-0.5'
-        }`}
+      className={`bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between transition-all duration-300 ${
+        isClickable
+          ? 'cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-emerald-200 hover:ring-2 hover:ring-emerald-500/10 group'
+          : 'hover:shadow-md hover:-translate-y-0.5'
+      }`}
     >
       <div className="space-y-1">
         <div className="flex items-center gap-2">
@@ -816,8 +1075,9 @@ function KPIStatCard({
           {badge}
         </div>
         <h3
-          className={`text-2xl font-bold text-slate-800 tracking-tight mt-1 transition-colors ${isClickable ? 'group-hover:text-emerald-700' : ''
-            }`}
+          className={`text-2xl font-bold text-slate-800 tracking-tight mt-1 transition-colors ${
+            isClickable ? 'group-hover:text-emerald-700' : ''
+          }`}
         >
           {value}
         </h3>
@@ -826,8 +1086,9 @@ function KPIStatCard({
         </p>
       </div>
       <div
-        className={`p-3 rounded-xl ${bgColor} border ${borderColor} shadow-inner transition-transform ${isClickable ? 'group-hover:scale-105' : ''
-          }`}
+        className={`p-3 rounded-xl ${bgColor} border ${borderColor} shadow-inner transition-transform ${
+          isClickable ? 'group-hover:scale-105' : ''
+        }`}
       >
         {icon}
       </div>
