@@ -19,9 +19,10 @@ export const getTestimonialsDto = {
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
         isActive: t.Optional(t.String()), // "true" | "false"
+        type: t.Optional(t.String()), // "home" | "tourism" | "medical"
     }),
     detail: {
-        summary: "Get testimonials with pagination and active filter",
+        summary: "Get testimonials with pagination, active filter, and type filter",
     },
 }
 

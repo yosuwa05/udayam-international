@@ -155,8 +155,8 @@ interface IntroScreenProps {
   onComplete: () => void
 }
 
-const TAGLINE = "Trade  ★   Travel ★   Trust    "
-const HOLD_AFTER_TYPED_MS = 1800
+const TAGLINE = "Trade  ★   Travel ★   Trust"
+const HOLD_AFTER_TYPED_MS = 400
 
 export default function IntroScreen({ onComplete }: IntroScreenProps) {
   const [typed, setTyped] = useState("")
@@ -169,7 +169,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
     if (doneRef.current) return
     doneRef.current = true
     setExiting(true)
-    setTimeout(onComplete, 900)
+    setTimeout(onComplete, 500)
   }
 
   // Handle brand animation end
@@ -251,7 +251,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
           justifyContent: "center",
           zIndex: 9999,
           opacity: exiting ? 0 : 1,
-          transition: exiting ? "opacity 0.9s ease" : "none",
+          transition: exiting ? "opacity 0.5s ease" : "none",
           pointerEvents: exiting ? "none" : "auto",
         }}
       >

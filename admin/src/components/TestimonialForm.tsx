@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Check } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   Select,
   SelectContent,
@@ -12,6 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+export const TYPE_OPTIONS = [
+  { label: 'Home', value: 'home', desc: 'Main Home page' },
+  { label: 'Tourism', value: 'tourism', desc: 'UV Holidays Tourism page' },
+  { label: 'Medical', value: 'medical', desc: 'Medical Tourism page' },
+] as const
+
 export type TestimonialFormValues = {
   name: string
   avatarInitial?: string
@@ -19,6 +27,7 @@ export type TestimonialFormValues = {
   text: string
   trip: string
   isActive: boolean
+  type: string[]
   order?: number
 }
 
@@ -91,6 +100,7 @@ export function TestimonialForm({
       text: '',
       trip: '',
       isActive: true,
+      type: defaultValues?.type && defaultValues.type.length > 0 ? defaultValues.type : ['home'],
       order: 0,
       ...defaultValues,
     },
@@ -166,6 +176,75 @@ export function TestimonialForm({
               })}
             />
           </Field>
+
+          {/* Type Multi-Select Field */}
+          <div className="md:col-span-2">
+            <Field
+              label="Display Pages / Type (Select Multiple)"
+              required
+              error={errors.type?.message}
+            >
+              <Controller
+                name="type"
+                control={control}
+                rules={{
+                  validate: (val) =>
+                    (val && val.length > 0) || 'Please select at least one page type',
+                }}
+                render={({ field }) => {
+                  const currentValues = Array.isArray(field.value) ? field.value : []
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2.5">
+                        {TYPE_OPTIONS.map((opt) => {
+                          const isSelected = currentValues.includes(opt.value)
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                if (isSelected) {
+                                  if (currentValues.length > 1) {
+                                    field.onChange(currentValues.filter((v) => v !== opt.value))
+                                  } else {
+                                    toast.error('At least one page type must be selected')
+                                  }
+                                } else {
+                                  field.onChange([...currentValues, opt.value])
+                                }
+                              }}
+                              className={`flex items-center gap-2.5 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                  : 'bg-background hover:bg-muted text-muted-foreground border-border'
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                  isSelected
+                                    ? 'bg-white/20 border-white/40'
+                                    : 'border-muted-foreground/40'
+                                }`}
+                              >
+                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="text-left">
+                                <span className="font-semibold">{opt.label}</span>
+                                <span className="text-xs ml-1.5 opacity-80">({opt.desc})</span>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Select which pages should show this testimonial. You can select Home, Tourism, and/or Medical.
+                      </p>
+                    </div>
+                  )
+                }}
+              />
+            </Field>
+          </div>
         </div>
 
         <Field

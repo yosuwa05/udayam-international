@@ -8,6 +8,7 @@ import TourismBookingModal from "./TourismBookingModal"
 import { toast } from "sonner"
 import Carsoule from "./Carsoule"
 import { CouponShowcase } from "./CouponShowcase"
+import TourismTestimonials from "./TourismTestimonials"
 import img1 from "../assets/1.png"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -3127,6 +3128,9 @@ const Tourism = () => {
             {/* ─── Load More (disabled per request) ─── */}
           </main>
         </div>
+
+        {/* ─── Tourism Testimonials Section ─── */}
+        <TourismTestimonials />
       </div>
       {/* Premium Package Details Drawer */}
       <TourismDetailsDrawer

@@ -12,6 +12,14 @@ export const createTestimonial = async (ctx: Context<{ body: any }>) => {
   const { body, set }: any = ctx;
 
   try {
+    const rawType = body.type !== undefined ? body.type : body.types;
+    let typeArr: string[] = ["home"];
+    if (Array.isArray(rawType) && rawType.length > 0) {
+      typeArr = rawType.map((t: string) => String(t).toLowerCase().trim());
+    } else if (typeof rawType === "string" && rawType.trim()) {
+      typeArr = [rawType.toLowerCase().trim()];
+    }
+
     const testimonial = await TestimonialModel.create({
       name: body.name,
       avatarInitial: body.avatarInitial || body.name.charAt(0).toUpperCase(),
@@ -19,6 +27,7 @@ export const createTestimonial = async (ctx: Context<{ body: any }>) => {
       text: body.text,
       trip: body.trip,
       isActive: body.isActive !== undefined ? body.isActive : true,
+      type: typeArr,
       order:
         body.order !== undefined && body.order !== "" ? Number(body.order) : 0,
     });
@@ -50,6 +59,18 @@ export const updateTestimonial = async (
     }
 
     const updateData = { ...body };
+    if (body.type !== undefined || body.types !== undefined) {
+      const rawType = body.type !== undefined ? body.type : body.types;
+      let typeArr: string[] = ["home"];
+      if (Array.isArray(rawType) && rawType.length > 0) {
+        typeArr = rawType.map((t: string) => String(t).toLowerCase().trim());
+      } else if (typeof rawType === "string" && rawType.trim()) {
+        typeArr = [rawType.toLowerCase().trim()];
+      }
+      updateData.type = typeArr;
+      delete updateData.types;
+    }
+
     if (body.name && !body.avatarInitial) {
       updateData.avatarInitial = body.name.charAt(0).toUpperCase();
     }
@@ -113,7 +134,19 @@ export const getActiveTestimonials = async (ctx: Context<{ query: any }>) => {
     const limit = Math.min(50, Math.max(1, parseInt(query.limit ?? "12")));
     const skip = (page - 1) * limit;
 
-    const filter = { isActive: true };
+    const filter: any = { isActive: true };
+    if (query.type && query.type.trim() && query.type !== "all") {
+      const targetType = query.type.toLowerCase().trim();
+      if (targetType === "home") {
+        filter.$or = [
+          { type: targetType },
+          { type: { $exists: false } },
+          { type: { $size: 0 } },
+        ];
+      } else {
+        filter.type = targetType;
+      }
+    }
 
     const [data, total] = await Promise.all([
       TestimonialModel.find(filter)
@@ -155,6 +188,9 @@ export const getAdminTestimonials = async (ctx: Context<{ query: any }>) => {
     const filter: any = {};
     const isActive = parseBool(query.isActive);
     if (isActive !== undefined) filter.isActive = isActive;
+    if (query.type && query.type.trim() && query.type !== "all") {
+      filter.type = query.type.toLowerCase().trim();
+    }
 
     const [data, total] = await Promise.all([
       TestimonialModel.find(filter)

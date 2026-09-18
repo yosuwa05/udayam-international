@@ -43,9 +43,11 @@ const Home = () => {
 
   const { data: testimonialsResponse, isLoading: isTestimonialsLoading } =
     useQuery({
-      queryKey: ["testimonials"],
+      queryKey: ["testimonials", "home"],
       queryFn: async () => {
-        const res = await _axios.get("/testimonials")
+        const res = await _axios.get("/testimonials", {
+          params: { type: "home" },
+        })
         return res.data as { status: boolean; data: any[] }
       },
       staleTime: 60_000,

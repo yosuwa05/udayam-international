@@ -7,6 +7,7 @@ export interface ITestimonial {
   text: string;
   trip: string;
   isActive: boolean;
+  type: string[];
   order?: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -26,6 +27,10 @@ const testimonialSchema = new Schema<ITestimonial>(
     },
     trip: { type: String, required: true, trim: true },
     isActive: { type: Boolean, default: true },
+    type: {
+      type: [String],
+      default: ["home"],
+    },
     order: { type: Number, default: 0 },
   },
   { timestamps: true },
