@@ -26,6 +26,7 @@ import { LoginModalProvider } from "./lib/useLoginModal"
 import LoginModal from "./components/LoginModal"
 import { Toaster } from "./components/ui/sonner"
 import TourTermsAndConditions from "./components/TourTermsAndCondition"
+import PrivacyPolicy from "./components/PrivacyPolicy"
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -40,7 +41,7 @@ function ScrollToTop() {
   return null
 }
 
-const NO_INTRO_ROUTES = ["/tour-terms-and-conditions"]
+const NO_INTRO_ROUTES = ["/tour-terms-and-conditions", "/terms-and-conditions", "/privacy-policy"]
 
 export function App() {
   const [showIntro, setShowIntro] = useState(
@@ -89,6 +90,14 @@ function AppShell() {
           <Route
             path="/tour-terms-and-conditions"
             element={<TourTermsAndConditions />}
+          />
+          <Route
+            path="/terms-and-conditions"
+            element={<TourTermsAndConditions />}
+          />
+          <Route
+            path="/privacy-policy"
+            element={<PrivacyPolicy />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

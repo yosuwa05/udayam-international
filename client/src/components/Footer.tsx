@@ -114,14 +114,17 @@ const Footer = () => {
                   </button>
                 </li>
               ))}
-              {["Privacy Policy", "Terms of Service"].map((l) => (
-                <li key={l}>
+              {[
+                { label: "Privacy Policy", href: "/privacy-policy" },
+                { label: "Terms & Conditions", href: "/tour-terms-and-conditions" },
+              ].map((item) => (
+                <li key={item.label}>
                   <a
-                    href="#"
+                    href={item.href}
                     className="text-[13px] transition-colors duration-200"
                     style={{ color: "white" }}
                   >
-                    {l}
+                    {item.label}
                   </a>
                 </li>
               ))}

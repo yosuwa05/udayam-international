@@ -2918,8 +2918,21 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         textDecoration: "underline",
                       }}
                     >
-                      Terms &amp; Conditions, Payment Schedule, Cancellation &amp;
-                      Refund Policy and Privacy Policy
+                      Terms &amp; Conditions
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: "#1B2B6B",
+                        fontWeight: 700,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Privacy Policy
                     </a>
                     . *
                   </label>

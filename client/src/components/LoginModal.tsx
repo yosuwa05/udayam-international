@@ -548,13 +548,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   }}
                 >
                   By signing in, you agree to our{" "}
-                  <span style={{ color: "#1B2B6B", cursor: "pointer" }}>
+                  <a
+                    href="/tour-terms-and-conditions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#1B2B6B", cursor: "pointer", textDecoration: "underline" }}
+                  >
                     Terms
-                  </span>
+                  </a>
                   {" & "}
-                  <span style={{ color: "#1B2B6B", cursor: "pointer" }}>
+                  <a
+                    href="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#1B2B6B", cursor: "pointer", textDecoration: "underline" }}
+                  >
                     Privacy Policy
-                  </span>
+                  </a>
                 </p>
               </div>
             )}
