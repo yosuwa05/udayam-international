@@ -1573,31 +1573,96 @@ function ConnectorLines({ containerRef, hubRef }) {
   const [lines, setLines] = useState([])
 
   useEffect(() => {
+    const ids = ["top", "left1", "right1", "left2", "right2", "bottom"]
+
     function compute() {
-      if (!containerRef.current || !hubRef.current) return
+      if (!containerRef.current || !hubRef.current) return false
       const cRect = containerRef.current.getBoundingClientRect()
       const hRect = hubRef.current.getBoundingClientRect()
+
+      // If the hub has no size yet, layout isn't ready
+      if (hRect.width === 0 || hRect.height === 0) return false
+
       const hx = hRect.left - cRect.left + hRect.width / 2
       const hy = hRect.top - cRect.top + hRect.height / 2
 
-      const ids = ["top", "left1", "right1", "left2", "right2", "bottom"]
       const newLines = []
-      ids.forEach((id, i) => {
-        const el = document.getElementById(`card-${id}`)
-        if (!el) return
+      for (let i = 0; i < ids.length; i++) {
+        const el = document.getElementById(`card-${ids[i]}`)
+        if (!el) return false // element not mounted yet
         const r = el.getBoundingClientRect()
+        if (r.width === 0) return false // card not laid out yet
         const cx = r.left - cRect.left + r.width / 2
         const cy = r.top - cRect.top + r.height / 2
         newLines.push({ x1: hx, y1: hy, x2: cx, y2: cy, delay: i * 0.35 })
-      })
+      }
       setLines(newLines)
+      return true
     }
 
-    const t = setTimeout(compute, 300)
-    window.addEventListener("resize", compute)
+    // Retry with rAF until all elements are positioned correctly,
+    // then verify the result is stable over two consecutive frames.
+    let rafId: number
+    let stable = 0
+
+    function tryCompute() {
+      const ok = compute()
+      if (ok) {
+        stable++
+        if (stable >= 2) return // settled — stop retrying
+      } else {
+        stable = 0
+      }
+      rafId = requestAnimationFrame(tryCompute)
+    }
+
+    // Kick off after a short delay so the initial render has committed
+    const t = setTimeout(() => {
+      rafId = requestAnimationFrame(tryCompute)
+    }, 50)
+
+    // Also recompute whenever an image inside the container finishes loading
+    // (lazy images shift layout after they decode)
+    function onImgLoad() {
+      stable = 0
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(tryCompute)
+    }
+
+    const imgs = containerRef.current
+      ? Array.from(containerRef.current.querySelectorAll("img"))
+      : []
+    imgs.forEach((img) => img.addEventListener("load", onImgLoad))
+
+    // ResizeObserver catches any remaining layout shifts
+    let ro: ResizeObserver | null = null
+    if (containerRef.current) {
+      ro = new ResizeObserver(() => {
+        stable = 0
+        cancelAnimationFrame(rafId)
+        rafId = requestAnimationFrame(tryCompute)
+      })
+      ro.observe(containerRef.current)
+    }
+
+    // Recompute on window resize (debounced)
+    let resizeTimer: ReturnType<typeof setTimeout>
+    function onResize() {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        stable = 0
+        compute()
+      }, 150)
+    }
+    window.addEventListener("resize", onResize)
+
     return () => {
       clearTimeout(t)
-      window.removeEventListener("resize", compute)
+      clearTimeout(resizeTimer)
+      cancelAnimationFrame(rafId)
+      imgs.forEach((img) => img.removeEventListener("load", onImgLoad))
+      ro?.disconnect()
+      window.removeEventListener("resize", onResize)
     }
   }, [containerRef, hubRef])
 

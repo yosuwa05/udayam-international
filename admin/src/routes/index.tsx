@@ -180,6 +180,15 @@ function Home() {
     totalRev > 0 ? Math.round((standardRev / totalRev) * 100) : 0
   const customizedPercentage =
     totalRev > 0 ? Math.round((customizedRev / totalRev) * 100) : 0
+  // Precise float widths for the bar (so small amounts still show a sliver)
+  const standardBarWidth =
+    totalRev > 0
+      ? Math.max((standardRev / totalRev) * 100, standardRev > 0 ? 1 : 0)
+      : 0
+  const customizedBarWidth =
+    totalRev > 0
+      ? Math.max((customizedRev / totalRev) * 100, customizedRev > 0 ? 1 : 0)
+      : 0
 
   const pieData = stats.pieChart || {
     domestic: 0,
@@ -267,7 +276,7 @@ function Home() {
           isClickable={true}
           badge={
             <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100/90 text-blue-800 border border-blue-200 cursor-pointer shadow-2xs">
-              View split <ChevronRight className="w-2.5 h-2.5" />
+              View <ChevronRight className="w-2.5 h-2.5" />
             </span>
           }
         />
@@ -282,7 +291,7 @@ function Home() {
           isClickable={true}
           badge={
             <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200 cursor-pointer shadow-2xs">
-              View split <ChevronRight className="w-2.5 h-2.5" />
+              View <ChevronRight className="w-2.5 h-2.5" />
             </span>
           }
         />
@@ -649,8 +658,8 @@ function Home() {
                   Total Bookings Breakdown
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                  Consolidated bookings count from Standard Packages and
-                  Customized Quotes
+                  Consolidated Bookings count from Standard Packages and
+                  Customized Packages
                 </DialogDescription>
               </div>
             </div>
@@ -834,7 +843,7 @@ function Home() {
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 mt-0.5">
                   Consolidated revenue from Standard Bookings and Customized
-                  Quotations
+                  Bookings
                 </DialogDescription>
               </div>
             </div>
@@ -862,14 +871,14 @@ function Home() {
                   <div
                     className="bg-emerald-500 h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${standardPercentage}%`,
+                      width: `${standardBarWidth}%`,
                     }}
                     title={`Standard: ${standardPercentage}%`}
                   />
                   <div
                     className="bg-purple-500 h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${customizedPercentage}%`,
+                      width: `${customizedBarWidth}%`,
                     }}
                     title={`Customized: ${customizedPercentage}%`}
                   />
@@ -877,13 +886,21 @@ function Home() {
                 <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
                   <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                    Standard: {standardPercentage}% (
-                    {formatCurrency(kpis.standardRevenue)})
+                    Standard:{' '}
+                    {standardPercentage === 0 && standardRev > 0
+                      ? '<1'
+                      : standardPercentage}
+                    % ({formatCurrency(kpis.standardRevenue)})
                   </span>
                   <span className="flex items-center gap-1.5 text-purple-700 font-semibold">
                     <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
-                    Customized: {customizedPercentage}% (
-                    {formatCurrency(kpis.customizedRevenue)})
+                    Customized:{' '}
+                    {customizedPercentage === 100 && standardRev > 0
+                      ? '>99'
+                      : customizedPercentage === 0 && customizedRev > 0
+                        ? '<1'
+                        : customizedPercentage}
+                    % ({formatCurrency(kpis.customizedRevenue)})
                   </span>
                 </div>
               </div>

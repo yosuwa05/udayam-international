@@ -107,6 +107,7 @@ const fetchPackages = async (p: FetchParams): Promise<ApiResponse> => {
     sortBy: p.sortBy,
     maxPrice: String(p.maxPrice),
   }
+  if (p.sortBy === "featured") params.isFeatured = "true"
   if (p.search) params.search = p.search
   if (p.packageType !== "all") params.packageType = p.packageType.toUpperCase()
   if (p.destinationRegions.length)

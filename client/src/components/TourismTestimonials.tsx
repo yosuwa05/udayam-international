@@ -45,10 +45,10 @@ export const TourismTestimonials: React.FC = () => {
   const displayList =
     activeTestimonials.length > 1
       ? [
-        activeTestimonials[activeTestimonials.length - 1],
-        ...activeTestimonials,
-        activeTestimonials[0],
-      ]
+          activeTestimonials[activeTestimonials.length - 1],
+          ...activeTestimonials,
+          activeTestimonials[0],
+        ]
       : activeTestimonials
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export const TourismTestimonials: React.FC = () => {
 
   return (
     <section
-      className="py-16 md:py-20 border-t border-[#E8E4DC]"
+      className="border-t border-[#E8E4DC] py-16 md:py-20"
       style={{
         background: "linear-gradient(180deg, #FAF8F4 0%, #F5F2EB 100%)",
       }}
@@ -101,31 +101,32 @@ export const TourismTestimonials: React.FC = () => {
       <div className="mx-auto max-w-[1280px] px-5 md:px-8 lg:px-10">
         {/* Section Header */}
         <div className="mx-auto mb-10 max-w-[620px] text-center md:mb-12">
-          <p className="inline-flex items-center gap-2 font-inter text-[0.75rem] font-bold tracking-[0.2em] text-[#2E7D32] uppercase mb-3">
+          <p className="mb-3 inline-flex items-center gap-2 font-inter text-[0.75rem] font-bold tracking-[0.2em] text-[#2E7D32] uppercase">
             <span className="h-[1.5px] w-5 bg-[#2E7D32]" />
             Traveler Stories
             <span className="h-[1.5px] w-5 bg-[#2E7D32]" />
           </p>
           <h2
-            className="text-3xl md:text-4xl lg:text-[2.6rem] font-bold leading-tight"
+            className="text-3xl leading-tight font-bold md:text-4xl lg:text-[2.6rem]"
             style={{
               fontFamily: "'Libre Baskerville', serif",
               color: "#1B2B6B",
             }}
           >
-            What Our Travelers Say
+            What Our Travellers Say
           </h2>
-          <p className="mt-3 text-sm md:text-base text-[#6B7280]">
-            Real memories and authentic stories from travelers who explored the world with UV Holidays.
+          <p className="mt-3 text-sm text-[#6B7280] md:text-base">
+            Real memories and authentic stories from travelers who explored the
+            world with UV Holidays.
           </p>
         </div>
 
         {isLoading ? (
-          <div className="flex gap-5 justify-center overflow-hidden py-6">
+          <div className="flex justify-center gap-5 overflow-hidden py-6">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-72 w-full max-w-[380px] animate-pulse rounded-2xl bg-white/70 border border-[#E8E4DC] p-8"
+                className="h-72 w-full max-w-[380px] animate-pulse rounded-2xl border border-[#E8E4DC] bg-white/70 p-8"
               />
             ))}
           </div>
@@ -156,7 +157,7 @@ export const TourismTestimonials: React.FC = () => {
                       }}
                     >
                       <div
-                        className="relative flex w-full flex-col rounded-2xl p-7 md:p-8 transition-all duration-300"
+                        className="relative flex w-full flex-col rounded-2xl p-7 transition-all duration-300 md:p-8"
                         style={{
                           background: "#ffffff",
                           border: `1.5px solid ${isActive ? "#1B2B6B" : "#E8E4DC"}`,
@@ -169,12 +170,11 @@ export const TourismTestimonials: React.FC = () => {
                         {/* Rating Stars */}
                         <div className="mb-4 flex items-center gap-1 text-[15px] text-[#F59E0B]">
                           {"★".repeat(t.rating) + "☆".repeat(5 - t.rating)}
-
                         </div>
 
                         {/* Testimonial Quote */}
                         <p
-                          className="mb-6 text-left text-[14.5px] leading-[1.75] text-[#374151] break-words"
+                          className="mb-6 text-left text-[14.5px] leading-[1.75] break-words text-[#374151]"
                           style={{
                             fontFamily: "'Inter', sans-serif",
                             overflowWrap: "break-word",
@@ -185,7 +185,7 @@ export const TourismTestimonials: React.FC = () => {
                         </p>
 
                         {/* Traveler info pinned to bottom */}
-                        <div className="mt-auto flex items-center gap-3.5 pt-4 border-t border-[#F3F4F6]">
+                        <div className="mt-auto flex items-center gap-3.5 border-t border-[#F3F4F6] pt-4">
                           <div
                             className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-base font-bold text-white shadow-sm"
                             style={{

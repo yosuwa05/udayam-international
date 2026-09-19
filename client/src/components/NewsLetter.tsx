@@ -52,6 +52,7 @@ const NewsLetter = () => {
           <button
             onClick={() => {
               navigate("/tourism")
+              window.scrollTo({ top: 0, behavior: "smooth" })
             }}
             className="font-ui cursor-pointer rounded-full bg-[#2E7D32] px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-[#256427] hover:shadow-xl"
           >
