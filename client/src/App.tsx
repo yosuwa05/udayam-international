@@ -27,6 +27,7 @@ import LoginModal from "./components/LoginModal"
 import { Toaster } from "./components/ui/sonner"
 import TourTermsAndConditions from "./components/TourTermsAndCondition"
 import PrivacyPolicy from "./components/PrivacyPolicy"
+import { isTourismDomain } from "./utils"
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -41,7 +42,11 @@ function ScrollToTop() {
   return null
 }
 
-const NO_INTRO_ROUTES = ["/tour-terms-and-conditions", "/terms-and-conditions", "/privacy-policy"]
+const NO_INTRO_ROUTES = [
+  "/tour-terms-and-conditions",
+  "/terms-and-conditions",
+  "/privacy-policy",
+]
 
 export function App() {
   const [showIntro, setShowIntro] = useState(
@@ -71,12 +76,14 @@ export function App() {
 }
 
 function AppShell() {
+  const isTourism = isTourismDomain()
+
   return (
     <>
       <Navbar />
       <main>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={isTourism ? <Tourism /> : <Home />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/tourism" element={<Tourism />} />
           <Route path="/medical" element={<MedicalTourism />} />
@@ -95,10 +102,7 @@ function AppShell() {
             path="/terms-and-conditions"
             element={<TourTermsAndConditions />}
           />
-          <Route
-            path="/privacy-policy"
-            element={<PrivacyPolicy />}
-          />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

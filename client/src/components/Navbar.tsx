@@ -9,6 +9,7 @@ import TravelLogo from "../assets/TravelLogo.jpeg"
 import EducationLogo from "../assets/UVPathways.JPG.jpeg"
 
 import { navItems, pageToPath, type Page } from "@/lib/navData"
+import { isTourismDomain } from "@/utils"
 import callIcon from "../assets/Call.svg"
 import mailIcon from "../assets/Email.svg"
 import locationIcon from "../assets/Location.svg"
@@ -26,6 +27,7 @@ const Navbar: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  const isTourism = isTourismDomain()
   const { user, logout } = useAuth()
   const { openLogin } = useLoginModal()
 
@@ -40,7 +42,17 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const isActive = (page: Page) => location.pathname === pageToPath[page]
+  const isActive = (page: Page) => {
+    if (isTourism) {
+      if (page === "tourism") {
+        return location.pathname === "/tourism" || location.pathname === "/"
+      }
+      if (page === "home") {
+        return false
+      }
+    }
+    return location.pathname === pageToPath[page]
+  }
 
   const go = (page: Page) => {
     setMenuOpen(false)
@@ -49,6 +61,16 @@ const Navbar: React.FC = () => {
       navigate("/contact#contact-section")
       return
     }
+
+    if (isTourism && (page === "tourism" || page === "home")) {
+      navigate("/")
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      })
+      return
+    }
+
     navigate(pageToPath[page])
 
     window.scrollTo({
@@ -69,9 +91,11 @@ const Navbar: React.FC = () => {
   }
 
   const currentPage =
-    (Object.entries(pageToPath).find(
-      ([_, path]) => path === location.pathname
-    )?.[0] as Page) || "home"
+    isTourism && location.pathname === "/"
+      ? "tourism"
+      : ((Object.entries(pageToPath).find(
+          ([_, path]) => path === location.pathname
+        )?.[0] as Page) || "home")
 
   const currentLogo = pageLogos[currentPage] || Homelogo
 
@@ -179,7 +203,7 @@ const Navbar: React.FC = () => {
         >
           <img
             src={currentLogo}
-            alt="Udayam International"
+            alt={isTourism ? "UV Holidays" : "Udayam International"}
             className={` ${currentLogo === Homelogo ? "h-[35px]" : "h-[60px] md:h-[70px]"} w-auto object-contain`}
             onError={(e) => {
               ;(e.currentTarget as HTMLImageElement).style.display = "none"
