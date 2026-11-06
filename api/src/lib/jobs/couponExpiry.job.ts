@@ -2,9 +2,9 @@ import { CouponModel } from "@models/coupon.model";
 import { CronJob } from "cron";
 
 const couponExpiryJob = new CronJob(
-    //   "0 30 1 * * *", // every day at 1:30 AM (server time)
+    "0 30 1 * * *", // every day at 1:30 AM (server time)
     // "*/15 * * * * *", // for testing
-    "*/30 * * * * *",
+    // "*/30 * * * * *",
     async () => {
         try {
             console.log("Coupon expiry job started");

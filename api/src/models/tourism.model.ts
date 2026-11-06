@@ -44,7 +44,7 @@ export interface ITourism {
     description?: string
     highlights?: string[]
     itinerary?: { day: number; title: string; description: string }[]
-
+    itineraryHighLight?: string
     isActive: boolean
     isFeatured: boolean
     isDeleted: boolean
@@ -95,7 +95,7 @@ const tourismSchema = new Schema<ITourism>(
 
         price: {
             type: Number,
-            required: function(this: any) {
+            required: function (this: any) {
                 return this.bookingType === "STANDARD";
             },
             min: 0,
@@ -133,7 +133,7 @@ const tourismSchema = new Schema<ITourism>(
                 _id: false,
             },
         ],
-
+        itineraryHighLight: { type: String, trim: true },
         isActive: { type: Boolean, default: true },
         isFeatured: { type: Boolean, default: false },
         isDeleted: { type: Boolean, default: false },

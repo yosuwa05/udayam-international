@@ -44,6 +44,8 @@ interface ApiPackage {
   label?: string
   order?: number
   itinerary?: { day: number; title: string; description: string }[]
+  highlights?: string[]
+  itineraryHighLight?: string
 }
 
 interface ApiResponse {
@@ -1715,6 +1717,49 @@ const TourismDetailsDrawer: React.FC<{
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Itinerary Highlight */}
+          {pkg.itineraryHighLight && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <h3
+                style={{
+                  fontFamily: "'Libre Baskerville',serif",
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  color: "#1B2B6B",
+                  margin: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span>✨</span>
+                <span>Itinerary Highlight</span>
+              </h3>
+              <div
+                style={{
+                  background: "#FAF8F4",
+                  border: "1.5px solid #E8E4DC",
+                  borderLeft: "4px solid #1B2B6B",
+                  borderRadius: 14,
+                  padding: "16px 20px",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: f,
+                    fontSize: ".88rem",
+                    color: "#5a5a7a",
+                    lineHeight: 1.65,
+                    margin: 0,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {pkg.itineraryHighLight}
+                </p>
               </div>
             </div>
           )}

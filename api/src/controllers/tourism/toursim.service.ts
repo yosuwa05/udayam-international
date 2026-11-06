@@ -76,7 +76,7 @@ export const createTouristPlace = async (
             description: body.description,
             highlights: parseJsonField(body.highlights),
             itinerary: parseJsonField(body.itinerary),
-
+            itineraryHighLight: body.itineraryHighLight,
             isActive: body.isActive ?? true,
             isFeatured: body.isFeatured ?? false,
             label: body.label,

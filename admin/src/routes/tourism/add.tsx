@@ -32,6 +32,7 @@ function RouteComponent() {
         'maxPax',
         'label',
         'description',
+        'itineraryHighLight',
         'order',
         'gstPercentage',
       ]
