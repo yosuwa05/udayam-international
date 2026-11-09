@@ -16,6 +16,7 @@ export type StandardBookingStatus =
     | "REFUND_PROCESSING"
     | "PARTIALLY_REFUNDED"
     | "REFUNDED"
+    | "PARTIALLY_PAID"
 
 export type CustomizedBookingStatus =
     | "ENQUIRY_RECEIVED"
@@ -70,6 +71,15 @@ export interface ICustomizedTransaction {
     createdAt?: Date
 }
 
+export interface IPaymentDetails {
+    totalPaidAmount: number
+    remainingAmount: number
+    paymentStatus: "PENDING" | "PARTIALLY_PAID" | "FULLY_PAID"
+    currentStage: number
+    maxStages: number
+    isFullyPaid: boolean
+}
+
 export interface IBooking {
     bookingNumber: string
     packageId: Types.ObjectId
@@ -79,6 +89,8 @@ export interface IBooking {
     pricingDetails: IPricingDetails
     couponId?: Types.ObjectId
     paymentId?: Types.ObjectId
+    payments?: Types.ObjectId[]
+    paymentDetails?: IPaymentDetails
     status: BookingStatus
     quotation?: IQuotation
     transactions?: ICustomizedTransaction[]
@@ -155,6 +167,19 @@ const bookingSchema = new Schema<IBooking>(
         pricingDetails: { type: pricingDetailsSchema, required: true },
         couponId: { type: Schema.Types.ObjectId, ref: "coupon" },
         paymentId: { type: Schema.Types.ObjectId, ref: "payment" },
+        payments: [{ type: Schema.Types.ObjectId, ref: "payment" }],
+        paymentDetails: {
+            totalPaidAmount: { type: Number, default: 0, min: 0 },
+            remainingAmount: { type: Number, default: 0, min: 0 },
+            paymentStatus: {
+                type: String,
+                enum: ["PENDING", "PARTIALLY_PAID", "FULLY_PAID"],
+                default: "PENDING",
+            },
+            currentStage: { type: Number, default: 1 },
+            maxStages: { type: Number, default: 3 },
+            isFullyPaid: { type: Boolean, default: false },
+        },
         status: {
             type: String,
             required: true,
@@ -177,6 +202,7 @@ const bookingSchema = new Schema<IBooking>(
                 "QUOTATION_SHARED",
                 "CUSTOMER_CONFIRMED",
                 "ENQUIRY_CANCELLED",
+                "PARTIALLY_PAID",
             ],
         },
         quotation: { type: quotationSchema },

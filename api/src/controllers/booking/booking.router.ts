@@ -4,6 +4,8 @@ import {
     getEligibleCouponsForPackage,
     createStandardBookingOrder,
     verifyStandardPayment,
+    createSubsequentBookingPaymentOrder,
+    getBookingPaymentSummaryHandler,
     handleRazorpayWebhook,
     createCustomizedEnquiry,
     getMyBookings,
@@ -28,6 +30,8 @@ export const bookingRouter = new Elysia({
     .get("/coupon/eligible/:packageId", getEligibleCouponsForPackage, { beforeHandle: userOnly })
     .post("/standard/create-order", createStandardBookingOrder, { beforeHandle: userOnly })
     .post("/standard/verify-payment", verifyStandardPayment, { beforeHandle: userOnly })
+    .post("/standard/subsequent-payment", createSubsequentBookingPaymentOrder, { beforeHandle: userOnly })
+    .get("/:id/payment-summary", getBookingPaymentSummaryHandler, { beforeHandle: userAndAdminOnly })
     .post("/customized/enquire", createCustomizedEnquiry, { beforeHandle: userOnly })
     .get("/my-bookings", getMyBookings, { beforeHandle: userOnly })
     .get("/my-bookings/:id", getMyBookingDetails, { beforeHandle: userOnly })

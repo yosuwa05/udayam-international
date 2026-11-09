@@ -10,6 +10,16 @@ import { BookingStatusHistoryModel } from "@models/bookingStatusHistory.model"
 import { RefundModel } from "@models/refund.model"
 import { APP_CONSTANTS } from "constant"
 import { sendStandardBookingEmail, sendCustomizedEnquiryEmail } from "@lib/emailTemplates"
+import {
+    getOrCreatePaymentPlanSettings,
+    validateInitialBookingPayment,
+    validateSubsequentBookingPayment,
+    getBookingPaymentSummary,
+    calculatePaymentStages,
+    roundCurrency,
+    amountToPaise,
+} from "@helper/paymentValidation.helper"
+import { recordStaffActivity } from "@helper/staffLogger"
 
 
 // ─── HELPER: Coupon Validator Logic ──────────────────────────────────────────
@@ -251,7 +261,7 @@ export const createStandardBookingOrder = async (ctx: Context) => {
     }
 
     try {
-        const { packageId, travellerInfo, couponCode } = body
+        const { packageId, travellerInfo, couponCode, paymentAmount } = body
         if (!packageId || !travellerInfo || !travellerInfo.fullName || !travellerInfo.mobileNumber || !travellerInfo.email || !travellerInfo.numberOfPersons || !travellerInfo.travelDate) {
             set.status = 400
             return { status: false, error: "Missing required booking details" }
@@ -292,8 +302,23 @@ export const createStandardBookingOrder = async (ctx: Context) => {
 
         const gstPercentage = pkg.gstPercentage ?? 0
         const gstAmount = Math.round((finalAmount * gstPercentage) / 100)
-        finalAmount = finalAmount + gstAmount
+        finalAmount = roundCurrency(finalAmount + gstAmount)
 
+        // ── Validate payment stage and upfront amount ──
+        const planSettings = await getOrCreatePaymentPlanSettings()
+        const paymentValidation = validateInitialBookingPayment({
+            finalAmount,
+            paymentAmount,
+            settings: planSettings,
+        })
+
+        if (!paymentValidation.isValid || paymentValidation.cleanAmount === undefined) {
+            set.status = 400
+            return { status: false, error: paymentValidation.error }
+        }
+
+        const payableAmount = paymentValidation.cleanAmount
+        const isFullPayment = Boolean(paymentValidation.isFullPayment)
         const bookingNumber = `UV-STD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
         // Create Production Razorpay Order via REST API
@@ -313,14 +338,17 @@ export const createStandardBookingOrder = async (ctx: Context) => {
                 Authorization: authHeader,
             },
             body: JSON.stringify({
-                amount: Math.round(finalAmount * 100), // amount in paise
+                amount: amountToPaise(payableAmount), // amount in paise
                 currency: "INR",
                 receipt: bookingNumber,
                 notes: {
                     bookingNumber,
                     packageId,
                     userId,
-                    couponCode,
+                    couponCode: couponCode || "",
+                    stage: "1",
+                    stageLabel: paymentValidation.stageLabel,
+                    isFullPayment: String(isFullPayment),
                 },
             }),
         })
@@ -361,14 +389,25 @@ export const createStandardBookingOrder = async (ctx: Context) => {
                 currency: "INR",
             },
             couponId: couponIdObj ? couponIdObj.toString() : null,
+            initialPaymentAmount: payableAmount,
+            isFullPayment,
+            stage: 1,
+            stageLabel: paymentValidation.stageLabel,
+            planSettings: {
+                maximumPaymentStages: planSettings.maximumPaymentStages,
+                minimumAdvancePercentage: planSettings.minimumAdvancePercentage,
+            },
         }
 
         // Create Payment record with pending payload
         await PaymentModel.create({
             razorpayOrderId,
-            amount: finalAmount,
+            amount: payableAmount,
             currency: "INR",
             status: "CREATED",
+            stage: 1,
+            stageLabel: paymentValidation.stageLabel,
+            isSubsequent: false,
             bookingPayload,
         })
 
@@ -377,10 +416,16 @@ export const createStandardBookingOrder = async (ctx: Context) => {
             data: {
                 bookingNumber,
                 razorpayOrderId,
-                amount: finalAmount,
-                amountInPaise: Math.round(finalAmount * 100),
+                amount: payableAmount,
+                amountInPaise: amountToPaise(payableAmount),
+                finalAmount,
+                remainingAmount: Math.max(0, roundCurrency(finalAmount - payableAmount)),
+                isFullPayment,
+                stage: 1,
+                stageLabel: paymentValidation.stageLabel,
                 currency: "INR",
                 keyId: razorpayKeyId,
+                paymentPlan: calculatePaymentStages(finalAmount, planSettings),
             },
         }
     } catch (error: any) {
@@ -402,8 +447,68 @@ export const confirmBookingFromPaymentPayload = async (
         throw new Error("Payment record not found")
     }
 
-    // Idempotency: If booking was already created for this payment, return it
-    if (payment.bookingId) {
+    // ── CASE A: SUBSEQUENT PAYMENT VERIFICATION ──
+    if (payment.isSubsequent || payment.bookingPayload?.isSubsequent) {
+        // Idempotency: if already processed, return booking
+        if (payment.status === "SUCCESS" && payment.bookingId) {
+            const existingBooking = await BookingModel.findById(payment.bookingId)
+            if (existingBooking) return existingBooking
+        }
+
+        if (!payment.bookingId) {
+            throw new Error("Booking ID missing for subsequent payment")
+        }
+
+        payment.status = "SUCCESS"
+        payment.razorpayPaymentId = razorpayPaymentId
+        payment.razorpaySignature = razorpaySignature
+        await payment.save()
+
+        const booking = await BookingModel.findById(payment.bookingId)
+        if (!booking) {
+            throw new Error("Associated booking not found for payment")
+        }
+
+        // Add payment to booking.payments array
+        if (!booking.payments) {
+            booking.payments = []
+        }
+        if (!booking.payments.some((id: any) => id.toString() === payment._id.toString())) {
+            booking.payments.push(payment._id as any)
+        }
+        booking.paymentId = payment._id
+
+        // Recompute booking payment summary
+        const summary = await getBookingPaymentSummary(booking)
+        booking.paymentDetails = {
+            totalPaidAmount: summary.totalPaidAmount,
+            remainingAmount: summary.remainingAmount,
+            paymentStatus: summary.paymentStatus,
+            currentStage: summary.currentStageNumber - 1,
+            maxStages: summary.maximumPaymentStages,
+            isFullyPaid: summary.isFullyPaid,
+        }
+
+        if (summary.isFullyPaid && booking.status === "PARTIALLY_PAID") {
+            booking.status = "CONFIRMED"
+        }
+        await booking.save()
+
+        // Audit History Log
+        await BookingStatusHistoryModel.create({
+            bookingId: booking._id,
+            fromStatus: booking.status,
+            toStatus: booking.status,
+            changedBy: booking.userId,
+            notes: `Stage ${payment.stage || ""} (${payment.stageLabel || "Subsequent Payment"}) payment of ₹${payment.amount.toLocaleString("en-IN")} verified successfully (Payment ID: ${razorpayPaymentId}). Remaining balance: ₹${summary.remainingAmount.toLocaleString("en-IN")}. Payment Status: ${summary.paymentStatus}`,
+        })
+
+        return booking
+    }
+
+    // ── CASE B: INITIAL BOOKING PAYMENT VERIFICATION ──
+    // Idempotency: If booking was already created for this payment and is marked SUCCESS, return it
+    if (payment.bookingId && payment.status === "SUCCESS") {
         const existingBooking = await BookingModel.findById(payment.bookingId)
         if (existingBooking) return existingBooking
     }
@@ -412,6 +517,12 @@ export const confirmBookingFromPaymentPayload = async (
     if (!payload) {
         throw new Error("Booking payload missing from payment record")
     }
+
+    const finalAmount = roundCurrency(payload.pricingDetails?.finalAmount || payment.amount)
+    const paidAmount = roundCurrency(payment.amount)
+    const remainingAmount = Math.max(0, roundCurrency(finalAmount - paidAmount))
+    const isFullyPaid = remainingAmount <= 0
+    const planSettings = await getOrCreatePaymentPlanSettings()
 
     // Create Booking Document strictly on Payment Success
     const booking = await BookingModel.create({
@@ -423,6 +534,16 @@ export const confirmBookingFromPaymentPayload = async (
         pricingDetails: payload.pricingDetails,
         couponId: payload.couponId ? new Types.ObjectId(payload.couponId) : undefined,
         status: "BOOKED",
+        paymentId: payment._id,
+        payments: [payment._id],
+        paymentDetails: {
+            totalPaidAmount: paidAmount,
+            remainingAmount,
+            paymentStatus: isFullyPaid ? "FULLY_PAID" : "PARTIALLY_PAID",
+            currentStage: 1,
+            maxStages: payload.planSettings?.maximumPaymentStages || planSettings.maximumPaymentStages,
+            isFullyPaid,
+        },
     })
 
     // Update Payment record
@@ -431,9 +552,6 @@ export const confirmBookingFromPaymentPayload = async (
     payment.razorpaySignature = razorpaySignature
     payment.bookingId = booking._id
     await payment.save()
-
-    booking.paymentId = payment._id
-    await booking.save()
 
     // Consume Coupon if applicable
     if (booking.couponId) {
@@ -460,7 +578,9 @@ export const confirmBookingFromPaymentPayload = async (
         fromStatus: "INITIATED",
         toStatus: "BOOKED",
         changedBy: new Types.ObjectId(payload.userId),
-        notes: `Payment verified & booking created successfully (Payment ID: ${razorpayPaymentId})`,
+        notes: isFullyPaid
+            ? `Full payment of ₹${paidAmount.toLocaleString("en-IN")} verified & booking confirmed (Payment ID: ${razorpayPaymentId})`
+            : `Booking advance of ₹${paidAmount.toLocaleString("en-IN")} (Stage 1: ${payment.stageLabel || "Booking Advance"}) verified & booking confirmed (Payment ID: ${razorpayPaymentId}). Remaining balance: ₹${remainingAmount.toLocaleString("en-IN")}`,
     })
 
     // Trigger confirmation email in the background
@@ -542,6 +662,138 @@ export const verifyStandardPayment = async (ctx: Context) => {
     }
 }
 
+// ─── 4a. STANDARD BOOKING: Create Subsequent Payment Order ───────────────────
+
+export const createSubsequentBookingPaymentOrder = async (ctx: Context) => {
+    const { body, set, store }: any = ctx
+    const userId = store.id
+
+    if (!userId) {
+        set.status = 401
+        return { status: false, error: "Authentication required" }
+    }
+
+    try {
+        const { bookingId, amount } = body
+        if (!bookingId || amount === undefined || amount === null) {
+            set.status = 400
+            return { status: false, error: "bookingId and payment amount are required" }
+        }
+
+        const booking = await BookingModel.findOne({
+            _id: new Types.ObjectId(bookingId),
+            userId: new Types.ObjectId(userId),
+        })
+
+        if (!booking) {
+            set.status = 404
+            return { status: false, error: "Booking not found or does not belong to your account" }
+        }
+
+        const planSettings = await getOrCreatePaymentPlanSettings()
+
+        const validation = await validateSubsequentBookingPayment({
+            booking,
+            paymentAmount: amount,
+            settings: planSettings,
+        })
+
+        if (!validation.isValid || validation.cleanAmount === undefined) {
+            set.status = 400
+            return { status: false, error: validation.error }
+        }
+
+        const payableAmount = validation.cleanAmount
+        const stageNumber = validation.stageNumber
+        const stageLabel = validation.stageLabel
+        const receipt = `UV-SUB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+
+        // Create Production Razorpay Order via REST API
+        const razorpayKeyId = APP_CONSTANTS.RAZORPAY_KEY_ID
+        const razorpayKeySecret = APP_CONSTANTS.RAZORPAY_KEY_SECRET
+
+        if (!razorpayKeyId || !razorpayKeySecret) {
+            set.status = 500
+            return { status: false, error: "Razorpay credentials are not configured on the server" }
+        }
+
+        const authHeader = "Basic " + Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString("base64")
+        const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: authHeader,
+            },
+            body: JSON.stringify({
+                amount: amountToPaise(payableAmount),
+                currency: "INR",
+                receipt,
+                notes: {
+                    bookingId: booking._id.toString(),
+                    bookingNumber: booking.bookingNumber,
+                    userId,
+                    stage: String(stageNumber),
+                    stageLabel,
+                    isSubsequent: "true",
+                },
+            }),
+        })
+
+        const rpData = await rpRes.json()
+        if (!rpRes.ok || !rpData || !rpData.id) {
+            console.error("Razorpay Subsequent Order Creation Error", rpData)
+            set.status = 500
+            return {
+                status: false,
+                error: rpData?.error?.description || "Failed to create Razorpay order for subsequent payment",
+            }
+        }
+
+        const razorpayOrderId = rpData.id
+
+        // Create Payment record for this subsequent stage
+        await PaymentModel.create({
+            bookingId: booking._id,
+            razorpayOrderId,
+            amount: payableAmount,
+            currency: "INR",
+            status: "CREATED",
+            stage: stageNumber,
+            stageLabel,
+            isSubsequent: true,
+            bookingPayload: {
+                bookingId: booking._id.toString(),
+                stage: stageNumber,
+                stageLabel,
+                amount: payableAmount,
+                isSubsequent: true,
+            },
+        })
+
+        return {
+            status: true,
+            message: `Order created for Stage ${stageNumber} (${stageLabel}) payment`,
+            data: {
+                bookingId: booking._id,
+                bookingNumber: booking.bookingNumber,
+                razorpayOrderId,
+                amount: payableAmount,
+                amountInPaise: amountToPaise(payableAmount),
+                currency: "INR",
+                keyId: razorpayKeyId,
+                stage: stageNumber,
+                stageLabel,
+                isFinalStage: validation.isFinalStage,
+                remainingAfterThisPayment: validation.remainingAfterThisPayment,
+            },
+        }
+    } catch (error: any) {
+        console.error("Create Subsequent Payment Order Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to create subsequent payment order" }
+    }
+}
+
 // ─── 4b. RAZORPAY WEBHOOK: Handle Webhook Notifications ───────────────────────
 
 export const handleRazorpayWebhook = async (ctx: Context) => {
@@ -594,16 +846,26 @@ export const handleRazorpayWebhook = async (ctx: Context) => {
                     if (payment.bookingId) {
                         const booking = await BookingModel.findById(payment.bookingId)
                         if (booking) {
-                            const oldStatus = booking.status
-                            booking.status = "PAYMENT_FAILED"
-                            await booking.save()
+                            if (payment.isSubsequent) {
+                                // For subsequent payments, the core booking remains confirmed; log failure history
+                                await BookingStatusHistoryModel.create({
+                                    bookingId: booking._id,
+                                    fromStatus: booking.status,
+                                    toStatus: booking.status,
+                                    notes: `Razorpay Webhook: Subsequent payment of ₹${payment.amount} for Stage ${payment.stage || ""} failed (${failureReason})`,
+                                })
+                            } else {
+                                const oldStatus = booking.status
+                                booking.status = "PAYMENT_FAILED"
+                                await booking.save()
 
-                            await BookingStatusHistoryModel.create({
-                                bookingId: booking._id,
-                                fromStatus: oldStatus,
-                                toStatus: "PAYMENT_FAILED",
-                                notes: `Razorpay Webhook: Payment failed (${failureReason})`,
-                            })
+                                await BookingStatusHistoryModel.create({
+                                    bookingId: booking._id,
+                                    fromStatus: oldStatus,
+                                    toStatus: "PAYMENT_FAILED",
+                                    notes: `Razorpay Webhook: Payment failed (${failureReason})`,
+                                })
+                            }
                         }
                     }
                 }
@@ -787,6 +1049,7 @@ export const getMyBookings = async (ctx: Context) => {
                 .limit(limit)
                 .populate("packageId", "title destination imageUrl packageType bookingType days nights price bannerImage")
                 .populate("paymentId")
+                .populate("payments")
                 .lean(),
             BookingModel.countDocuments(filter),
         ])
@@ -824,6 +1087,7 @@ export const getMyBookingDetails = async (ctx: Context) => {
         })
             .populate("packageId")
             .populate("paymentId")
+            .populate("payments")
             .populate("couponId")
             .lean()
 
@@ -832,14 +1096,18 @@ export const getMyBookingDetails = async (ctx: Context) => {
             return { status: false, error: "Booking not found" }
         }
 
-        const history = await BookingStatusHistoryModel.find({ bookingId: booking._id })
-            .sort({ createdAt: -1 })
-            .lean()
+        const [history, paymentSummary] = await Promise.all([
+            BookingStatusHistoryModel.find({ bookingId: booking._id })
+                .sort({ createdAt: -1 })
+                .lean(),
+            getBookingPaymentSummary(booking),
+        ])
 
         return {
             status: true,
             data: {
                 ...booking,
+                paymentSummary,
                 history,
             },
         }
@@ -847,6 +1115,40 @@ export const getMyBookingDetails = async (ctx: Context) => {
         console.error("Get My Booking Details Error", error)
         set.status = 500
         return { status: false, error: "Failed to fetch booking details" }
+    }
+}
+
+// ─── 6b. USER & ADMIN: Get Booking Payment Plan Summary Endpoint ─────────────
+
+export const getBookingPaymentSummaryHandler = async (ctx: Context<{ params: { id: string } }>) => {
+    const { params, set, store }: any = ctx
+    const userId = store.id
+    const userRole = store.role
+
+    try {
+        const booking = await BookingModel.findById(params.id).lean()
+        if (!booking) {
+            set.status = 404
+            return { status: false, error: "Booking not found" }
+        }
+
+        // Only the owner or an admin can access this summary
+        if (userRole !== "ADMIN" && booking.userId.toString() !== userId) {
+            set.status = 403
+            return { status: false, error: "Access denied to this booking" }
+        }
+
+        const settings = await getOrCreatePaymentPlanSettings()
+        const summary = await getBookingPaymentSummary(booking, settings)
+
+        return {
+            status: true,
+            data: summary,
+        }
+    } catch (error: any) {
+        console.error("Get Booking Payment Summary Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to fetch payment summary" }
     }
 }
 
@@ -942,6 +1244,7 @@ export const getBookingDetails = async (ctx: Context<{ params: { id: string } }>
             .populate("userId", "fullName email mobile profileImage")
             .populate("couponId")
             .populate("paymentId")
+            .populate("payments")
             .lean()
 
         if (!booking) {
@@ -949,14 +1252,18 @@ export const getBookingDetails = async (ctx: Context<{ params: { id: string } }>
             return { status: false, error: "Booking record not found" }
         }
 
-        const statusHistory = await BookingStatusHistoryModel.find({ bookingId: booking._id })
-            .sort({ createdAt: 1 })
-            .lean()
+        const [statusHistory, paymentSummary] = await Promise.all([
+            BookingStatusHistoryModel.find({ bookingId: booking._id })
+                .sort({ createdAt: 1 })
+                .lean(),
+            getBookingPaymentSummary(booking),
+        ])
 
         return {
             status: true,
             data: {
                 ...booking,
+                paymentSummary,
                 statusHistory,
             },
         }
@@ -1026,6 +1333,17 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
             notes: `Quotation updated to ₹${Number(amount).toLocaleString("en-IN")}. ${notes || ""}`,
         })
 
+        await recordStaffActivity(ctx, {
+            action: "UPDATE",
+            module: "Customized Bookings",
+            route: "/bookings/customized",
+            recordId: params.id,
+            recordTitle: booking.bookingNumber,
+            previousData: { status: oldStatus, pricingDetails: booking.pricingDetails },
+            updatedData: { status: nextStatus, finalAmount },
+            details: `Updated quotation to ₹${Number(amount).toLocaleString("en-IN")} for booking ${booking.bookingNumber}`,
+        })
+
         return {
             status: true,
             message: "Quotation updated successfully",
@@ -1067,6 +1385,18 @@ export const updateBookingStatus = async (ctx: Context<{ params: { id: string } 
             toStatus: status,
             changedBy: new Types.ObjectId(adminId),
             notes: notes || `Booking status changed from ${oldStatus} to ${status}`,
+        })
+
+        const isCustom = booking.bookingType === "CUSTOMIZED"
+        await recordStaffActivity(ctx, {
+            action: "UPDATE",
+            module: isCustom ? "Customized Bookings" : "Standard Bookings",
+            route: isCustom ? "/bookings/customized" : "/bookings/standard",
+            recordId: params.id,
+            recordTitle: booking.bookingNumber,
+            previousData: { status: oldStatus },
+            updatedData: { status },
+            details: `Updated booking status from ${oldStatus} to ${status} for ${booking.bookingNumber}`,
         })
 
         return {
@@ -1154,6 +1484,16 @@ export const recordCustomizedTransaction = async (ctx: Context<{ params: { id: s
             toStatus: booking.status,
             changedBy: new Types.ObjectId(adminId),
             notes: `Recorded payment entry of ₹${Number(amount).toLocaleString("en-IN")} via ${paymentMode}.${notes ? ` Notes: ${notes}` : ""}`,
+        })
+
+        await recordStaffActivity(ctx, {
+            action: "UPDATE",
+            module: "Customized Bookings",
+            route: "/bookings/customized",
+            recordId: params.id,
+            recordTitle: booking.bookingNumber,
+            updatedData: { newTransaction, totalPaid: totalPaid + Number(amount), pendingAmount: pendingAmount - Number(amount) },
+            details: `Recorded payment of ₹${Number(amount).toLocaleString("en-IN")} (${paymentMode}) for ${booking.bookingNumber}`,
         })
 
         return {

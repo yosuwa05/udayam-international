@@ -1,10 +1,12 @@
 import React, { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { _axios } from "@/lib/axios"
 import { useAuth } from "@/lib/useAuth"
 import { useNavigate } from "react-router-dom"
 import { pdf } from "@react-pdf/renderer"
 import { BookingInvoicePDF } from "./BookingInvoicePDF"
+import { loadRazorpayScript } from "@/lib/razorpay"
+import { toast } from "sonner"
 import {
   Calendar,
   MapPin,
@@ -20,11 +22,20 @@ import {
   Sparkles,
   Download,
   Loader2,
+  CreditCard,
+  CheckCircle2,
+  AlertCircle,
+  Layers,
+  ArrowRight,
+  ShieldCheck,
+  Receipt,
+  Info,
 } from "lucide-react"
 
 export const MyBookings: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   // Filters & Pagination state
   const [searchQuery, setSearchQuery] = useState("")
@@ -39,9 +50,19 @@ export const MyBookings: React.FC = () => {
   // Track which booking is being downloaded (PDF)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
-  // Prevent background page scroll when detail modal is active
+  // Subsequent Payment State (for making payments from detail modal or quick card modal)
+  const [quickPaymentBooking, setQuickPaymentBooking] = useState<any | null>(null)
+  const [subsequentChoice, setSubsequentChoice] = useState<"MIN" | "FULL" | "CUSTOM">("MIN")
+  const [customSubsequentAmount, setCustomSubsequentAmount] = useState<string>("")
+  const [isPayingSubsequent, setIsPayingSubsequent] = useState(false)
+
+  // Detail Modal internal subsequent payment state
+  const [detailPaymentChoice, setDetailPaymentChoice] = useState<"MIN" | "FULL" | "CUSTOM">("MIN")
+  const [detailCustomAmount, setDetailCustomAmount] = useState<string>("")
+
+  // Prevent background page scroll when modal is active
   React.useEffect(() => {
-    if (selectedBookingId) {
+    if (selectedBookingId || quickPaymentBooking) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = ""
@@ -49,9 +70,9 @@ export const MyBookings: React.FC = () => {
     return () => {
       document.body.style.overflow = ""
     }
-  }, [selectedBookingId])
+  }, [selectedBookingId, quickPaymentBooking])
 
-  // Query User Bookings
+  // Query User Bookings List
   const { data: bookingsData, isLoading, isError } = useQuery({
     queryKey: ["my-bookings", page, limit, selectedBookingType, selectedStatus, searchQuery],
     queryFn: async () => {
@@ -69,7 +90,7 @@ export const MyBookings: React.FC = () => {
     enabled: !!user,
   })
 
-  // Query Selected Single Booking Details
+  // Query Selected Single Booking Details (contains full paymentSummary from backend)
   const { data: bookingDetailsData, isLoading: isLoadingDetail } = useQuery({
     queryKey: ["my-booking-details", selectedBookingId],
     queryFn: async () => {
@@ -79,6 +100,25 @@ export const MyBookings: React.FC = () => {
     },
     enabled: !!selectedBookingId,
   })
+
+  // Query Payment Summary for Quick Payment Booking if needed
+  const { data: quickBookingSummaryData } = useQuery({
+    queryKey: ["booking-payment-summary", quickPaymentBooking?._id],
+    queryFn: async () => {
+      if (!quickPaymentBooking?._id) return null
+      const res = await _axios.get(`/booking/${quickPaymentBooking._id}/payment-summary`)
+      return res.data?.data
+    },
+    enabled: !!quickPaymentBooking?._id,
+  })
+
+  // Reset payment selection states when booking modal opens
+  React.useEffect(() => {
+    setSubsequentChoice("MIN")
+    setCustomSubsequentAmount("")
+    setDetailPaymentChoice("MIN")
+    setDetailCustomAmount("")
+  }, [quickPaymentBooking, selectedBookingId])
 
   // ── Download PDF handler ────────────────────────────────────────────────
   const handleDownloadPdf = async (bookingId: string, bookingNumber: string) => {
@@ -100,9 +140,99 @@ export const MyBookings: React.FC = () => {
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error("PDF generation failed:", err)
-      alert("Failed to generate invoice. Please try again.")
+      toast.error("Failed to generate invoice. Please try again.")
     } finally {
       setDownloadingId(null)
+    }
+  }
+
+  // ── Handle Subsequent Installment Payment ────────────────────────────────
+  const handleExecuteSubsequentPayment = async (
+    bookingId: string,
+    bookingNumber: string,
+    amountToPay: number,
+    stageNumber?: number,
+    stageLabel?: string
+  ) => {
+    if (!amountToPay || isNaN(amountToPay) || amountToPay <= 0) {
+      toast.error("Please enter a valid payment amount")
+      return
+    }
+
+    setIsPayingSubsequent(true)
+    try {
+      const res = await _axios.post("/booking/standard/subsequent-payment", {
+        bookingId,
+        amount: amountToPay,
+      })
+
+      if (!res.data?.status || !res.data?.data) {
+        toast.error(res.data?.error || "Failed to initialize installment payment")
+        setIsPayingSubsequent(false)
+        return
+      }
+
+      const orderData = res.data.data
+
+      const loaded = await loadRazorpayScript()
+      if (!loaded || !window.Razorpay) {
+        toast.error("Razorpay SDK failed to load. Please check your network connection.")
+        setIsPayingSubsequent(false)
+        return
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amountInPaise,
+        currency: "INR",
+        name: "UV Holidays",
+        description: `Installment: ${bookingNumber} (${orderData.stageLabel || `Stage ${orderData.stage}`})`,
+        order_id: orderData.razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await _axios.post("/booking/standard/verify-payment", {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            })
+            if (verifyRes.data?.status) {
+              toast.success(
+                `Payment of ₹${amountToPay.toLocaleString("en-IN")} for Stage ${orderData.stage} verified successfully! 🎉`
+              )
+              // Refresh both the list and any open detail query
+              queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
+              queryClient.invalidateQueries({ queryKey: ["my-booking-details"] })
+              queryClient.invalidateQueries({ queryKey: ["booking-payment-summary"] })
+              setQuickPaymentBooking(null)
+            } else {
+              toast.error(verifyRes.data?.error || "Payment verification failed")
+            }
+          } catch (err: any) {
+            toast.error(err?.response?.data?.error || "Payment verification failed")
+          } finally {
+            setIsPayingSubsequent(false)
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsPayingSubsequent(false)
+          },
+        },
+        prefill: {
+          name: user?.fullName || "",
+          email: user?.email || "",
+          contact: user?.mobile || "",
+        },
+        theme: {
+          color: "#1B2B6B",
+        },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Failed to initiate payment")
+      setIsPayingSubsequent(false)
     }
   }
 
@@ -134,12 +264,15 @@ export const MyBookings: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "BOOKED":
+      case "CONFIRMED":
       case "COMPLETED":
         return "bg-emerald-100 text-emerald-800 border-emerald-300"
+      case "PARTIALLY_PAID":
+        return "bg-amber-100 text-amber-800 border-amber-300"
       case "QUOTATION_SHARED":
         return "bg-blue-100 text-blue-800 border-blue-300"
       case "ENQUIRY_RECEIVED":
-        return "bg-amber-100 text-amber-800 border-amber-300"
+        return "bg-amber-50 text-amber-700 border-amber-200"
       case "REFUNDED":
       case "PARTIALLY_REFUNDED":
         return "bg-purple-100 text-purple-800 border-purple-300"
@@ -151,8 +284,6 @@ export const MyBookings: React.FC = () => {
     }
   }
 
-  const f = "'Inter', sans-serif"
-
   return (
     <div className="min-h-screen bg-[#F4F6FB] py-10 px-4 md:px-10">
       <div className="mx-auto max-w-6xl">
@@ -163,10 +294,10 @@ export const MyBookings: React.FC = () => {
               <ShoppingBag size={14} /> My Travel Dashboard
             </div>
             <h1 className="mt-2 font-serif text-2xl font-bold text-[#0F1B47] md:text-3xl">
-              My Travel Bookings & Enquiries
+              My Travel Bookings &amp; Enquiries
             </h1>
             <p className="mt-1 text-xs text-gray-500 md:text-sm">
-              Manage all your standard tour bookings, customized package quotations, and status history.
+              Manage your tour bookings, track multiple payment stages, pay installments, and download invoices.
             </p>
           </div>
 
@@ -226,6 +357,7 @@ export const MyBookings: React.FC = () => {
               >
                 <option value="ALL">All Booking Statuses</option>
                 <option value="BOOKED">BOOKED / CONFIRMED</option>
+                <option value="PARTIALLY_PAID">PARTIALLY PAID (PENDING INSTALLMENT)</option>
                 <option value="ENQUIRY_RECEIVED">ENQUIRY RECEIVED</option>
                 <option value="QUOTATION_SHARED">QUOTATION SHARED</option>
                 <option value="COMPLETED">COMPLETED</option>
@@ -286,6 +418,23 @@ export const MyBookings: React.FC = () => {
             <div className="flex flex-col gap-4">
               {bookingsList.map((bk: any) => {
                 const pkg = bk.packageId
+
+                // Payment multi-stage breakdown on card
+                const finalAmount = bk.pricingDetails?.finalAmount || 0
+                const totalPaid =
+                  bk.paymentDetails?.totalPaidAmount ??
+                  (["BOOKED", "CONFIRMED", "COMPLETED"].includes(bk.status) ? finalAmount : 0)
+                const remainingAmount =
+                  bk.paymentDetails?.remainingAmount ?? Math.max(0, finalAmount - totalPaid)
+                const isPartiallyPaid =
+                  remainingAmount > 0 && totalPaid > 0 && bk.bookingType === "STANDARD"
+                const isFullyPaid =
+                  remainingAmount <= 0 && totalPaid > 0 && bk.bookingType === "STANDARD"
+                const currentStage = bk.paymentDetails?.currentStage || 1
+                const maxStages = bk.paymentDetails?.maxStages || 3
+                const paidPercentage =
+                  finalAmount > 0 ? Math.min(100, Math.round((totalPaid / finalAmount) * 100)) : 0
+
                 return (
                   <div
                     key={bk._id}
@@ -319,6 +468,19 @@ export const MyBookings: React.FC = () => {
                             >
                               {bk.status.replace(/_/g, " ")}
                             </span>
+
+                            {/* Payment Status Badges */}
+                            {isPartiallyPaid && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 text-white px-2.5 py-0.5 text-[10px] font-bold shadow-xs">
+                                <Clock size={11} /> Partially Paid (Stage {currentStage}/{maxStages})
+                              </span>
+                            )}
+                            {isFullyPaid && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-[10px] font-bold">
+                                <CheckCircle2 size={11} /> 100% Fully Paid
+                              </span>
+                            )}
+
                             <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
                               {bk.bookingType === "CUSTOMIZED" ? "Customized Enquiry" : "Standard Package"}
                             </span>
@@ -353,18 +515,47 @@ export const MyBookings: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Right: Pricing & Actions */}
+                      {/* Right: Pricing & Payment Actions */}
                       <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between border-t border-gray-100 pt-3 lg:border-t-0 lg:pt-0 gap-3">
                         <div className="text-left lg:text-right">
                           <span className="text-[11px] font-medium text-gray-400">Total Price:</span>
                           <p className="font-serif text-lg font-bold text-[#1B2B6B]">
-                            {bk.pricingDetails?.finalAmount
-                              ? `₹${bk.pricingDetails.finalAmount.toLocaleString("en-IN")}`
-                              : "Custom Quote"}
+                            {finalAmount ? `₹${finalAmount.toLocaleString("en-IN")}` : "Custom Quote"}
                           </p>
+
+                          {/* Multi-Stage Payment Progress on Card */}
+                          {bk.bookingType === "STANDARD" && isPartiallyPaid && (
+                            <div className="mt-1 flex flex-col lg:items-end gap-1">
+                              <div className="flex items-center gap-2 text-xs font-semibold">
+                                <span className="text-emerald-700">
+                                  Paid: ₹{totalPaid.toLocaleString("en-IN")}
+                                </span>
+                                <span className="text-gray-300">•</span>
+                                <span className="text-amber-700 font-bold">
+                                  Pending: ₹{remainingAmount.toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                              <div className="w-44 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className="bg-gradient-to-r from-emerald-500 to-[#1B2B6B] h-1.5 rounded-full"
+                                  style={{ width: `${paidPercentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
+                          {/* "Pay Next Stage" button for partially paid standard bookings */}
+                          {isPartiallyPaid && !["CANCELLED", "REFUNDED", "PAYMENT_FAILED"].includes(bk.status) && (
+                            <button
+                              onClick={() => setQuickPaymentBooking(bk)}
+                              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:scale-105"
+                            >
+                              <CreditCard size={14} /> Pay Next Stage
+                            </button>
+                          )}
+
                           {/* View Full Details */}
                           <button
                             onClick={() => setSelectedBookingId(bk._id)}
@@ -439,7 +630,7 @@ export const MyBookings: React.FC = () => {
         )}
       </div>
 
-      {/* ── SINGLE BOOKING DETAIL MODAL ── */}
+      {/* ── 1. SINGLE BOOKING DETAIL MODAL (With Multi-Stage Payment Details) ── */}
       {selectedBookingId && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
@@ -447,7 +638,7 @@ export const MyBookings: React.FC = () => {
             if (e.target === e.currentTarget) setSelectedBookingId(null)
           }}
         >
-          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between bg-gradient-to-r from-[#0F1B47] to-[#1B2B6B] px-6 py-4 text-white">
               <div>
@@ -479,7 +670,7 @@ export const MyBookings: React.FC = () => {
                   <div className="flex items-center justify-between rounded-2xl bg-[#FAF8F4] p-4 border border-gray-200">
                     <div>
                       <span className="text-xs text-gray-500">Booking Status</span>
-                      <div className="mt-1">
+                      <div className="mt-1 flex items-center gap-2">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold border ${getStatusBadge(
                             bookingDetailsData.status
@@ -487,6 +678,11 @@ export const MyBookings: React.FC = () => {
                         >
                           {bookingDetailsData.status.replace(/_/g, " ")}
                         </span>
+                        {bookingDetailsData.paymentDetails?.paymentStatus === "PARTIALLY_PAID" && (
+                          <span className="rounded-full bg-amber-500 text-white px-2.5 py-0.5 text-[11px] font-bold">
+                            Stage {bookingDetailsData.paymentDetails.currentStage} of {bookingDetailsData.paymentDetails.maxStages}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -497,10 +693,257 @@ export const MyBookings: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* ── MULTI-STAGE PAYMENT PLAN & PROGRESS SECTION (Standard Bookings) ── */}
+                  {bookingDetailsData.bookingType === "STANDARD" && bookingDetailsData.paymentSummary && (
+                    <div className="rounded-2xl border border-[#1B2B6B]/20 bg-white p-5 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#E8ECFA] text-[#1B2B6B]">
+                            <Layers size={18} />
+                          </span>
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F1B47]">
+                              Payment Stages &amp; Balance Status
+                            </h4>
+                            <span className="text-[11px] text-gray-500">
+                              {bookingDetailsData.paymentSummary.isFullyPaid
+                                ? "All payment stages completed! 100% Paid"
+                                : `Stage ${bookingDetailsData.paymentSummary.currentStageNumber - 1} of ${bookingDetailsData.paymentSummary.maximumPaymentStages} completed`}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress percentage pill */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[#1B2B6B]">
+                            {bookingDetailsData.paymentSummary.paidPercentage}% Paid
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Visual Progress Bar */}
+                      <div className="mt-4">
+                        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                          <div
+                            className="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 via-[#1B2B6B] to-[#1B2B6B] transition-all duration-500"
+                            style={{ width: `${bookingDetailsData.paymentSummary.paidPercentage}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 3 Metrics Cards */}
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-xl bg-[#FAF8F4] p-3 border border-gray-100 text-left">
+                          <span className="text-[11px] font-medium text-gray-500">Total Amount</span>
+                          <p className="font-serif text-base font-bold text-[#1B2B6B]">
+                            ₹{bookingDetailsData.paymentSummary.finalAmount.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-emerald-50 p-3 border border-emerald-100 text-left">
+                          <span className="text-[11px] font-medium text-emerald-800">Total Paid</span>
+                          <p className="font-serif text-base font-bold text-emerald-700">
+                            ₹{bookingDetailsData.paymentSummary.totalPaidAmount.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-amber-50 p-3 border border-amber-100 text-left">
+                          <span className="text-[11px] font-medium text-amber-800">Pending Balance</span>
+                          <p className="font-serif text-base font-bold text-amber-700">
+                            ₹{bookingDetailsData.paymentSummary.remainingAmount.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Payment History Records Table */}
+                      {bookingDetailsData.paymentSummary.successfulPayments?.length > 0 && (
+                        <div className="mt-5">
+                          <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+                            <Receipt size={13} /> Completed Payment Transactions ({bookingDetailsData.paymentSummary.successfulPayments.length})
+                          </div>
+                          <div className="overflow-hidden rounded-xl border border-gray-100 bg-[#FAF8F4] divide-y divide-gray-100 text-xs">
+                            {bookingDetailsData.paymentSummary.successfulPayments.map((p: any, idx: number) => (
+                              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                    {p.stage || idx + 1}
+                                  </span>
+                                  <div>
+                                    <span className="font-bold text-gray-800">
+                                      {p.stageLabel || `Stage ${p.stage || idx + 1} Payment`}
+                                    </span>
+                                    {p.razorpayPaymentId && (
+                                      <p className="text-[10px] font-mono text-gray-400">
+                                        ID: {p.razorpayPaymentId}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between sm:justify-end gap-3">
+                                  <span className="text-[11px] text-gray-400">
+                                    {p.paidAt ? new Date(p.paidAt).toLocaleString("en-IN", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }) : "Verified"}
+                                  </span>
+                                  <span className="font-bold text-emerald-700 bg-emerald-100/60 px-2.5 py-1 rounded-md">
+                                    ₹{p.amount.toLocaleString("en-IN")}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Interactive Pay Next Stage in Detail View */}
+                      {bookingDetailsData.paymentSummary.canMakeSubsequentPayment &&
+                        bookingDetailsData.paymentSummary.remainingAmount > 0 &&
+                        !["CANCELLED", "REFUNDED", "PAYMENT_FAILED"].includes(bookingDetailsData.status) && (
+                          <div className="mt-5 rounded-2xl bg-gradient-to-br from-[#F4F6FB] to-[#FAF8F4] p-4 border border-[#1B2B6B]/20">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-1.5 font-bold text-[#1B2B6B] text-xs uppercase tracking-wide">
+                                <CreditCard size={15} /> Pay Next Stage: {bookingDetailsData.paymentSummary.nextStageLabel}
+                              </div>
+                              <span className="text-[11px] font-bold text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                                Stage {bookingDetailsData.paymentSummary.currentStageNumber} of {bookingDetailsData.paymentSummary.maximumPaymentStages}
+                              </span>
+                            </div>
+
+                            {/* Stage Guidance Note */}
+                            {bookingDetailsData.paymentSummary.isFinalStage ? (
+                              <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 leading-relaxed mb-3">
+                                ⚠️ <strong>Final Payment Stage:</strong> This is the final installment allowed (Stage 3). The remaining balance of ₹{bookingDetailsData.paymentSummary.remainingAmount.toLocaleString("en-IN")} must be cleared in full.
+                              </p>
+                            ) : (
+                              <p className="text-xs text-gray-600 mb-3">
+                                Minimum required for this stage is <strong>₹{bookingDetailsData.paymentSummary.nextStageMinimumAmount.toLocaleString("en-IN")}</strong> ({bookingDetailsData.paymentSummary.nextStageMinimumPercentage}%). You may also pay more or clear the full balance now.
+                              </p>
+                            )}
+
+                            {/* Option selection tabs if not final stage */}
+                            {!bookingDetailsData.paymentSummary.isFinalStage ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setDetailPaymentChoice("MIN")}
+                                  className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                                    detailPaymentChoice === "MIN"
+                                      ? "border-[#1B2B6B] bg-white shadow-sm ring-1 ring-[#1B2B6B]"
+                                      : "border-gray-200 bg-white/70 hover:bg-white"
+                                  }`}
+                                >
+                                  <div className="font-semibold text-gray-600">Stage Minimum</div>
+                                  <div className="font-bold text-[#1B2B6B] text-sm mt-0.5">
+                                    ₹{bookingDetailsData.paymentSummary.nextStageMinimumAmount.toLocaleString("en-IN")}
+                                  </div>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setDetailPaymentChoice("FULL")}
+                                  className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                                    detailPaymentChoice === "FULL"
+                                      ? "border-[#1B2B6B] bg-white shadow-sm ring-1 ring-[#1B2B6B]"
+                                      : "border-gray-200 bg-white/70 hover:bg-white"
+                                  }`}
+                                >
+                                  <div className="font-semibold text-gray-600">Clear Full Balance</div>
+                                  <div className="font-bold text-emerald-700 text-sm mt-0.5">
+                                    ₹{bookingDetailsData.paymentSummary.remainingAmount.toLocaleString("en-IN")}
+                                  </div>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setDetailPaymentChoice("CUSTOM")}
+                                  className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                                    detailPaymentChoice === "CUSTOM"
+                                      ? "border-[#1B2B6B] bg-white shadow-sm ring-1 ring-[#1B2B6B]"
+                                      : "border-gray-200 bg-white/70 hover:bg-white"
+                                  }`}
+                                >
+                                  <div className="font-semibold text-gray-600">Custom Amount</div>
+                                  <div className="font-bold text-[#1B2B6B] text-sm mt-0.5">
+                                    Any Amount
+                                  </div>
+                                </button>
+                              </div>
+                            ) : null}
+
+                            {/* Custom input when selected */}
+                            {detailPaymentChoice === "CUSTOM" && !bookingDetailsData.paymentSummary.isFinalStage && (
+                              <div className="mb-3">
+                                <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                                  Enter Amount to Pay (Min: ₹{bookingDetailsData.paymentSummary.nextStageMinimumAmount.toLocaleString("en-IN")} • Max: ₹{bookingDetailsData.paymentSummary.remainingAmount.toLocaleString("en-IN")}):
+                                </label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">
+                                    ₹
+                                  </span>
+                                  <input
+                                    type="number"
+                                    min={bookingDetailsData.paymentSummary.nextStageMinimumAmount}
+                                    max={bookingDetailsData.paymentSummary.remainingAmount}
+                                    value={detailCustomAmount}
+                                    onChange={(e) => setDetailCustomAmount(e.target.value)}
+                                    placeholder={`e.g. ${bookingDetailsData.paymentSummary.nextStageMinimumAmount}`}
+                                    className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-7 pr-4 text-xs font-semibold text-gray-800 outline-none focus:border-[#1B2B6B]"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Trigger Button */}
+                            {(() => {
+                              let amountToPay = bookingDetailsData.paymentSummary.remainingAmount
+                              if (!bookingDetailsData.paymentSummary.isFinalStage) {
+                                if (detailPaymentChoice === "MIN") {
+                                  amountToPay = bookingDetailsData.paymentSummary.nextStageMinimumAmount
+                                } else if (detailPaymentChoice === "FULL") {
+                                  amountToPay = bookingDetailsData.paymentSummary.remainingAmount
+                                } else if (detailPaymentChoice === "CUSTOM") {
+                                  amountToPay = Number(detailCustomAmount) || bookingDetailsData.paymentSummary.nextStageMinimumAmount
+                                }
+                              }
+
+                              return (
+                                <button
+                                  type="button"
+                                  disabled={isPayingSubsequent}
+                                  onClick={() =>
+                                    handleExecuteSubsequentPayment(
+                                      bookingDetailsData._id,
+                                      bookingDetailsData.bookingNumber,
+                                      amountToPay,
+                                      bookingDetailsData.paymentSummary.currentStageNumber,
+                                      bookingDetailsData.paymentSummary.nextStageLabel
+                                    )
+                                  }
+                                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0F1B47] to-[#1B2B6B] px-5 py-3 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.01] disabled:opacity-50"
+                                >
+                                  {isPayingSubsequent ? (
+                                    <>
+                                      <Loader2 size={16} className="animate-spin" /> Processing Payment...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CreditCard size={16} /> Pay ₹{amountToPay.toLocaleString("en-IN")} Now via Razorpay →
+                                    </>
+                                  )}
+                                </button>
+                              )
+                            })()}
+                          </div>
+                        )}
+                    </div>
+                  )}
+
                   {/* Primary Traveller Info */}
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F1B47] mb-2">
-                      Primary Traveller & Contact
+                      Primary Traveller &amp; Contact
                     </h4>
                     <div className="grid grid-cols-1 gap-3 rounded-2xl bg-gray-50 p-4 sm:grid-cols-3 text-xs">
                       <div>
@@ -561,7 +1004,7 @@ export const MyBookings: React.FC = () => {
                   {bookingDetailsData.pricingDetails && (
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F1B47] mb-2">
-                        Payment & Pricing Summary
+                        Package Pricing Summary
                       </h4>
                       <div className="rounded-2xl border border-gray-200 bg-[#FAF8F4] p-4 text-xs">
                         <div className="flex justify-between py-1 border-b border-gray-200">
@@ -583,7 +1026,7 @@ export const MyBookings: React.FC = () => {
                           </div>
                         )}
                         <div className="flex justify-between pt-2 text-sm font-bold text-[#1B2B6B]">
-                          <span>Final Amount Payable:</span>
+                          <span>Final Total Amount:</span>
                           <span>₹{bookingDetailsData.pricingDetails.finalAmount?.toLocaleString("en-IN")}</span>
                         </div>
                       </div>
@@ -625,6 +1068,210 @@ export const MyBookings: React.FC = () => {
               >
                 Close Window
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. QUICK SUBSEQUENT PAYMENT MODAL (Opened from List Card Button) ── */}
+      {quickPaymentBooking && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isPayingSubsequent) setQuickPaymentBooking(null)
+          }}
+        >
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-[#0F1B47] to-[#1B2B6B] px-6 py-4 text-white">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+                  Pay Tour Installment
+                </span>
+                <h3 className="font-serif text-base font-bold">
+                  {quickPaymentBooking.packageId?.title || quickPaymentBooking.bookingNumber}
+                </h3>
+              </div>
+              <button
+                disabled={isPayingSubsequent}
+                onClick={() => setQuickPaymentBooking(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {(() => {
+                const summary = quickBookingSummaryData
+                const finalAmount = quickPaymentBooking.pricingDetails?.finalAmount || 0
+                const totalPaid =
+                  summary?.totalPaidAmount ??
+                  (quickPaymentBooking.paymentDetails?.totalPaidAmount || 0)
+                const remainingAmount =
+                  summary?.remainingAmount ??
+                  (quickPaymentBooking.paymentDetails?.remainingAmount || Math.max(0, finalAmount - totalPaid))
+                const nextMinAmount = summary?.nextStageMinimumAmount ?? Math.min(Math.round(finalAmount * 0.4), remainingAmount)
+                const nextMinPct = summary?.nextStageMinimumPercentage ?? 40
+                const isFinalStage = summary?.isFinalStage || false
+                const stageNumber = summary?.currentStageNumber || (quickPaymentBooking.paymentDetails?.currentStage ? quickPaymentBooking.paymentDetails.currentStage + 1 : 2)
+                const maxStages = summary?.maximumPaymentStages || quickPaymentBooking.paymentDetails?.maxStages || 3
+                const stageLabel = summary?.nextStageLabel || (isFinalStage ? "Final Payment" : `Stage ${stageNumber} Payment`)
+
+                let amountToCharge = remainingAmount
+                if (!isFinalStage) {
+                  if (subsequentChoice === "MIN") {
+                    amountToCharge = nextMinAmount
+                  } else if (subsequentChoice === "FULL") {
+                    amountToCharge = remainingAmount
+                  } else if (subsequentChoice === "CUSTOM") {
+                    amountToCharge = Number(customSubsequentAmount) || nextMinAmount
+                  }
+                }
+
+                return (
+                  <div className="flex flex-col gap-4">
+                    {/* Summary row */}
+                    <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[#FAF8F4] p-4 text-xs">
+                      <div>
+                        <span className="text-gray-400">Total Price:</span>
+                        <p className="font-bold text-[#1B2B6B]">₹{finalAmount.toLocaleString("en-IN")}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Total Paid:</span>
+                        <p className="font-bold text-emerald-700">₹{totalPaid.toLocaleString("en-IN")}</p>
+                      </div>
+                      <div className="col-span-2 pt-2 border-t border-gray-200 flex justify-between items-center">
+                        <span className="font-semibold text-gray-700">Remaining Balance:</span>
+                        <span className="font-serif text-base font-bold text-amber-700">
+                          ₹{remainingAmount.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Stage Alert */}
+                    {isFinalStage ? (
+                      <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800 border border-amber-200">
+                        ⚠️ <strong>Final Payment Stage (Stage {stageNumber} of {maxStages}):</strong> You must pay the full remaining balance of ₹{remainingAmount.toLocaleString("en-IN")}.
+                      </div>
+                    ) : (
+                      <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-900 border border-blue-200">
+                        💳 <strong>Stage {stageNumber} ({stageLabel}):</strong> Minimum required payment is ₹{nextMinAmount.toLocaleString("en-IN")} ({nextMinPct}%). You can also choose to clear the entire balance now.
+                      </div>
+                    )}
+
+                    {/* Payment Options Selection */}
+                    {!isFinalStage && (
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSubsequentChoice("MIN")}
+                          className={`p-3 rounded-xl border text-left text-xs transition-all ${
+                            subsequentChoice === "MIN"
+                              ? "border-[#1B2B6B] bg-white shadow-sm ring-1 ring-[#1B2B6B]"
+                              : "border-gray-200 bg-gray-50 hover:bg-white"
+                          }`}
+                        >
+                          <div className="font-semibold text-gray-500 text-[11px]">Minimum ({nextMinPct}%)</div>
+                          <div className="font-bold text-[#1B2B6B] text-sm mt-0.5">
+                            ₹{nextMinAmount.toLocaleString("en-IN")}
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSubsequentChoice("FULL")}
+                          className={`p-3 rounded-xl border text-left text-xs transition-all ${
+                            subsequentChoice === "FULL"
+                              ? "border-[#1B2B6B] bg-white shadow-sm ring-1 ring-[#1B2B6B]"
+                              : "border-gray-200 bg-gray-50 hover:bg-white"
+                          }`}
+                        >
+                          <div className="font-semibold text-gray-500 text-[11px]">Clear Full</div>
+                          <div className="font-bold text-emerald-700 text-sm mt-0.5">
+                            ₹{remainingAmount.toLocaleString("en-IN")}
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSubsequentChoice("CUSTOM")}
+                          className={`p-3 rounded-xl border text-left text-xs transition-all ${
+                            subsequentChoice === "CUSTOM"
+                              ? "border-[#1B2B6B] bg-white shadow-sm ring-1 ring-[#1B2B6B]"
+                              : "border-gray-200 bg-gray-50 hover:bg-white"
+                          }`}
+                        >
+                          <div className="font-semibold text-gray-500 text-[11px]">Custom</div>
+                          <div className="font-bold text-[#1B2B6B] text-sm mt-0.5">
+                            Choose
+                          </div>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Custom Input */}
+                    {subsequentChoice === "CUSTOM" && !isFinalStage && (
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                          Amount to Pay (Min: ₹{nextMinAmount.toLocaleString("en-IN")} • Max: ₹{remainingAmount.toLocaleString("en-IN")}):
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            min={nextMinAmount}
+                            max={remainingAmount}
+                            value={customSubsequentAmount}
+                            onChange={(e) => setCustomSubsequentAmount(e.target.value)}
+                            placeholder={`e.g. ${nextMinAmount}`}
+                            className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-7 pr-4 text-xs font-semibold text-gray-800 outline-none focus:border-[#1B2B6B]"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="mt-2 flex gap-3">
+                      <button
+                        type="button"
+                        disabled={isPayingSubsequent}
+                        onClick={() => setQuickPaymentBooking(null)}
+                        className="flex-1 rounded-xl border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPayingSubsequent}
+                        onClick={() =>
+                          handleExecuteSubsequentPayment(
+                            quickPaymentBooking._id,
+                            quickPaymentBooking.bookingNumber,
+                            amountToCharge,
+                            stageNumber,
+                            stageLabel
+                          )
+                        }
+                        className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0F1B47] to-[#1B2B6B] py-2.5 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] disabled:opacity-50"
+                      >
+                        {isPayingSubsequent ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={15} /> Pay ₹{amountToCharge.toLocaleString("en-IN")} →
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </div>

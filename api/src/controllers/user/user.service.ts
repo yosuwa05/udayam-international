@@ -7,6 +7,7 @@ import { EncodeUserPaseto, DecodeUserPaseto } from "@lib/paseto";
 import { saveFile } from "@lib/file";
 import { RoleType } from "@types";
 import { SendOtpSchema, VerifyOtpSchema, GoogleLoginSchema } from "./user.schema";
+import { recordStaffActivity } from "@helper/staffLogger";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 const COOKIE_NAME = "udayam_access_token_user";
@@ -429,8 +430,20 @@ export const updateUserStatus = async (ctx: Context) => {
             return { status: false, error: "User not found" };
         }
 
+        const prevStatus = user.status;
         user.status = status;
         await user.save();
+
+        await recordStaffActivity(ctx, {
+            action: "UPDATE",
+            module: "Users",
+            route: "/users",
+            recordId: params.id,
+            recordTitle: user.fullName || user.email || user.mobile || "User",
+            previousData: { status: prevStatus },
+            updatedData: { status },
+            details: `Updated user status from ${prevStatus} to ${status} for "${user.fullName || user.email || user.mobile || "User"}"`,
+        });
 
         return {
             status: true,

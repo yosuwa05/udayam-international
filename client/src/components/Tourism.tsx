@@ -888,6 +888,18 @@ export const PCard: React.FC<{
             >
               {fmtPrice(card.price)}
             </div>
+            <div
+              style={{
+                fontFamily: f,
+                fontSize: ".64rem",
+                color: "#4ADE80",
+                fontWeight: 600,
+                marginTop: 2,
+                textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+              }}
+            >
+              Pay from {fmtPrice(Math.round(card.price * 0.1))} advance
+            </div>
           </div>
         )}
       </div>
@@ -1821,6 +1833,17 @@ const TourismDetailsDrawer: React.FC<{
                 }}
               >
                 ₹{pkg.price ? pkg.price.toLocaleString("en-IN") : "0"}
+              </div>
+              <div
+                style={{
+                  fontFamily: f,
+                  fontSize: ".7rem",
+                  fontWeight: 600,
+                  color: "#166534",
+                  marginTop: 2,
+                }}
+              >
+                Pay in full or start with {Math.round((pkg.price || 0) * 0.1).toLocaleString("en-IN")} advance
               </div>
             </div>
           )}

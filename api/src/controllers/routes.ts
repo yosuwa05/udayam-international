@@ -7,6 +7,8 @@ import { couponRouter } from "./coupon/coupon.router";
 import { bookingRouter } from "./booking/booking.router";
 import { triptypesRouter } from "./triptypes/triptypes.router";
 import { regionRouter } from "./region/region.router";
+import { paymentPlanSettingsRouter } from "./paymentPlanSettings/paymentPlanSettings.router";
+import { staffRouter } from "./staff/staff.router";
 
 const BaseRouter = new Elysia({
     prefix: "/api/V1",
@@ -21,5 +23,7 @@ const BaseRouter = new Elysia({
     .use(bookingRouter)
     .use(triptypesRouter)
     .use(regionRouter)
+    .use(paymentPlanSettingsRouter)
+    .use(staffRouter)
 
 export { BaseRouter }

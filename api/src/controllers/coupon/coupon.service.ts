@@ -1,5 +1,6 @@
 import { Context } from "elysia"
 import { CouponModel } from "@models/coupon.model"
+import { recordStaffActivity } from "@helper/staffLogger"
 import { UserModel } from "@models/user.model"
 import { TourismModel } from "@models/tourism.model"
 import { BookingModel } from "@models/booking.model"
@@ -89,6 +90,16 @@ export const createCoupon = async (ctx: Context) => {
             updatedBy: new Types.ObjectId(adminId),
         })
 
+        await recordStaffActivity(ctx, {
+            action: "CREATE",
+            module: "Coupons",
+            route: "/coupons",
+            recordId: coupon._id.toString(),
+            recordTitle: coupon.couponCode,
+            updatedData: coupon.toObject ? coupon.toObject() : coupon,
+            details: `Created new Coupon: "${coupon.couponCode}"`,
+        })
+
         set.status = 201
         return { message: "Coupon created successfully", data: coupon, status: true }
     } catch (error: any) {
@@ -174,6 +185,17 @@ export const updateCoupon = async (ctx: Context<{ params: { id: string } }>) => 
             { new: true, runValidators: true }
         )
 
+        await recordStaffActivity(ctx, {
+            action: "UPDATE",
+            module: "Coupons",
+            route: "/coupons",
+            recordId: params.id,
+            recordTitle: updated?.couponCode || existing.couponCode,
+            previousData: existing.toObject ? existing.toObject() : existing,
+            updatedData: updated?.toObject ? updated.toObject() : updated,
+            details: `Updated Coupon: "${updated?.couponCode || existing.couponCode}"`,
+        })
+
         return { message: "Coupon updated successfully", data: updated, status: true }
     } catch (error: any) {
         console.error("Update Coupon Error", error)
@@ -198,6 +220,16 @@ export const deleteCoupon = async (ctx: Context<{ params: { id: string } }>) => 
         existing.isDeleted = true
         existing.updatedBy = new Types.ObjectId(adminId)
         await existing.save()
+
+        await recordStaffActivity(ctx, {
+            action: "DELETE",
+            module: "Coupons",
+            route: "/coupons",
+            recordId: params.id,
+            recordTitle: existing.couponCode,
+            previousData: existing.toObject ? existing.toObject() : existing,
+            details: `Deleted Coupon: "${existing.couponCode}"`,
+        })
 
         return { message: "Coupon deleted successfully", status: true }
     } catch (error: any) {

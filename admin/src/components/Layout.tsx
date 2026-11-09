@@ -12,6 +12,8 @@ import {
   Sparkles,
   Tag,
   Globe,
+  ShieldCheck,
+  Activity,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
@@ -41,6 +43,7 @@ interface NavLink {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string; size?: number }>
+  adminOnly?: boolean
 }
 
 const allLinks: NavLink[] = [
@@ -57,6 +60,8 @@ const allLinks: NavLink[] = [
   { name: 'Coupons', href: '/coupons', icon: TicketPercent },
   { name: 'Trip Types', href: '/trip-types', icon: Tag },
   { name: 'Regions', href: '/regions', icon: Globe },
+  { name: 'Staff Management', href: '/staff', icon: ShieldCheck, adminOnly: true },
+  { name: 'Activity Logs', href: '/staff-logs', icon: Activity, adminOnly: true },
 ]
 
 interface LayoutProps {
@@ -79,16 +84,72 @@ export default function Layout({ session, userType }: LayoutProps) {
   const [activeMenu, setActiveMenu] = useState('/')
   const [links, setLinks] = useState<NavLink[]>(allLinks)
 
-  /* route guard for staff */
+  /* route guard and menu filtering for staff and admin */
   useEffect(() => {
-    if (userType === 'staff' && session?.allowedRoutes) {
-      const allowed = session.allowedRoutes as string[]
-      setLinks(allLinks.filter((l) => allowed.includes(l.href)))
-      if (!allowed.includes(location.pathname)) navigate({ to: '/' })
+    if (userType === 'staff') {
+      const permissions = session?.permissions || []
+      const allowedRoutes = permissions
+        .filter((p: any) => p.view)
+        .map((p: any) => p.route)
+
+      const permittedLinks = allLinks.filter(
+        (l) => !l.adminOnly && allowedRoutes.includes(l.href)
+      )
+      setLinks(permittedLinks)
+
+      // Guard: if on an admin-only page (/staff, /staff-logs), redirect
+      const isStaffOrLogs = location.pathname.startsWith('/staff')
+      if (isStaffOrLogs) {
+        toast.error('Access restricted: Admin only section.')
+        if (permittedLinks.length > 0) {
+          navigate({ to: permittedLinks[0].href })
+        }
+        return
+      }
+
+      // Check if current route is allowed
+      const currentPath = location.pathname
+      let isAllowed = false
+
+      if (currentPath === '/' && allowedRoutes.includes('/')) {
+        isAllowed = true
+      } else if (currentPath.startsWith('/bookings')) {
+        // Bookings can be /bookings/standard, /bookings/customized, or /bookings/:id
+        const search = location.search as any
+        const typeParam = (
+          typeof search === 'object' && search !== null
+            ? search.type
+            : new URLSearchParams(search || '').get('type')
+        )?.toLowerCase()
+
+        if (currentPath === '/bookings/standard' || currentPath.startsWith('/bookings/standard/')) {
+          isAllowed = allowedRoutes.includes('/bookings/standard')
+        } else if (currentPath === '/bookings/customized' || currentPath.startsWith('/bookings/customized/')) {
+          isAllowed = allowedRoutes.includes('/bookings/customized')
+        } else if (typeParam === 'customized') {
+          isAllowed = allowedRoutes.includes('/bookings/customized')
+        } else if (typeParam === 'standard') {
+          isAllowed = allowedRoutes.includes('/bookings/standard')
+        } else {
+          // If no specific type param on /bookings/:id, allow if user has permission for either
+          isAllowed =
+            allowedRoutes.includes('/bookings/standard') ||
+            allowedRoutes.includes('/bookings/customized')
+        }
+      } else {
+        isAllowed = allowedRoutes.some(
+          (r: string) => r !== '/' && (currentPath === r || currentPath.startsWith(r + '/'))
+        )
+      }
+
+      if (!isAllowed && permittedLinks.length > 0) {
+        toast.error('Access restricted: You do not have view permission for this page.')
+        navigate({ to: permittedLinks[0].href })
+      }
     } else {
       setLinks(allLinks)
     }
-  }, [userType, session, location.pathname])
+  }, [userType, session, location.pathname, location.search, navigate])
 
   /* track active segment */
   useEffect(() => {
@@ -351,6 +412,24 @@ export default function Layout({ session, userType }: LayoutProps) {
               <Plus size={18} />
               New Booking
             </button> */}
+
+            {/* Role & User Badge */}
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-xs px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider ${
+                  userType === 'staff'
+                    ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30'
+                    : 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/30'
+                }`}
+              >
+                {userType === 'staff' ? 'Staff' : 'Admin'}
+              </span>
+              {session?.name && (
+                <span className="text-xs text-slate-300 font-medium hidden sm:inline">
+                  {session.name}
+                </span>
+              )}
+            </div>
 
             {/* Logout */}
             <AlertDialog>

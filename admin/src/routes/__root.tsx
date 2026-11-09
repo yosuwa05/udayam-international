@@ -33,7 +33,9 @@ function RootComponent() {
     queryFn: async () => {
       try {
         const adminResponse = await _axios.get('/admin-auth/session')
-        return { data: adminResponse.data.data, userType: 'admin' as const }
+        const role = adminResponse.data?.data?.role?.toUpperCase()
+        const userType = role === 'STAFF' ? ('staff' as const) : ('admin' as const)
+        return { data: adminResponse.data.data, userType }
       } catch (adminError) {
         console.log(adminError)
       }

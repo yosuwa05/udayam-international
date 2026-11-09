@@ -1,5 +1,6 @@
 import { Context } from "elysia";
 import { TestimonialModel } from "@models/testimonial.model";
+import { recordStaffActivity } from "@helper/staffLogger";
 
 const parseBool = (val?: string) => {
   if (val === "true") return true;
@@ -30,6 +31,16 @@ export const createTestimonial = async (ctx: Context<{ body: any }>) => {
       type: typeArr,
       order:
         body.order !== undefined && body.order !== "" ? Number(body.order) : 0,
+    });
+
+    await recordStaffActivity(ctx, {
+      action: "CREATE",
+      module: "Testimonials",
+      route: "/testimonials",
+      recordId: testimonial._id.toString(),
+      recordTitle: testimonial.name,
+      updatedData: testimonial.toObject ? testimonial.toObject() : testimonial,
+      details: `Created new Testimonial by "${testimonial.name}"`,
     });
 
     set.status = 201;
@@ -85,6 +96,17 @@ export const updateTestimonial = async (
       { new: true, runValidators: true },
     );
 
+    await recordStaffActivity(ctx, {
+      action: "UPDATE",
+      module: "Testimonials",
+      route: "/testimonials",
+      recordId: params.id,
+      recordTitle: updated?.name || existing.name,
+      previousData: existing.toObject ? existing.toObject() : existing,
+      updatedData: updated?.toObject ? updated.toObject() : updated,
+      details: `Updated Testimonial by "${updated?.name || existing.name}"`,
+    });
+
     return {
       message: "Testimonial updated successfully",
       data: updated,
@@ -112,6 +134,17 @@ export const toggleActiveTestimonial = async (
 
     existing.isActive = !existing.isActive;
     await existing.save();
+
+    await recordStaffActivity(ctx, {
+      action: "UPDATE",
+      module: "Testimonials",
+      route: "/testimonials",
+      recordId: params.id,
+      recordTitle: existing.name,
+      previousData: { isActive: !existing.isActive },
+      updatedData: { isActive: existing.isActive },
+      details: `Changed status to ${existing.isActive ? "active" : "inactive"} for Testimonial: "${existing.name}"`,
+    });
 
     return {
       message: `Testimonial status updated to ${existing.isActive ? "active" : "inactive"}`,

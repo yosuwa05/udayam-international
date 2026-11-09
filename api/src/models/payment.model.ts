@@ -12,6 +12,9 @@ export interface IPayment {
     status: PaymentStatus
     bookingPayload?: any
     failureReason?: string
+    stage?: number
+    stageLabel?: string
+    isSubsequent?: boolean
     createdAt?: Date
     updatedAt?: Date
 }
@@ -32,6 +35,9 @@ const paymentSchema = new Schema<IPayment>(
             required: true,
         },
         failureReason: { type: String, trim: true },
+        stage: { type: Number },
+        stageLabel: { type: String, trim: true },
+        isSubsequent: { type: Boolean, default: false },
     },
     { timestamps: true }
 )

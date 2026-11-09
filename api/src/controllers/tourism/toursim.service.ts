@@ -6,6 +6,7 @@ import { PaymentModel } from "@models/payment.model"
 import { UserModel } from "@models/user.model"
 import { BookingModel } from "@models/booking.model"
 import { CouponModel } from "@models/coupon.model"
+import { recordStaffActivity } from "@helper/staffLogger"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,16 @@ export const createTouristPlace = async (
         }
 
         const place = await TourismModel.create(placeData)
+
+        await recordStaffActivity(ctx, {
+            action: "CREATE",
+            module: "Tourism",
+            route: "/tourism",
+            recordId: place._id.toString(),
+            recordTitle: place.title,
+            updatedData: place.toObject ? place.toObject() : place,
+            details: `Created new Tourism package: "${place.title}"`,
+        })
 
         set.status = 201
         return { message: "Tourism package created successfully", data: place, status: true }
@@ -180,6 +191,17 @@ export const updateTouristPlace = async (
             { new: true, runValidators: true }
         )
 
+        await recordStaffActivity(ctx, {
+            action: "UPDATE",
+            module: "Tourism",
+            route: "/tourism",
+            recordId: params.id,
+            recordTitle: updated?.title || existing.title,
+            previousData: existing.toObject ? existing.toObject() : existing,
+            updatedData: updated?.toObject ? updated.toObject() : updated,
+            details: `Updated Tourism package: "${updated?.title || existing.title}"`,
+        })
+
         return { message: "Tourism package updated successfully", data: updated, status: true }
     } catch (error: any) {
         console.error("Update Tourism Error", error)
@@ -204,6 +226,16 @@ export const deleteTouristPlace = async (
 
         place.isDeleted = true
         await place.save()
+
+        await recordStaffActivity(ctx, {
+            action: "DELETE",
+            module: "Tourism",
+            route: "/tourism",
+            recordId: params.id,
+            recordTitle: place.title,
+            previousData: place.toObject ? place.toObject() : place,
+            details: `Deleted Tourism package: "${place.title}"`,
+        })
 
         return { message: "Tourism package deleted successfully", status: true }
     } catch (error: any) {

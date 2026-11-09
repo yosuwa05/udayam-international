@@ -44,6 +44,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { SearchInput } from '@/components/SearchInput'
 import { Plus, Pencil, Trash2, Check, X, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePermissions } from '@/lib/usePermissions'
 
 interface TripTypesSearch {
   page?: number
@@ -88,6 +89,9 @@ function TripTypesIndexComponent() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const { canEdit, canDelete } = usePermissions()
+  const hasEdit = canEdit('/trip-types')
+  const hasDelete = canDelete('/trip-types')
 
   const page = searchParams.page ?? 1
   const limit = searchParams.limit ?? 10
@@ -235,13 +239,15 @@ function TripTypesIndexComponent() {
             packages
           </p>
         </div>
-        <Button
-          className="gap-2 shrink-0 cursor-pointer"
-          onClick={() => setIsAddOpen(true)}
-        >
-          <Plus className="w-4 h-4" />
-          Add Trip Type
-        </Button>
+        {hasEdit && (
+          <Button
+            className="gap-2 shrink-0 cursor-pointer"
+            onClick={() => setIsAddOpen(true)}
+          >
+            <Plus className="w-4 h-4" />
+            Add Trip Type
+          </Button>
+        )}
       </div>
 
       {/* Filter Bar */}
@@ -348,28 +354,37 @@ function TripTypesIndexComponent() {
                     <Switch
                       checked={item.isActive}
                       onCheckedChange={() => toggleMutation.mutate(item._id)}
-                      disabled={toggleMutation.isPending}
-                      title={item.isActive ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
+                      disabled={!hasEdit || toggleMutation.isPending}
+                      title={!hasEdit ? 'Permission required to edit' : item.isActive ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
                     />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 cursor-pointer"
-                        onClick={() => handleOpenEdit(item)}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
-                        onClick={() => setDeleteId(item._id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      {hasEdit && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 cursor-pointer"
+                          onClick={() => handleOpenEdit(item)}
+                          title="Edit Trip Type"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {hasDelete && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                          onClick={() => setDeleteId(item._id)}
+                          title="Delete Trip Type"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {!hasEdit && !hasDelete && (
+                        <span className="text-xs text-muted-foreground italic">View only</span>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

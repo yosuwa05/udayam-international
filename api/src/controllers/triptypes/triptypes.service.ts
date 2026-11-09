@@ -1,5 +1,6 @@
 import { Context } from "elysia";
 import { TripTypeModel } from "@models/triptypes.model";
+import { recordStaffActivity } from "@helper/staffLogger";
 
 const parseBool = (val?: string) => {
   if (val === "true") return true;
@@ -29,6 +30,16 @@ export const createTripType = async (ctx: Context<{ body: any }>) => {
       isActive: body.isActive !== undefined ? body.isActive : true,
       isDeleted: false,
       order: body.order !== undefined && body.order !== "" ? Number(body.order) : 0,
+    });
+
+    await recordStaffActivity(ctx, {
+      action: "CREATE",
+      module: "Trip Types",
+      route: "/trip-types",
+      recordId: tripType._id.toString(),
+      recordTitle: tripType.name,
+      updatedData: tripType.toObject ? tripType.toObject() : tripType,
+      details: `Created new Trip Type: "${tripType.name}"`,
     });
 
     set.status = 201;
@@ -91,6 +102,17 @@ export const updateTripType = async (
       { new: true, runValidators: true },
     );
 
+    await recordStaffActivity(ctx, {
+      action: "UPDATE",
+      module: "Trip Types",
+      route: "/trip-types",
+      recordId: params.id,
+      recordTitle: updated?.name || existing.name,
+      previousData: existing.toObject ? existing.toObject() : existing,
+      updatedData: updated?.toObject ? updated.toObject() : updated,
+      details: `Updated Trip Type: "${updated?.name || existing.name}"`,
+    });
+
     return {
       message: "Trip type updated successfully",
       data: updated,
@@ -119,6 +141,17 @@ export const toggleActiveTripType = async (
     existing.isActive = !existing.isActive;
     await existing.save();
 
+    await recordStaffActivity(ctx, {
+      action: "UPDATE",
+      module: "Trip Types",
+      route: "/trip-types",
+      recordId: params.id,
+      recordTitle: existing.name,
+      previousData: { isActive: !existing.isActive },
+      updatedData: { isActive: existing.isActive },
+      details: `Changed status to ${existing.isActive ? "active" : "inactive"} for Trip Type: "${existing.name}"`,
+    });
+
     return {
       message: `Trip type status updated to ${existing.isActive ? "active" : "inactive"}`,
       data: existing,
@@ -146,6 +179,16 @@ export const deleteTripType = async (
 
     existing.isDeleted = true;
     await existing.save();
+
+    await recordStaffActivity(ctx, {
+      action: "DELETE",
+      module: "Trip Types",
+      route: "/trip-types",
+      recordId: params.id,
+      recordTitle: existing.name,
+      previousData: existing.toObject ? existing.toObject() : existing,
+      details: `Deleted Trip Type: "${existing.name}"`,
+    });
 
     return {
       message: "Trip type deleted successfully",

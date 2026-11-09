@@ -15,17 +15,22 @@ import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as TripTypesIndexRouteImport } from './routes/trip-types/index'
 import { Route as TourismIndexRouteImport } from './routes/tourism/index'
 import { Route as TestimonialsIndexRouteImport } from './routes/testimonials/index'
+import { Route as StaffIndexRouteImport } from './routes/staff/index'
+import { Route as StaffLogsIndexRouteImport } from './routes/staff-logs/index'
 import { Route as RegionsIndexRouteImport } from './routes/regions/index'
 import { Route as CouponsIndexRouteImport } from './routes/coupons/index'
 import { Route as BookingsIndexRouteImport } from './routes/bookings/index'
 import { Route as TourismAddRouteImport } from './routes/tourism/add'
 import { Route as TestimonialsAddRouteImport } from './routes/testimonials/add'
+import { Route as StaffAddRouteImport } from './routes/staff/add'
 import { Route as CouponsAddRouteImport } from './routes/coupons/add'
 import { Route as BookingsStandardRouteImport } from './routes/bookings/standard'
 import { Route as BookingsCustomizedRouteImport } from './routes/bookings/customized'
 import { Route as BookingsIdRouteImport } from './routes/bookings/$id'
 import { Route as TourismIdEditRouteImport } from './routes/tourism/$id/edit'
 import { Route as TestimonialsIdEditRouteImport } from './routes/testimonials/$id/edit'
+import { Route as StaffIdEditRouteImport } from './routes/staff/$id/edit'
+import { Route as StaffIdActivityRouteImport } from './routes/staff/$id/activity'
 import { Route as CouponsIdEditRouteImport } from './routes/coupons/$id/edit'
 
 const LoginRoute = LoginRouteImport.update({
@@ -58,6 +63,16 @@ const TestimonialsIndexRoute = TestimonialsIndexRouteImport.update({
   path: '/testimonials/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/staff/',
+  path: '/staff/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffLogsIndexRoute = StaffLogsIndexRouteImport.update({
+  id: '/staff-logs/',
+  path: '/staff-logs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegionsIndexRoute = RegionsIndexRouteImport.update({
   id: '/regions/',
   path: '/regions/',
@@ -81,6 +96,11 @@ const TourismAddRoute = TourismAddRouteImport.update({
 const TestimonialsAddRoute = TestimonialsAddRouteImport.update({
   id: '/testimonials/add',
   path: '/testimonials/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffAddRoute = StaffAddRouteImport.update({
+  id: '/staff/add',
+  path: '/staff/add',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CouponsAddRoute = CouponsAddRouteImport.update({
@@ -113,6 +133,16 @@ const TestimonialsIdEditRoute = TestimonialsIdEditRouteImport.update({
   path: '/testimonials/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffIdEditRoute = StaffIdEditRouteImport.update({
+  id: '/staff/$id/edit',
+  path: '/staff/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffIdActivityRoute = StaffIdActivityRouteImport.update({
+  id: '/staff/$id/activity',
+  path: '/staff/$id/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CouponsIdEditRoute = CouponsIdEditRouteImport.update({
   id: '/coupons/$id/edit',
   path: '/coupons/$id/edit',
@@ -126,16 +156,21 @@ export interface FileRoutesByFullPath {
   '/bookings/customized': typeof BookingsCustomizedRoute
   '/bookings/standard': typeof BookingsStandardRoute
   '/coupons/add': typeof CouponsAddRoute
+  '/staff/add': typeof StaffAddRoute
   '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
   '/bookings/': typeof BookingsIndexRoute
   '/coupons/': typeof CouponsIndexRoute
   '/regions/': typeof RegionsIndexRoute
+  '/staff-logs/': typeof StaffLogsIndexRoute
+  '/staff/': typeof StaffIndexRoute
   '/testimonials/': typeof TestimonialsIndexRoute
   '/tourism/': typeof TourismIndexRoute
   '/trip-types/': typeof TripTypesIndexRoute
   '/users/': typeof UsersIndexRoute
   '/coupons/$id/edit': typeof CouponsIdEditRoute
+  '/staff/$id/activity': typeof StaffIdActivityRoute
+  '/staff/$id/edit': typeof StaffIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
 }
@@ -146,16 +181,21 @@ export interface FileRoutesByTo {
   '/bookings/customized': typeof BookingsCustomizedRoute
   '/bookings/standard': typeof BookingsStandardRoute
   '/coupons/add': typeof CouponsAddRoute
+  '/staff/add': typeof StaffAddRoute
   '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
   '/bookings': typeof BookingsIndexRoute
   '/coupons': typeof CouponsIndexRoute
   '/regions': typeof RegionsIndexRoute
+  '/staff-logs': typeof StaffLogsIndexRoute
+  '/staff': typeof StaffIndexRoute
   '/testimonials': typeof TestimonialsIndexRoute
   '/tourism': typeof TourismIndexRoute
   '/trip-types': typeof TripTypesIndexRoute
   '/users': typeof UsersIndexRoute
   '/coupons/$id/edit': typeof CouponsIdEditRoute
+  '/staff/$id/activity': typeof StaffIdActivityRoute
+  '/staff/$id/edit': typeof StaffIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
 }
@@ -167,16 +207,21 @@ export interface FileRoutesById {
   '/bookings/customized': typeof BookingsCustomizedRoute
   '/bookings/standard': typeof BookingsStandardRoute
   '/coupons/add': typeof CouponsAddRoute
+  '/staff/add': typeof StaffAddRoute
   '/testimonials/add': typeof TestimonialsAddRoute
   '/tourism/add': typeof TourismAddRoute
   '/bookings/': typeof BookingsIndexRoute
   '/coupons/': typeof CouponsIndexRoute
   '/regions/': typeof RegionsIndexRoute
+  '/staff-logs/': typeof StaffLogsIndexRoute
+  '/staff/': typeof StaffIndexRoute
   '/testimonials/': typeof TestimonialsIndexRoute
   '/tourism/': typeof TourismIndexRoute
   '/trip-types/': typeof TripTypesIndexRoute
   '/users/': typeof UsersIndexRoute
   '/coupons/$id/edit': typeof CouponsIdEditRoute
+  '/staff/$id/activity': typeof StaffIdActivityRoute
+  '/staff/$id/edit': typeof StaffIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
 }
@@ -189,16 +234,21 @@ export interface FileRouteTypes {
     | '/bookings/customized'
     | '/bookings/standard'
     | '/coupons/add'
+    | '/staff/add'
     | '/testimonials/add'
     | '/tourism/add'
     | '/bookings/'
     | '/coupons/'
     | '/regions/'
+    | '/staff-logs/'
+    | '/staff/'
     | '/testimonials/'
     | '/tourism/'
     | '/trip-types/'
     | '/users/'
     | '/coupons/$id/edit'
+    | '/staff/$id/activity'
+    | '/staff/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -209,16 +259,21 @@ export interface FileRouteTypes {
     | '/bookings/customized'
     | '/bookings/standard'
     | '/coupons/add'
+    | '/staff/add'
     | '/testimonials/add'
     | '/tourism/add'
     | '/bookings'
     | '/coupons'
     | '/regions'
+    | '/staff-logs'
+    | '/staff'
     | '/testimonials'
     | '/tourism'
     | '/trip-types'
     | '/users'
     | '/coupons/$id/edit'
+    | '/staff/$id/activity'
+    | '/staff/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
   id:
@@ -229,16 +284,21 @@ export interface FileRouteTypes {
     | '/bookings/customized'
     | '/bookings/standard'
     | '/coupons/add'
+    | '/staff/add'
     | '/testimonials/add'
     | '/tourism/add'
     | '/bookings/'
     | '/coupons/'
     | '/regions/'
+    | '/staff-logs/'
+    | '/staff/'
     | '/testimonials/'
     | '/tourism/'
     | '/trip-types/'
     | '/users/'
     | '/coupons/$id/edit'
+    | '/staff/$id/activity'
+    | '/staff/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
   fileRoutesById: FileRoutesById
@@ -250,16 +310,21 @@ export interface RootRouteChildren {
   BookingsCustomizedRoute: typeof BookingsCustomizedRoute
   BookingsStandardRoute: typeof BookingsStandardRoute
   CouponsAddRoute: typeof CouponsAddRoute
+  StaffAddRoute: typeof StaffAddRoute
   TestimonialsAddRoute: typeof TestimonialsAddRoute
   TourismAddRoute: typeof TourismAddRoute
   BookingsIndexRoute: typeof BookingsIndexRoute
   CouponsIndexRoute: typeof CouponsIndexRoute
   RegionsIndexRoute: typeof RegionsIndexRoute
+  StaffLogsIndexRoute: typeof StaffLogsIndexRoute
+  StaffIndexRoute: typeof StaffIndexRoute
   TestimonialsIndexRoute: typeof TestimonialsIndexRoute
   TourismIndexRoute: typeof TourismIndexRoute
   TripTypesIndexRoute: typeof TripTypesIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   CouponsIdEditRoute: typeof CouponsIdEditRoute
+  StaffIdActivityRoute: typeof StaffIdActivityRoute
+  StaffIdEditRoute: typeof StaffIdEditRoute
   TestimonialsIdEditRoute: typeof TestimonialsIdEditRoute
   TourismIdEditRoute: typeof TourismIdEditRoute
 }
@@ -308,6 +373,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestimonialsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/': {
+      id: '/staff/'
+      path: '/staff'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff-logs/': {
+      id: '/staff-logs/'
+      path: '/staff-logs'
+      fullPath: '/staff-logs/'
+      preLoaderRoute: typeof StaffLogsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/regions/': {
       id: '/regions/'
       path: '/regions'
@@ -341,6 +420,13 @@ declare module '@tanstack/react-router' {
       path: '/testimonials/add'
       fullPath: '/testimonials/add'
       preLoaderRoute: typeof TestimonialsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/add': {
+      id: '/staff/add'
+      path: '/staff/add'
+      fullPath: '/staff/add'
+      preLoaderRoute: typeof StaffAddRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coupons/add': {
@@ -385,6 +471,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestimonialsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/$id/edit': {
+      id: '/staff/$id/edit'
+      path: '/staff/$id/edit'
+      fullPath: '/staff/$id/edit'
+      preLoaderRoute: typeof StaffIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/$id/activity': {
+      id: '/staff/$id/activity'
+      path: '/staff/$id/activity'
+      fullPath: '/staff/$id/activity'
+      preLoaderRoute: typeof StaffIdActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/coupons/$id/edit': {
       id: '/coupons/$id/edit'
       path: '/coupons/$id/edit'
@@ -402,16 +502,21 @@ const rootRouteChildren: RootRouteChildren = {
   BookingsCustomizedRoute: BookingsCustomizedRoute,
   BookingsStandardRoute: BookingsStandardRoute,
   CouponsAddRoute: CouponsAddRoute,
+  StaffAddRoute: StaffAddRoute,
   TestimonialsAddRoute: TestimonialsAddRoute,
   TourismAddRoute: TourismAddRoute,
   BookingsIndexRoute: BookingsIndexRoute,
   CouponsIndexRoute: CouponsIndexRoute,
   RegionsIndexRoute: RegionsIndexRoute,
+  StaffLogsIndexRoute: StaffLogsIndexRoute,
+  StaffIndexRoute: StaffIndexRoute,
   TestimonialsIndexRoute: TestimonialsIndexRoute,
   TourismIndexRoute: TourismIndexRoute,
   TripTypesIndexRoute: TripTypesIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   CouponsIdEditRoute: CouponsIdEditRoute,
+  StaffIdActivityRoute: StaffIdActivityRoute,
+  StaffIdEditRoute: StaffIdEditRoute,
   TestimonialsIdEditRoute: TestimonialsIdEditRoute,
   TourismIdEditRoute: TourismIdEditRoute,
 }

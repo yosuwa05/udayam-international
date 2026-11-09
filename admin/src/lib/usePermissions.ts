@@ -1,0 +1,88 @@
+import { useQuery } from '@tanstack/react-query'
+import { _axios } from '@/lib/axios'
+
+export interface RoutePermission {
+  route: string
+  name: string
+  view: boolean
+  edit: boolean
+  delete: boolean
+}
+
+export function usePermissions() {
+  const { data: sessionData } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const res = await _axios.get('/admin-auth/session')
+      const role = res.data?.data?.role?.toUpperCase()
+      const userType = role === 'STAFF' ? ('staff' as const) : ('admin' as const)
+      return { data: res.data?.data, userType }
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const user = sessionData?.data
+  const role = user?.role?.toUpperCase()
+  const isAdmin = role === 'ADMIN'
+  const isStaff = role === 'STAFF'
+  const permissions: RoutePermission[] = user?.permissions || []
+
+  const getPermission = (route: string): RoutePermission | undefined => {
+    return permissions.find((p) => p.route === route)
+  }
+
+  const canView = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
+    if (isAdmin) return true
+    if (route.startsWith('/bookings')) {
+      if (bookingType === 'customized') return getPermission('/bookings/customized')?.view ?? false
+      if (bookingType === 'standard') return getPermission('/bookings/standard')?.view ?? false
+      return (
+        (getPermission('/bookings/standard')?.view ?? false) ||
+        (getPermission('/bookings/customized')?.view ?? false)
+      )
+    }
+    const perm = getPermission(route)
+    return perm?.view ?? false
+  }
+
+  const canEdit = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
+    if (isAdmin) return true
+    if (route.startsWith('/bookings')) {
+      if (bookingType === 'customized') return getPermission('/bookings/customized')?.edit ?? false
+      if (bookingType === 'standard') return getPermission('/bookings/standard')?.edit ?? false
+      return (
+        (getPermission('/bookings/standard')?.edit ?? false) ||
+        (getPermission('/bookings/customized')?.edit ?? false)
+      )
+    }
+    const perm = getPermission(route)
+    return perm?.edit ?? false
+  }
+
+  const canDelete = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
+    if (isAdmin) return true
+    if (route.startsWith('/bookings')) {
+      if (bookingType === 'customized') return getPermission('/bookings/customized')?.delete ?? false
+      if (bookingType === 'standard') return getPermission('/bookings/standard')?.delete ?? false
+      return (
+        (getPermission('/bookings/standard')?.delete ?? false) ||
+        (getPermission('/bookings/customized')?.delete ?? false)
+      )
+    }
+    const perm = getPermission(route)
+    return perm?.delete ?? false
+  }
+
+  return {
+    user,
+    role,
+    isAdmin,
+    isStaff,
+    permissions,
+    getPermission,
+    canView,
+    canEdit,
+    canDelete,
+  }
+}
+
