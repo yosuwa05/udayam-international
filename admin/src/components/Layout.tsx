@@ -14,6 +14,7 @@ import {
   Globe,
   ShieldCheck,
   Activity,
+  RotateCcw,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
@@ -54,6 +55,7 @@ const allLinks: NavLink[] = [
     icon: CalendarCheck,
   },
   { name: 'Customized Bookings', href: '/bookings/customized', icon: Sparkles },
+  { name: 'Cancellation Requests', href: '/bookings/cancellations', icon: RotateCcw },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Tourism', href: '/tourism', icon: MapIcon },
   { name: 'Testimonials', href: '/testimonials', icon: MessageSquare },
@@ -122,7 +124,11 @@ export default function Layout({ session, userType }: LayoutProps) {
             : new URLSearchParams(search || '').get('type')
         )?.toLowerCase()
 
-        if (currentPath === '/bookings/standard' || currentPath.startsWith('/bookings/standard/')) {
+        if (currentPath === '/bookings/cancellations' || currentPath.startsWith('/bookings/cancellations/')) {
+          isAllowed =
+            allowedRoutes.includes('/bookings/cancellations') ||
+            allowedRoutes.includes('/bookings/standard')
+        } else if (currentPath === '/bookings/standard' || currentPath.startsWith('/bookings/standard/')) {
           isAllowed = allowedRoutes.includes('/bookings/standard')
         } else if (currentPath === '/bookings/customized' || currentPath.startsWith('/bookings/customized/')) {
           isAllowed = allowedRoutes.includes('/bookings/customized')
@@ -134,7 +140,8 @@ export default function Layout({ session, userType }: LayoutProps) {
           // If no specific type param on /bookings/:id, allow if user has permission for either
           isAllowed =
             allowedRoutes.includes('/bookings/standard') ||
-            allowedRoutes.includes('/bookings/customized')
+            allowedRoutes.includes('/bookings/customized') ||
+            allowedRoutes.includes('/bookings/cancellations')
         }
       } else {
         isAllowed = allowedRoutes.some(
@@ -161,7 +168,9 @@ export default function Layout({ session, userType }: LayoutProps) {
           ? search.type
           : new URLSearchParams(search || '').get('type')
 
-      if (parts[2] === 'customized' || typeParam === 'customized') {
+      if (parts[2] === 'cancellations') {
+        setActiveMenu('/bookings/cancellations')
+      } else if (parts[2] === 'customized' || typeParam === 'customized') {
         setActiveMenu('/bookings/customized')
       } else {
         setActiveMenu('/bookings/standard')

@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   Receipt,
   Info,
+  RotateCcw,
 } from "lucide-react"
 
 export const MyBookings: React.FC = () => {
@@ -60,9 +61,16 @@ export const MyBookings: React.FC = () => {
   const [detailPaymentChoice, setDetailPaymentChoice] = useState<"MIN" | "FULL" | "CUSTOM">("MIN")
   const [detailCustomAmount, setDetailCustomAmount] = useState<string>("")
 
+  // Cancellation Request State
+  const [cancelModalBooking, setCancelModalBooking] = useState<any | null>(null)
+  const [cancelReasonCategory, setCancelReasonCategory] = useState<string>("Personal Emergency")
+  const [cancelReason, setCancelReason] = useState<string>("")
+  const [cancelUserNotes, setCancelUserNotes] = useState<string>("")
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false)
+
   // Prevent background page scroll when modal is active
   React.useEffect(() => {
-    if (selectedBookingId || quickPaymentBooking) {
+    if (selectedBookingId || quickPaymentBooking || cancelModalBooking) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = ""
@@ -70,7 +78,7 @@ export const MyBookings: React.FC = () => {
     return () => {
       document.body.style.overflow = ""
     }
-  }, [selectedBookingId, quickPaymentBooking])
+  }, [selectedBookingId, quickPaymentBooking, cancelModalBooking])
 
   // Query User Bookings List
   const { data: bookingsData, isLoading, isError } = useQuery({
@@ -236,6 +244,38 @@ export const MyBookings: React.FC = () => {
     }
   }
 
+  // ── Handle Submit Cancellation Request ────────────────────────────────────
+  const handleSubmitCancellationRequest = async () => {
+    if (!cancelModalBooking) return
+    if (!cancelReason.trim()) {
+      toast.error("Please enter a reason for cancelling your booking")
+      return
+    }
+
+    setIsSubmittingCancel(true)
+    try {
+      const res = await _axios.post(`/booking/${cancelModalBooking._id}/cancel-request`, {
+        reason: cancelReason.trim(),
+        reasonCategory: cancelReasonCategory,
+        userNotes: cancelUserNotes.trim() || undefined,
+      })
+
+      if (res.data?.status) {
+        toast.success(res.data?.message || "Cancellation request submitted for admin review")
+        queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
+        queryClient.invalidateQueries({ queryKey: ["my-booking-details", cancelModalBooking._id] })
+        setCancelModalBooking(null)
+      } else {
+        toast.error(res.data?.error || "Failed to submit cancellation request")
+      }
+    } catch (err: any) {
+      console.error("Cancellation Request Error:", err)
+      toast.error(err?.response?.data?.error || "Failed to submit cancellation request")
+    } finally {
+      setIsSubmittingCancel(false)
+    }
+  }
+
   if (!user) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
@@ -273,6 +313,8 @@ export const MyBookings: React.FC = () => {
         return "bg-blue-100 text-blue-800 border-blue-300"
       case "ENQUIRY_RECEIVED":
         return "bg-amber-50 text-amber-700 border-amber-200"
+      case "CANCELLATION_REQUESTED":
+        return "bg-amber-100 text-amber-900 border-amber-300 font-bold"
       case "REFUNDED":
       case "PARTIALLY_REFUNDED":
         return "bg-purple-100 text-purple-800 border-purple-300"
@@ -358,6 +400,7 @@ export const MyBookings: React.FC = () => {
                 <option value="ALL">All Booking Statuses</option>
                 <option value="BOOKED">BOOKED / CONFIRMED</option>
                 <option value="PARTIALLY_PAID">PARTIALLY PAID (PENDING INSTALLMENT)</option>
+                <option value="CANCELLATION_REQUESTED">CANCELLATION REQUESTED</option>
                 <option value="ENQUIRY_RECEIVED">ENQUIRY RECEIVED</option>
                 <option value="QUOTATION_SHARED">QUOTATION SHARED</option>
                 <option value="COMPLETED">COMPLETED</option>
@@ -470,7 +513,12 @@ export const MyBookings: React.FC = () => {
                             </span>
 
                             {/* Payment Status Badges */}
-                            {isPartiallyPaid && (
+                            {bk.status === "CANCELLATION_REQUESTED" && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold">
+                                <Clock size={11} className="text-amber-700" /> Cancellation Under Review
+                              </span>
+                            )}
+                            {isPartiallyPaid && bk.status !== "CANCELLATION_REQUESTED" && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 text-white px-2.5 py-0.5 text-[10px] font-bold shadow-xs">
                                 <Clock size={11} /> Partially Paid (Stage {currentStage}/{maxStages})
                               </span>
@@ -547,12 +595,27 @@ export const MyBookings: React.FC = () => {
 
                         <div className="flex flex-wrap items-center gap-2">
                           {/* "Pay Next Stage" button for partially paid standard bookings */}
-                          {isPartiallyPaid && !["CANCELLED", "REFUNDED", "PAYMENT_FAILED"].includes(bk.status) && (
+                          {isPartiallyPaid && !["CANCELLED", "REFUNDED", "PAYMENT_FAILED", "CANCELLATION_REQUESTED"].includes(bk.status) && (
                             <button
                               onClick={() => setQuickPaymentBooking(bk)}
                               className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:scale-105"
                             >
                               <CreditCard size={14} /> Pay Next Stage
+                            </button>
+                          )}
+
+                          {/* Request Cancellation button */}
+                          {!["CANCELLED", "REFUNDED", "CANCELLATION_REQUESTED", "PAYMENT_FAILED", "COMPLETED", "ENQUIRY_CANCELLED"].includes(bk.status) && (
+                            <button
+                              onClick={() => {
+                                setCancelModalBooking(bk)
+                                setCancelReasonCategory("Personal Emergency")
+                                setCancelReason("")
+                                setCancelUserNotes("")
+                              }}
+                              className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800"
+                            >
+                              <RotateCcw size={13} /> Cancel
                             </button>
                           )}
 
@@ -693,6 +756,97 @@ export const MyBookings: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* ── CANCELLATION REQUEST DETAILS & REFUND BANNER ── */}
+                  {bookingDetailsData.cancellationRequest && (
+                    <>
+                      {/* Under Review */}
+                      {bookingDetailsData.cancellationRequest.status === "PENDING" && (
+                        <div className="rounded-2xl border border-amber-300 bg-amber-50/80 p-4 shadow-xs space-y-2">
+                          <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                            <Clock size={16} className="text-amber-700" />
+                            Cancellation Request Under Review
+                          </div>
+                          <p className="text-xs text-amber-800">
+                            You have submitted a cancellation request for this booking. Our team is currently reviewing your request against package terms and calculating your eligible refund. Payment installments are temporarily paused.
+                          </p>
+                          <div className="rounded-xl bg-white/90 p-3 border border-amber-200 text-xs space-y-1">
+                            <div>
+                              <span className="text-gray-500">Reason Category: </span>
+                              <span className="font-semibold text-gray-800">{bookingDetailsData.cancellationRequest.reasonCategory}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Reason: </span>
+                              <span className="font-medium text-gray-800">"{bookingDetailsData.cancellationRequest.reason}"</span>
+                            </div>
+                            {bookingDetailsData.cancellationRequest.userNotes && (
+                              <div className="text-[11px] text-gray-500 italic">
+                                Notes: {bookingDetailsData.cancellationRequest.userNotes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Completed / Refund Settled */}
+                      {bookingDetailsData.cancellationRequest.status === "COMPLETED" && (
+                        <div className="rounded-2xl border border-emerald-300 bg-emerald-50/80 p-5 shadow-xs space-y-3">
+                          <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs uppercase tracking-wider">
+                            <CheckCircle2 size={16} className="text-emerald-700" />
+                            Cancellation Approved &amp; Refund Settled
+                          </div>
+                          <p className="text-xs text-emerald-800">
+                            This booking was cancelled and your refund has been processed by our team.
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 rounded-xl bg-white p-3 border border-emerald-200 text-xs">
+                            <div>
+                              <span className="text-[11px] text-gray-400">Refund Amount:</span>
+                              <div className="text-sm font-bold text-emerald-700">
+                                ₹{Number(bookingDetailsData.cancellationRequest.adminRefundDetails?.refundAmount || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-gray-400">Deduction / Fee:</span>
+                              <div className="text-sm font-bold text-gray-700">
+                                ₹{Number(bookingDetailsData.cancellationRequest.adminRefundDetails?.deductionAmount || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-gray-400">Settlement Mode:</span>
+                              <div className="text-xs font-semibold text-gray-800">
+                                {bookingDetailsData.cancellationRequest.adminRefundDetails?.paymentMode?.replace(/_/g, " ")}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-gray-400">Reference / UTR:</span>
+                              <div className="text-xs font-mono text-gray-800 truncate">
+                                {bookingDetailsData.cancellationRequest.adminRefundDetails?.transactionReference || "N/A"}
+                              </div>
+                            </div>
+                          </div>
+                          {bookingDetailsData.cancellationRequest.adminRefundDetails?.adminNotes && (
+                            <div className="text-xs text-emerald-900 bg-white/80 p-2.5 rounded-lg border border-emerald-100">
+                              <strong>Notes:</strong> {bookingDetailsData.cancellationRequest.adminRefundDetails.adminNotes}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Rejected */}
+                      {bookingDetailsData.cancellationRequest.status === "REJECTED" && (
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-xs space-y-1">
+                          <div className="flex items-center gap-2 font-bold text-rose-900">
+                            <AlertCircle size={15} className="text-rose-600" />
+                            Previous Cancellation Request Declined
+                          </div>
+                          <p className="text-rose-800">
+                            Reason: "{bookingDetailsData.cancellationRequest.adminRejectionDetails?.rejectionReason}".
+                            Your booking has been restored and remains active.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   {/* ── MULTI-STAGE PAYMENT PLAN & PROGRESS SECTION (Standard Bookings) ── */}
                   {bookingDetailsData.bookingType === "STANDARD" && bookingDetailsData.paymentSummary && (
                     <div className="rounded-2xl border border-[#1B2B6B]/20 bg-white p-5 shadow-sm">
@@ -800,7 +954,7 @@ export const MyBookings: React.FC = () => {
                       {/* Interactive Pay Next Stage in Detail View */}
                       {bookingDetailsData.paymentSummary.canMakeSubsequentPayment &&
                         bookingDetailsData.paymentSummary.remainingAmount > 0 &&
-                        !["CANCELLED", "REFUNDED", "PAYMENT_FAILED"].includes(bookingDetailsData.status) && (
+                        !["CANCELLED", "REFUNDED", "PAYMENT_FAILED", "CANCELLATION_REQUESTED"].includes(bookingDetailsData.status) && (
                           <div className="mt-5 rounded-2xl bg-gradient-to-br from-[#F4F6FB] to-[#FAF8F4] p-4 border border-[#1B2B6B]/20">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-1.5 font-bold text-[#1B2B6B] text-xs uppercase tracking-wide">
@@ -1061,13 +1215,31 @@ export const MyBookings: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-gray-100 p-4 text-right">
-              <button
-                onClick={() => setSelectedBookingId(null)}
-                className="rounded-full bg-[#1B2B6B] px-6 py-2 text-xs font-bold text-white"
-              >
-                Close Window
-              </button>
+            <div className="border-t border-gray-100 p-4 flex items-center justify-between">
+              {bookingDetailsData &&
+                !["CANCELLED", "REFUNDED", "CANCELLATION_REQUESTED", "PAYMENT_FAILED", "COMPLETED", "ENQUIRY_CANCELLED"].includes(bookingDetailsData.status) &&
+                bookingDetailsData.cancellationRequest?.status !== "PENDING" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCancelModalBooking(bookingDetailsData)
+                      setCancelReasonCategory("Personal Emergency")
+                      setCancelReason("")
+                      setCancelUserNotes("")
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors"
+                  >
+                    <RotateCcw size={13} /> Request Cancellation
+                  </button>
+                )}
+              <div className="ml-auto">
+                <button
+                  onClick={() => setSelectedBookingId(null)}
+                  className="rounded-full bg-[#1B2B6B] px-6 py-2 text-xs font-bold text-white hover:bg-[#0F1B47] transition-colors"
+                >
+                  Close Window
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1272,6 +1444,148 @@ export const MyBookings: React.FC = () => {
                   </div>
                 )
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 3. CANCELLATION REQUEST DIALOG MODAL ── */}
+      {cancelModalBooking && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isSubmittingCancel) {
+              setCancelModalBooking(null)
+            }
+          }}
+        >
+          <div className="relative w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-[#0F1B47] to-[#1B2B6B] p-5 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300">
+                  <RotateCcw size={18} />
+                </div>
+                <div>
+                  <h3 className="font-serif text-base font-bold">Request Booking Cancellation</h3>
+                  <p className="text-[11px] text-gray-300 font-mono">
+                    Booking #{cancelModalBooking.bookingNumber}
+                  </p>
+                </div>
+              </div>
+              <button
+                disabled={isSubmittingCancel}
+                onClick={() => setCancelModalBooking(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4 text-xs">
+              {/* Summary box */}
+              <div className="rounded-2xl bg-gray-50 p-4 border border-gray-100 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">Package:</span>
+                  <span className="font-bold text-[#0F1B47] truncate max-w-[240px]">
+                    {cancelModalBooking.packageId?.title || cancelModalBooking.package?.title || "Tour Package"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">Total Paid So Far:</span>
+                  <span className="font-bold text-emerald-700 text-sm">
+                    ₹{Number(
+                      cancelModalBooking.paymentDetails?.totalPaidAmount ||
+                      cancelModalBooking.paymentSummary?.totalPaidAmount ||
+                      0
+                    ).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Policy note */}
+              <div className="rounded-xl bg-amber-50 p-3.5 border border-amber-200 text-amber-900 leading-relaxed text-[11px]">
+                ℹ️ <strong>Cancellation Review Process:</strong>
+                <p className="mt-1">
+                  Bookings are not cancelled immediately. Your request will be sent to our administration team for review against package terms and conditions. Once approved, the eligible refund will be manually processed and recorded.
+                </p>
+              </div>
+
+              {/* Reason Category dropdown */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Reason Category *
+                </label>
+                <select
+                  value={cancelReasonCategory}
+                  onChange={(e) => setCancelReasonCategory(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 px-3 text-xs font-semibold text-gray-800 outline-none focus:border-[#1B2B6B]"
+                >
+                  <option value="Personal Emergency">Personal Emergency</option>
+                  <option value="Change of Travel Dates / Plans">Change of Travel Dates / Plans</option>
+                  <option value="Health / Medical Reasons">Health / Medical Reasons</option>
+                  <option value="Financial Constraints">Financial Constraints</option>
+                  <option value="Family Emergency">Family Emergency</option>
+                  <option value="Other">Other Reason</option>
+                </select>
+              </div>
+
+              {/* Reason textarea */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Reason for Cancellation *
+                </label>
+                <textarea
+                  rows={3}
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Please describe why you wish to cancel this booking..."
+                  className="w-full rounded-xl border border-gray-200 bg-white p-3 text-xs font-normal text-gray-800 outline-none focus:border-[#1B2B6B] resize-none"
+                />
+              </div>
+
+              {/* Additional notes / Bank details */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Refund Payout Details / Notes (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={cancelUserNotes}
+                  onChange={(e) => setCancelUserNotes(e.target.value)}
+                  placeholder="e.g. UPI ID: name@upi or Bank Account & IFSC"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 px-3 text-xs font-normal text-gray-800 outline-none focus:border-[#1B2B6B]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isSubmittingCancel}
+                  onClick={() => setCancelModalBooking(null)}
+                  className="flex-1 rounded-xl border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Keep Booking
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmittingCancel}
+                  onClick={handleSubmitCancellationRequest}
+                  className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 py-2.5 text-xs font-bold text-white shadow-md hover:from-rose-700 hover:to-rose-800 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmittingCancel ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Submitting Request...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw size={15} /> Submit Cancellation Request
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

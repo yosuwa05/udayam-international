@@ -8,6 +8,7 @@ import { CouponUsageModel } from "@models/couponUsage.model"
 import { TourismModel } from "@models/tourism.model"
 import { BookingStatusHistoryModel } from "@models/bookingStatusHistory.model"
 import { RefundModel } from "@models/refund.model"
+import { BookingCancellationRequestModel } from "@models/cancellationRequest.model"
 import { APP_CONSTANTS } from "constant"
 import { sendStandardBookingEmail, sendCustomizedEnquiryEmail } from "@lib/emailTemplates"
 import {
@@ -872,47 +873,47 @@ export const handleRazorpayWebhook = async (ctx: Context) => {
             }
         }
 
-        // 3. REFUND CREATED / PROCESSED -> Update Refund & Booking Status
-        else if (eventName === "refund.processed" || eventName === "refund.created") {
-            const refundEntity = event?.payload?.refund?.entity
-            const razorpayPaymentId = refundEntity?.payment_id
-            const razorpayRefundId = refundEntity?.id
-            const refundAmountInPaise = refundEntity?.amount || 0
-            const refundAmount = refundAmountInPaise / 100
+        // // 3. REFUND CREATED / PROCESSED -> Update Refund & Booking Status
+        // else if (eventName === "refund.processed" || eventName === "refund.created") {
+        //     const refundEntity = event?.payload?.refund?.entity
+        //     const razorpayPaymentId = refundEntity?.payment_id
+        //     const razorpayRefundId = refundEntity?.id
+        //     const refundAmountInPaise = refundEntity?.amount || 0
+        //     const refundAmount = refundAmountInPaise / 100
 
-            if (razorpayPaymentId) {
-                const payment = await PaymentModel.findOne({ razorpayPaymentId })
-                if (payment) {
-                    payment.status = "REFUNDED"
-                    await payment.save()
+        //     if (razorpayPaymentId) {
+        //         const payment = await PaymentModel.findOne({ razorpayPaymentId })
+        //         if (payment) {
+        //             payment.status = "REFUNDED"
+        //             await payment.save()
 
-                    if (payment.bookingId) {
-                        const booking = await BookingModel.findById(payment.bookingId)
-                        if (booking) {
-                            const oldStatus = booking.status
-                            booking.status = "REFUNDED"
-                            await booking.save()
+        //             if (payment.bookingId) {
+        //                 const booking = await BookingModel.findById(payment.bookingId)
+        //                 if (booking) {
+        //                     const oldStatus = booking.status
+        //                     booking.status = "REFUNDED"
+        //                     await booking.save()
 
-                            await BookingStatusHistoryModel.create({
-                                bookingId: booking._id,
-                                fromStatus: oldStatus,
-                                toStatus: "REFUNDED",
-                                notes: `Razorpay Webhook: Refund processed (Refund ID: ${razorpayRefundId})`,
-                            })
+        //                     await BookingStatusHistoryModel.create({
+        //                         bookingId: booking._id,
+        //                         fromStatus: oldStatus,
+        //                         toStatus: "REFUNDED",
+        //                         notes: `Razorpay Webhook: Refund processed (Refund ID: ${razorpayRefundId})`,
+        //                     })
 
-                            await RefundModel.create({
-                                bookingId: booking._id,
-                                paymentId: payment._id,
-                                amount: refundAmount || payment.amount,
-                                reason: "Razorpay Webhook Refund Notification",
-                                status: "SUCCESS",
-                                razorpayRefundId,
-                            })
-                        }
-                    }
-                }
-            }
-        }
+        //                     await RefundModel.create({
+        //                         bookingId: booking._id,
+        //                         paymentId: payment._id,
+        //                         amount: refundAmount || payment.amount,
+        //                         reason: "Razorpay Webhook Refund Notification",
+        //                         status: "SUCCESS",
+        //                         razorpayRefundId,
+        //                     })
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         return { status: true, message: "Webhook processed successfully" }
     } catch (error: any) {
@@ -1050,6 +1051,7 @@ export const getMyBookings = async (ctx: Context) => {
                 .populate("packageId", "title destination imageUrl packageType bookingType days nights price bannerImage")
                 .populate("paymentId")
                 .populate("payments")
+                .populate("cancellationRequestId")
                 .lean(),
             BookingModel.countDocuments(filter),
         ])
@@ -1096,12 +1098,35 @@ export const getMyBookingDetails = async (ctx: Context) => {
             return { status: false, error: "Booking not found" }
         }
 
-        const [history, paymentSummary] = await Promise.all([
+        const [history, paymentSummary, cancellationRequest] = await Promise.all([
             BookingStatusHistoryModel.find({ bookingId: booking._id })
                 .sort({ createdAt: -1 })
                 .lean(),
             getBookingPaymentSummary(booking),
+            BookingCancellationRequestModel.findOne({ bookingId: booking._id })
+                .sort({ createdAt: -1 })
+                .lean(),
         ])
+
+        // Self-heal: ensure booking is marked CANCELLED if cancellation request was completed
+        if (booking.status === "CANCELLATION_REQUESTED" && cancellationRequest?.status === "COMPLETED") {
+            booking.status = "CANCELLED"
+            const refundAmt = cancellationRequest.adminRefundDetails?.refundAmount || 0
+            const paymentStatus =
+                refundAmt >= (cancellationRequest.totalPaidAmount || 0) ? "REFUNDED" : "PARTIALLY_REFUNDED"
+            if (booking.paymentDetails) {
+                booking.paymentDetails.paymentStatus = paymentStatus
+            }
+            await BookingModel.updateOne(
+                { _id: booking._id },
+                {
+                    $set: {
+                        status: "CANCELLED",
+                        ...(booking.paymentDetails ? { "paymentDetails.paymentStatus": paymentStatus } : {}),
+                    },
+                }
+            )
+        }
 
         return {
             status: true,
@@ -1109,6 +1134,7 @@ export const getMyBookingDetails = async (ctx: Context) => {
                 ...booking,
                 paymentSummary,
                 history,
+                cancellationRequest,
             },
         }
     } catch (error: any) {
@@ -1210,6 +1236,7 @@ export const getAdminBookings = async (ctx: Context) => {
                 .limit(limit)
                 .populate("packageId", "title destination packageType price")
                 .populate("userId", "fullName email mobile")
+                .populate("cancellationRequestId")
                 .lean(),
             BookingModel.countDocuments(filter),
         ])
@@ -1239,6 +1266,11 @@ export const getBookingDetails = async (ctx: Context<{ params: { id: string } }>
     const { params, set }: any = ctx
 
     try {
+        if (!Types.ObjectId.isValid(params.id)) {
+            set.status = 400
+            return { status: false, error: "Invalid booking ID" }
+        }
+
         const booking = await BookingModel.findById(params.id)
             .populate("packageId")
             .populate("userId", "fullName email mobile profileImage")
@@ -1252,12 +1284,35 @@ export const getBookingDetails = async (ctx: Context<{ params: { id: string } }>
             return { status: false, error: "Booking record not found" }
         }
 
-        const [statusHistory, paymentSummary] = await Promise.all([
+        const [statusHistory, paymentSummary, cancellationRequest] = await Promise.all([
             BookingStatusHistoryModel.find({ bookingId: booking._id })
                 .sort({ createdAt: 1 })
                 .lean(),
             getBookingPaymentSummary(booking),
+            BookingCancellationRequestModel.findOne({ bookingId: booking._id })
+                .sort({ createdAt: -1 })
+                .lean(),
         ])
+
+        // Self-heal: ensure booking is marked CANCELLED if cancellation request was completed
+        if (booking.status === "CANCELLATION_REQUESTED" && cancellationRequest?.status === "COMPLETED") {
+            booking.status = "CANCELLED"
+            const refundAmt = cancellationRequest.adminRefundDetails?.refundAmount || 0
+            const paymentStatus =
+                refundAmt >= (cancellationRequest.totalPaidAmount || 0) ? "REFUNDED" : "PARTIALLY_REFUNDED"
+            if (booking.paymentDetails) {
+                booking.paymentDetails.paymentStatus = paymentStatus
+            }
+            await BookingModel.updateOne(
+                { _id: booking._id },
+                {
+                    $set: {
+                        status: "CANCELLED",
+                        ...(booking.paymentDetails ? { "paymentDetails.paymentStatus": paymentStatus } : {}),
+                    },
+                }
+            )
+        }
 
         return {
             status: true,
@@ -1265,6 +1320,7 @@ export const getBookingDetails = async (ctx: Context<{ params: { id: string } }>
                 ...booking,
                 paymentSummary,
                 statusHistory,
+                cancellationRequest,
             },
         }
     } catch (error: any) {
@@ -1287,10 +1343,24 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
             return { status: false, error: "Valid quotation amount is required" }
         }
 
+        if (!Types.ObjectId.isValid(params.id)) {
+            set.status = 400
+            return { status: false, error: "Invalid booking ID" }
+        }
+
         const booking = await BookingModel.findById(params.id)
         if (!booking) {
             set.status = 404
             return { status: false, error: "Booking not found" }
+        }
+
+        const terminalStatuses = ["CANCELLED", "COMPLETED", "ENQUIRY_CANCELLED", "REFUNDED"]
+        if (terminalStatuses.includes(booking.status)) {
+            set.status = 400
+            return {
+                status: false,
+                error: `Cannot update quotation because this booking is already ${booking.status.replace(/_/g, " ")}.`,
+            }
         }
 
         if (booking.bookingType !== "CUSTOMIZED") {
@@ -1369,10 +1439,40 @@ export const updateBookingStatus = async (ctx: Context<{ params: { id: string } 
             return { status: false, error: "New status is required" }
         }
 
+        if (!Types.ObjectId.isValid(params.id)) {
+            set.status = 400
+            return { status: false, error: "Invalid booking ID" }
+        }
+
         const booking = await BookingModel.findById(params.id)
         if (!booking) {
             set.status = 404
             return { status: false, error: "Booking not found" }
+        }
+
+        const terminalStatuses = ["CANCELLED", "COMPLETED", "ENQUIRY_CANCELLED", "REFUNDED"]
+        if (terminalStatuses.includes(booking.status)) {
+            set.status = 400
+            return {
+                status: false,
+                error: `Cannot update booking status because it is already ${booking.status.replace(/_/g, " ")}. Finalized bookings cannot be modified.`,
+            }
+        }
+
+        if (booking.status === "CANCELLATION_REQUESTED") {
+            set.status = 400
+            return {
+                status: false,
+                error: "This booking has a pending cancellation request. Please approve or reject it from Cancellation Requests.",
+            }
+        }
+
+        if (booking.status === status) {
+            return {
+                status: true,
+                message: "Booking status is already set to this status",
+                data: booking,
+            }
         }
 
         const oldStatus = booking.status
@@ -1430,10 +1530,24 @@ export const recordCustomizedTransaction = async (ctx: Context<{ params: { id: s
             return { status: false, error: "Valid payment mode is required" }
         }
 
+        if (!Types.ObjectId.isValid(params.id)) {
+            set.status = 400
+            return { status: false, error: "Invalid booking ID" }
+        }
+
         const booking = await BookingModel.findById(params.id)
         if (!booking) {
             set.status = 404
             return { status: false, error: "Booking not found" }
+        }
+
+        const terminalStatuses = ["CANCELLED", "COMPLETED", "ENQUIRY_CANCELLED", "REFUNDED"]
+        if (terminalStatuses.includes(booking.status)) {
+            set.status = 400
+            return {
+                status: false,
+                error: `Cannot record payment because this booking is already ${booking.status.replace(/_/g, " ")}.`,
+            }
         }
 
         if (booking.bookingType !== "CUSTOMIZED") {
@@ -1505,5 +1619,489 @@ export const recordCustomizedTransaction = async (ctx: Context<{ params: { id: s
         console.error("Record Transaction Error", error)
         set.status = 500
         return { status: false, error: "Failed to record transaction" }
+    }
+}
+
+// ─── 12. USER: Submit Booking Cancellation Request ───────────────────────────
+
+export const requestBookingCancellation = async (ctx: Context<{ params: { id: string } }>) => {
+    const { params, body, set, store }: any = ctx
+    const userId = store.id
+
+    try {
+        const { reason, reasonCategory, userNotes } = body || {}
+        if (!reason || typeof reason !== "string" || !reason.trim()) {
+            set.status = 400
+            return { status: false, error: "Please provide a reason for cancelling your booking" }
+        }
+
+        const booking = await BookingModel.findById(params.id)
+        if (!booking) {
+            set.status = 404
+            return { status: false, error: "Booking not found" }
+        }
+
+        if (booking.userId.toString() !== userId.toString()) {
+            set.status = 403
+            return { status: false, error: "You are not authorized to cancel this booking" }
+        }
+
+        const nonCancellableStatuses = [
+            "CANCELLED",
+            "REFUNDED",
+            "CANCELLATION_REQUESTED",
+            "COMPLETED",
+            "PAYMENT_FAILED",
+            "ENQUIRY_CANCELLED",
+        ]
+        if (nonCancellableStatuses.includes(booking.status)) {
+            set.status = 400
+            return {
+                status: false,
+                error: `Booking cannot be cancelled in its current status: ${booking.status.replace(/_/g, " ")}`,
+            }
+        }
+
+        // Check if there is already an active pending request
+        const existingPending = await BookingCancellationRequestModel.findOne({
+            bookingId: booking._id,
+            status: "PENDING",
+        })
+        if (existingPending) {
+            set.status = 400
+            return {
+                status: false,
+                error: "A cancellation request is already pending review for this booking",
+            }
+        }
+
+        // Calculate total amount paid so far
+        let totalPaid = 0
+        if (booking.bookingType === "STANDARD") {
+            if (booking.paymentDetails?.totalPaidAmount) {
+                totalPaid = booking.paymentDetails.totalPaidAmount
+            } else if (booking.payments && booking.payments.length > 0) {
+                const payments = await PaymentModel.find({
+                    _id: { $in: booking.payments },
+                    status: "SUCCESS",
+                })
+                totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0)
+            } else if (booking.paymentId) {
+                const payment = await PaymentModel.findById(booking.paymentId)
+                if (payment && payment.status === "SUCCESS") {
+                    totalPaid = payment.amount || 0
+                }
+            }
+        } else {
+            // CUSTOMIZED
+            totalPaid = (booking.transactions || []).reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
+        }
+
+        const totalBookingAmount = booking.pricingDetails?.finalAmount || 0
+        const previousBookingStatus = booking.status
+
+        const cancellationRequest = await BookingCancellationRequestModel.create({
+            bookingId: booking._id,
+            userId: booking.userId,
+            bookingNumber: booking.bookingNumber,
+            bookingType: booking.bookingType,
+            packageId: booking.packageId,
+            totalBookingAmount,
+            totalPaidAmount: totalPaid,
+            reasonCategory: reasonCategory?.trim() || "Personal Emergency",
+            reason: reason.trim(),
+            userNotes: userNotes?.trim(),
+            status: "PENDING",
+            previousBookingStatus,
+        })
+
+        booking.status = "CANCELLATION_REQUESTED"
+        booking.cancellationRequestId = cancellationRequest._id
+        await booking.save()
+
+        await BookingStatusHistoryModel.create({
+            bookingId: booking._id,
+            fromStatus: previousBookingStatus,
+            toStatus: "CANCELLATION_REQUESTED",
+            changedBy: new Types.ObjectId(userId),
+            notes: `Customer requested cancellation (${reasonCategory || "Personal Emergency"}). Reason: ${reason.trim()}`,
+        })
+
+        return {
+            status: true,
+            message: "Cancellation request submitted successfully. Our team will review your request.",
+            data: cancellationRequest,
+        }
+    } catch (error: any) {
+        console.error("Request Booking Cancellation Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to submit cancellation request" }
+    }
+}
+
+// ─── 13. USER & ADMIN: Get Booking Cancellation Request Details ──────────────
+
+export const getBookingCancellationRequest = async (ctx: Context<{ params: { id: string } }>) => {
+    const { params, set, store }: any = ctx
+    const requesterId = store.id
+    const userRole = store.role
+
+    try {
+        const booking = await BookingModel.findById(params.id)
+        if (!booking) {
+            set.status = 404
+            return { status: false, error: "Booking not found" }
+        }
+
+        if (userRole === "USER" && booking.userId.toString() !== requesterId.toString()) {
+            set.status = 403
+            return { status: false, error: "Unauthorized access" }
+        }
+
+        const request = await BookingCancellationRequestModel.findOne({ bookingId: booking._id })
+            .sort({ createdAt: -1 })
+            .populate("userId", "fullName email mobile")
+            .populate("packageId", "title destination packageType price imageUrl")
+            .lean()
+
+        return {
+            status: true,
+            data: request,
+        }
+    } catch (error: any) {
+        console.error("Get Booking Cancellation Request Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to fetch cancellation request" }
+    }
+}
+
+// ─── 14. ADMIN: List Cancellation Requests ───────────────────────────────────
+
+export const getAdminCancellationRequests = async (ctx: Context) => {
+    const { query, set }: any = ctx
+
+    try {
+        const page = Math.max(1, parseInt(query?.page as string) || 1)
+        const limit = Math.max(1, Math.min(100, parseInt(query?.limit as string) || 10))
+        const statusFilter = query?.status as string
+        const search = (query?.search as string)?.trim()
+
+        const filter: any = {}
+
+        if (statusFilter && statusFilter !== "ALL") {
+            filter.status = statusFilter
+        }
+
+        if (search) {
+            const searchRegex = new RegExp(search, "i")
+            filter.$or = [
+                { bookingNumber: searchRegex },
+                { reason: searchRegex },
+            ]
+        }
+
+        const [total, pending, completed, rejected] = await Promise.all([
+            BookingCancellationRequestModel.countDocuments(),
+            BookingCancellationRequestModel.countDocuments({ status: "PENDING" }),
+            BookingCancellationRequestModel.countDocuments({ status: "COMPLETED" }),
+            BookingCancellationRequestModel.countDocuments({ status: "REJECTED" }),
+        ])
+
+        const filteredTotal = await BookingCancellationRequestModel.countDocuments(filter)
+
+        const requests = await BookingCancellationRequestModel.find(filter)
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .populate("userId", "fullName email mobile")
+            .populate("packageId", "title destination packageType price imageUrl")
+            .populate({
+                path: "bookingId",
+                select: "status bookingType travellerInfo pricingDetails paymentDetails quotation transactions createdAt",
+            })
+            .lean()
+
+        return {
+            status: true,
+            data: {
+                requests,
+                counts: { total, pending, completed, rejected },
+                pagination: {
+                    page,
+                    limit,
+                    total: filteredTotal,
+                    totalPages: Math.ceil(filteredTotal / limit) || 1,
+                },
+            },
+        }
+    } catch (error: any) {
+        console.error("Get Admin Cancellation Requests Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to fetch cancellation requests" }
+    }
+}
+
+// ─── 15. ADMIN: Get Single Cancellation Request Details ───────────────────────
+
+export const getAdminCancellationRequestDetails = async (ctx: Context<{ params: { id: string } }>) => {
+    const { params, set }: any = ctx
+
+    try {
+        if (!Types.ObjectId.isValid(params.id)) {
+            set.status = 400
+            return { status: false, error: "Invalid cancellation request ID" }
+        }
+
+        const request = await BookingCancellationRequestModel.findById(params.id)
+            .populate("userId", "fullName email mobile")
+            .populate("packageId")
+            .populate({
+                path: "bookingId",
+                populate: {
+                    path: "payments",
+                },
+            })
+            .lean()
+
+        if (!request) {
+            set.status = 404
+            return { status: false, error: "Cancellation request not found" }
+        }
+
+        // Self-heal: ensure booking is marked CANCELLED if cancellation request was completed
+        if (request.status === "COMPLETED" && (request.bookingId as any)?.status === "CANCELLATION_REQUESTED") {
+            const refundAmt = request.adminRefundDetails?.refundAmount || 0
+            const paymentStatus =
+                refundAmt >= (request.totalPaidAmount || 0) ? "REFUNDED" : "PARTIALLY_REFUNDED"
+            await BookingModel.updateOne(
+                { _id: (request.bookingId as any)._id },
+                {
+                    $set: {
+                        status: "CANCELLED",
+                        "paymentDetails.paymentStatus": paymentStatus,
+                    },
+                }
+            )
+            ;(request.bookingId as any).status = "CANCELLED"
+            if ((request.bookingId as any).paymentDetails) {
+                ;(request.bookingId as any).paymentDetails.paymentStatus = paymentStatus
+            }
+        }
+
+        return {
+            status: true,
+            data: request,
+        }
+    } catch (error: any) {
+        console.error("Get Cancellation Request Details Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to fetch cancellation request details" }
+    }
+}
+
+// ─── 16. ADMIN: Process Cancellation Request (Accept & Refund / Reject) ───────
+
+export const processCancellationRequest = async (ctx: Context<{ params: { id: string } }>) => {
+    const { params, body, set, store }: any = ctx
+    const adminId = store.id
+    const adminName = store.name || "Admin"
+
+    try {
+        if (!Types.ObjectId.isValid(params.id)) {
+            set.status = 400
+            return { status: false, error: "Invalid cancellation request ID" }
+        }
+
+        const { action, refundAmount, paymentMode, transactionReference, adminNotes, refundDate, rejectionReason } = body || {}
+
+        if (!action || !["ACCEPT", "REJECT"].includes(action)) {
+            set.status = 400
+            return { status: false, error: "Action must be either 'ACCEPT' or 'REJECT'" }
+        }
+
+        const request = await BookingCancellationRequestModel.findById(params.id)
+        if (!request) {
+            set.status = 404
+            return { status: false, error: "Cancellation request not found" }
+        }
+
+        if (request.status !== "PENDING") {
+            // Self-repair if booking was not updated due to prior error
+            const booking = await BookingModel.findById(request.bookingId)
+            if (booking && request.status === "COMPLETED" && booking.status === "CANCELLATION_REQUESTED") {
+                const refundAmt = request.adminRefundDetails?.refundAmount || 0
+                const paymentStatus =
+                    refundAmt >= (request.totalPaidAmount || 0) ? "REFUNDED" : "PARTIALLY_REFUNDED"
+                booking.status = "CANCELLED"
+                if (booking.paymentDetails) {
+                    booking.paymentDetails.paymentStatus = paymentStatus
+                }
+                await booking.save()
+                return {
+                    status: true,
+                    message: "Booking status updated to CANCELLED and refund completed",
+                    data: request,
+                }
+            }
+            set.status = 400
+            return { status: false, error: `This cancellation request is already ${request.status.toLowerCase()}` }
+        }
+
+        const booking = await BookingModel.findById(request.bookingId)
+        if (!booking) {
+            set.status = 404
+            return { status: false, error: "Associated booking not found" }
+        }
+
+        if (action === "ACCEPT") {
+            const numericRefund = Number(refundAmount)
+            if (isNaN(numericRefund) || numericRefund < 0) {
+                set.status = 400
+                return { status: false, error: "Please enter a valid refund amount (0 or greater)" }
+            }
+
+            if (numericRefund > request.totalPaidAmount) {
+                set.status = 400
+                return {
+                    status: false,
+                    error: `Refund amount (₹${numericRefund.toLocaleString("en-IN")}) cannot exceed the total amount paid by user (₹${request.totalPaidAmount.toLocaleString("en-IN")})`,
+                }
+            }
+
+            const validModes = ["BANK_TRANSFER", "UPI", "CASH", "ONLINE", "OTHER"]
+            const selectedMode = validModes.includes(paymentMode) ? paymentMode : "BANK_TRANSFER"
+            const deductionAmount = Math.max(0, request.totalPaidAmount - numericRefund)
+
+            // 1. Update booking status to CANCELLED and payment status first
+            const oldBookingStatus = booking.status
+            booking.status = "CANCELLED"
+            if (booking.paymentDetails) {
+                if (numericRefund >= request.totalPaidAmount && request.totalPaidAmount > 0) {
+                    booking.paymentDetails.paymentStatus = "REFUNDED"
+                } else if (numericRefund > 0) {
+                    booking.paymentDetails.paymentStatus = "PARTIALLY_REFUNDED"
+                }
+            }
+            await booking.save()
+
+            // 2. Mark request as COMPLETED
+            request.status = "COMPLETED"
+            request.adminRefundDetails = {
+                refundAmount: numericRefund,
+                deductionAmount,
+                paymentMode: selectedMode as any,
+                transactionReference: transactionReference?.trim() || undefined,
+                refundDate: refundDate ? new Date(refundDate) : new Date(),
+                adminNotes: adminNotes?.trim() || undefined,
+                processedBy: new Types.ObjectId(adminId),
+                processedByName: adminName,
+                processedAt: new Date(),
+            }
+            await request.save()
+
+            // Create Refund document for audit
+            if (numericRefund > 0) {
+                await RefundModel.create({
+                    bookingId: booking._id,
+                    cancellationRequestId: request._id,
+                    amount: numericRefund,
+                    reason: adminNotes?.trim() || `Refund for cancelled booking ${booking.bookingNumber}`,
+                    status: "SUCCESS",
+                    refundMode: selectedMode,
+                    transactionReference: transactionReference?.trim() || undefined,
+                    processedBy: new Types.ObjectId(adminId),
+                })
+            }
+
+            // Record status history
+            await BookingStatusHistoryModel.create({
+                bookingId: booking._id,
+                fromStatus: "CANCELLATION_REQUESTED",
+                toStatus: "CANCELLED",
+                changedBy: new Types.ObjectId(adminId),
+                notes: `Cancellation approved & refund completed: ₹${numericRefund.toLocaleString("en-IN")} via ${selectedMode}.${transactionReference ? ` Ref: ${transactionReference}.` : ""}${adminNotes ? ` Notes: ${adminNotes}` : ""}`,
+            })
+
+            // Record staff activity
+            await recordStaffActivity(ctx, {
+                action: "UPDATE",
+                module: "Cancellation Requests",
+                route: "/bookings/cancellations",
+                recordId: request._id.toString(),
+                recordTitle: booking.bookingNumber,
+                previousData: { status: "PENDING", bookingStatus: oldBookingStatus },
+                updatedData: {
+                    status: "COMPLETED",
+                    bookingStatus: "CANCELLED",
+                    refundAmount: numericRefund,
+                    deductionAmount,
+                    paymentMode: selectedMode,
+                    transactionReference,
+                },
+                details: `Approved cancellation & processed refund of ₹${numericRefund.toLocaleString("en-IN")} (${selectedMode}) for ${booking.bookingNumber}`,
+            })
+
+            return {
+                status: true,
+                message: "Cancellation request approved and refund recorded successfully",
+                data: request,
+            }
+        } else {
+            // REJECT
+            if (!rejectionReason || !rejectionReason.trim()) {
+                set.status = 400
+                return { status: false, error: "Please provide a reason for rejecting the cancellation request" }
+            }
+
+            request.status = "REJECTED"
+            request.adminRejectionDetails = {
+                rejectionReason: rejectionReason.trim(),
+                rejectedBy: new Types.ObjectId(adminId),
+                rejectedByName: adminName,
+                rejectedAt: new Date(),
+            }
+            await request.save()
+
+            // Revert booking to previous status
+            const oldBookingStatus = booking.status
+            const restoredStatus = (request.previousBookingStatus || "BOOKED") as BookingStatus
+            booking.status = restoredStatus
+            await booking.save()
+
+            // Record status history
+            await BookingStatusHistoryModel.create({
+                bookingId: booking._id,
+                fromStatus: oldBookingStatus,
+                toStatus: restoredStatus,
+                changedBy: new Types.ObjectId(adminId),
+                notes: `Cancellation request declined by admin. Reverted status to ${restoredStatus}. Reason: ${rejectionReason.trim()}`,
+            })
+
+            // Record staff activity
+            await recordStaffActivity(ctx, {
+                action: "UPDATE",
+                module: "Cancellation Requests",
+                route: "/bookings/cancellations",
+                recordId: request._id.toString(),
+                recordTitle: booking.bookingNumber,
+                previousData: { status: "PENDING", bookingStatus: oldBookingStatus },
+                updatedData: {
+                    status: "REJECTED",
+                    bookingStatus: restoredStatus,
+                    rejectionReason: rejectionReason.trim(),
+                },
+                details: `Rejected cancellation request for ${booking.bookingNumber}. Reason: ${rejectionReason.trim()}`,
+            })
+
+            return {
+                status: true,
+                message: "Cancellation request rejected and booking restored to previous status",
+                data: request,
+            }
+        }
+    } catch (error: any) {
+        console.error("Process Cancellation Request Error", error)
+        set.status = 500
+        return { status: false, error: "Failed to process cancellation request" }
     }
 }

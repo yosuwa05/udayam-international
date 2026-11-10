@@ -17,6 +17,7 @@ export type StandardBookingStatus =
     | "PARTIALLY_REFUNDED"
     | "REFUNDED"
     | "PARTIALLY_PAID"
+    | "CANCELLATION_REQUESTED"
 
 export type CustomizedBookingStatus =
     | "ENQUIRY_RECEIVED"
@@ -27,6 +28,7 @@ export type CustomizedBookingStatus =
     | "BOOKED"
     | "COMPLETED"
     | "ENQUIRY_CANCELLED"
+    | "CANCELLATION_REQUESTED"
 
 export type BookingStatus = StandardBookingStatus | CustomizedBookingStatus
 
@@ -74,7 +76,7 @@ export interface ICustomizedTransaction {
 export interface IPaymentDetails {
     totalPaidAmount: number
     remainingAmount: number
-    paymentStatus: "PENDING" | "PARTIALLY_PAID" | "FULLY_PAID"
+    paymentStatus: "PENDING" | "PARTIALLY_PAID" | "FULLY_PAID" | "REFUNDED" | "PARTIALLY_REFUNDED"
     currentStage: number
     maxStages: number
     isFullyPaid: boolean
@@ -92,6 +94,7 @@ export interface IBooking {
     payments?: Types.ObjectId[]
     paymentDetails?: IPaymentDetails
     status: BookingStatus
+    cancellationRequestId?: Types.ObjectId
     quotation?: IQuotation
     transactions?: ICustomizedTransaction[]
     createdAt?: Date
@@ -173,7 +176,13 @@ const bookingSchema = new Schema<IBooking>(
             remainingAmount: { type: Number, default: 0, min: 0 },
             paymentStatus: {
                 type: String,
-                enum: ["PENDING", "PARTIALLY_PAID", "FULLY_PAID"],
+                enum: [
+                    "PENDING",
+                    "PARTIALLY_PAID",
+                    "FULLY_PAID",
+                    "REFUNDED",
+                    "PARTIALLY_REFUNDED",
+                ],
                 default: "PENDING",
             },
             currentStage: { type: Number, default: 1 },
@@ -203,8 +212,10 @@ const bookingSchema = new Schema<IBooking>(
                 "CUSTOMER_CONFIRMED",
                 "ENQUIRY_CANCELLED",
                 "PARTIALLY_PAID",
+                "CANCELLATION_REQUESTED",
             ],
         },
+        cancellationRequestId: { type: Schema.Types.ObjectId, ref: "bookingCancellationRequest" },
         quotation: { type: quotationSchema },
         transactions: { type: [customizedTransactionSchema], default: [] },
     },

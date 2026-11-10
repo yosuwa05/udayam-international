@@ -34,11 +34,18 @@ export function usePermissions() {
   const canView = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
     if (isAdmin) return true
     if (route.startsWith('/bookings')) {
+      if (route === '/bookings/cancellations' || route.startsWith('/bookings/cancellations')) {
+        return (
+          (getPermission('/bookings/cancellations')?.view ?? false) ||
+          (getPermission('/bookings/standard')?.view ?? false)
+        )
+      }
       if (bookingType === 'customized') return getPermission('/bookings/customized')?.view ?? false
       if (bookingType === 'standard') return getPermission('/bookings/standard')?.view ?? false
       return (
         (getPermission('/bookings/standard')?.view ?? false) ||
-        (getPermission('/bookings/customized')?.view ?? false)
+        (getPermission('/bookings/customized')?.view ?? false) ||
+        (getPermission('/bookings/cancellations')?.view ?? false)
       )
     }
     const perm = getPermission(route)
@@ -48,11 +55,18 @@ export function usePermissions() {
   const canEdit = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
     if (isAdmin) return true
     if (route.startsWith('/bookings')) {
+      if (route === '/bookings/cancellations' || route.startsWith('/bookings/cancellations')) {
+        return (
+          (getPermission('/bookings/cancellations')?.edit ?? false) ||
+          (getPermission('/bookings/standard')?.edit ?? false)
+        )
+      }
       if (bookingType === 'customized') return getPermission('/bookings/customized')?.edit ?? false
       if (bookingType === 'standard') return getPermission('/bookings/standard')?.edit ?? false
       return (
         (getPermission('/bookings/standard')?.edit ?? false) ||
-        (getPermission('/bookings/customized')?.edit ?? false)
+        (getPermission('/bookings/customized')?.edit ?? false) ||
+        (getPermission('/bookings/cancellations')?.edit ?? false)
       )
     }
     const perm = getPermission(route)
@@ -62,11 +76,18 @@ export function usePermissions() {
   const canDelete = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
     if (isAdmin) return true
     if (route.startsWith('/bookings')) {
+      if (route === '/bookings/cancellations' || route.startsWith('/bookings/cancellations')) {
+        return (
+          (getPermission('/bookings/cancellations')?.delete ?? false) ||
+          (getPermission('/bookings/standard')?.delete ?? false)
+        )
+      }
       if (bookingType === 'customized') return getPermission('/bookings/customized')?.delete ?? false
       if (bookingType === 'standard') return getPermission('/bookings/standard')?.delete ?? false
       return (
         (getPermission('/bookings/standard')?.delete ?? false) ||
-        (getPermission('/bookings/customized')?.delete ?? false)
+        (getPermission('/bookings/customized')?.delete ?? false) ||
+        (getPermission('/bookings/cancellations')?.delete ?? false)
       )
     }
     const perm = getPermission(route)

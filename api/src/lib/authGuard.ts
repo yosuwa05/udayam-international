@@ -22,6 +22,9 @@ export function mapUrlToModuleRoute(urlStr: string): { route: string; secondaryR
         if (pathname.includes("/testimonial")) return { route: "/testimonials" };
         if (pathname.includes("/user")) return { route: "/users" };
         if (pathname.includes("/booking")) {
+            if (pathname.includes("cancellation")) {
+                return { route: "/bookings/cancellations", secondaryRoute: "/bookings/standard" };
+            }
             const isCustomized =
                 pathname.includes("customized") ||
                 pathname.includes("quotation") ||

@@ -73,6 +73,7 @@ const AVAILABLE_MODULES = [
   'Testimonials',
   'Standard Bookings',
   'Customized Bookings',
+  'Cancellation Requests',
   'Users',
 ]
 

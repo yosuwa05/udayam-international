@@ -27,11 +27,13 @@ import { Route as CouponsAddRouteImport } from './routes/coupons/add'
 import { Route as BookingsStandardRouteImport } from './routes/bookings/standard'
 import { Route as BookingsCustomizedRouteImport } from './routes/bookings/customized'
 import { Route as BookingsIdRouteImport } from './routes/bookings/$id'
+import { Route as BookingsCancellationsIndexRouteImport } from './routes/bookings/cancellations/index'
 import { Route as TourismIdEditRouteImport } from './routes/tourism/$id/edit'
 import { Route as TestimonialsIdEditRouteImport } from './routes/testimonials/$id/edit'
 import { Route as StaffIdEditRouteImport } from './routes/staff/$id/edit'
 import { Route as StaffIdActivityRouteImport } from './routes/staff/$id/activity'
 import { Route as CouponsIdEditRouteImport } from './routes/coupons/$id/edit'
+import { Route as BookingsCancellationsIdRouteImport } from './routes/bookings/cancellations/$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -123,6 +125,12 @@ const BookingsIdRoute = BookingsIdRouteImport.update({
   path: '/bookings/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingsCancellationsIndexRoute =
+  BookingsCancellationsIndexRouteImport.update({
+    id: '/bookings/cancellations/',
+    path: '/bookings/cancellations/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TourismIdEditRoute = TourismIdEditRouteImport.update({
   id: '/tourism/$id/edit',
   path: '/tourism/$id/edit',
@@ -148,6 +156,11 @@ const CouponsIdEditRoute = CouponsIdEditRouteImport.update({
   path: '/coupons/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingsCancellationsIdRoute = BookingsCancellationsIdRouteImport.update({
+  id: '/bookings/cancellations/$id',
+  path: '/bookings/cancellations/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -168,11 +181,13 @@ export interface FileRoutesByFullPath {
   '/tourism/': typeof TourismIndexRoute
   '/trip-types/': typeof TripTypesIndexRoute
   '/users/': typeof UsersIndexRoute
+  '/bookings/cancellations/$id': typeof BookingsCancellationsIdRoute
   '/coupons/$id/edit': typeof CouponsIdEditRoute
   '/staff/$id/activity': typeof StaffIdActivityRoute
   '/staff/$id/edit': typeof StaffIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
+  '/bookings/cancellations/': typeof BookingsCancellationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -193,11 +208,13 @@ export interface FileRoutesByTo {
   '/tourism': typeof TourismIndexRoute
   '/trip-types': typeof TripTypesIndexRoute
   '/users': typeof UsersIndexRoute
+  '/bookings/cancellations/$id': typeof BookingsCancellationsIdRoute
   '/coupons/$id/edit': typeof CouponsIdEditRoute
   '/staff/$id/activity': typeof StaffIdActivityRoute
   '/staff/$id/edit': typeof StaffIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
+  '/bookings/cancellations': typeof BookingsCancellationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,11 +236,13 @@ export interface FileRoutesById {
   '/tourism/': typeof TourismIndexRoute
   '/trip-types/': typeof TripTypesIndexRoute
   '/users/': typeof UsersIndexRoute
+  '/bookings/cancellations/$id': typeof BookingsCancellationsIdRoute
   '/coupons/$id/edit': typeof CouponsIdEditRoute
   '/staff/$id/activity': typeof StaffIdActivityRoute
   '/staff/$id/edit': typeof StaffIdEditRoute
   '/testimonials/$id/edit': typeof TestimonialsIdEditRoute
   '/tourism/$id/edit': typeof TourismIdEditRoute
+  '/bookings/cancellations/': typeof BookingsCancellationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -246,11 +265,13 @@ export interface FileRouteTypes {
     | '/tourism/'
     | '/trip-types/'
     | '/users/'
+    | '/bookings/cancellations/$id'
     | '/coupons/$id/edit'
     | '/staff/$id/activity'
     | '/staff/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
+    | '/bookings/cancellations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -271,11 +292,13 @@ export interface FileRouteTypes {
     | '/tourism'
     | '/trip-types'
     | '/users'
+    | '/bookings/cancellations/$id'
     | '/coupons/$id/edit'
     | '/staff/$id/activity'
     | '/staff/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
+    | '/bookings/cancellations'
   id:
     | '__root__'
     | '/'
@@ -296,11 +319,13 @@ export interface FileRouteTypes {
     | '/tourism/'
     | '/trip-types/'
     | '/users/'
+    | '/bookings/cancellations/$id'
     | '/coupons/$id/edit'
     | '/staff/$id/activity'
     | '/staff/$id/edit'
     | '/testimonials/$id/edit'
     | '/tourism/$id/edit'
+    | '/bookings/cancellations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -322,11 +347,13 @@ export interface RootRouteChildren {
   TourismIndexRoute: typeof TourismIndexRoute
   TripTypesIndexRoute: typeof TripTypesIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
+  BookingsCancellationsIdRoute: typeof BookingsCancellationsIdRoute
   CouponsIdEditRoute: typeof CouponsIdEditRoute
   StaffIdActivityRoute: typeof StaffIdActivityRoute
   StaffIdEditRoute: typeof StaffIdEditRoute
   TestimonialsIdEditRoute: typeof TestimonialsIdEditRoute
   TourismIdEditRoute: typeof TourismIdEditRoute
+  BookingsCancellationsIndexRoute: typeof BookingsCancellationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -457,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bookings/cancellations/': {
+      id: '/bookings/cancellations/'
+      path: '/bookings/cancellations'
+      fullPath: '/bookings/cancellations/'
+      preLoaderRoute: typeof BookingsCancellationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tourism/$id/edit': {
       id: '/tourism/$id/edit'
       path: '/tourism/$id/edit'
@@ -492,6 +526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CouponsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bookings/cancellations/$id': {
+      id: '/bookings/cancellations/$id'
+      path: '/bookings/cancellations/$id'
+      fullPath: '/bookings/cancellations/$id'
+      preLoaderRoute: typeof BookingsCancellationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -514,11 +555,13 @@ const rootRouteChildren: RootRouteChildren = {
   TourismIndexRoute: TourismIndexRoute,
   TripTypesIndexRoute: TripTypesIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
+  BookingsCancellationsIdRoute: BookingsCancellationsIdRoute,
   CouponsIdEditRoute: CouponsIdEditRoute,
   StaffIdActivityRoute: StaffIdActivityRoute,
   StaffIdEditRoute: StaffIdEditRoute,
   TestimonialsIdEditRoute: TestimonialsIdEditRoute,
   TourismIdEditRoute: TourismIdEditRoute,
+  BookingsCancellationsIndexRoute: BookingsCancellationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

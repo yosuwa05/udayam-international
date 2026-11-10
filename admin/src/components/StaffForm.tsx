@@ -44,6 +44,7 @@ export const DEFAULT_LAYOUT_MODULES = [
   { route: '/', name: 'Dashboard', description: 'Overview and platform statistics' },
   { route: '/bookings/standard', name: 'Standard Bookings', description: 'Manage bookings and installment stages' },
   { route: '/bookings/customized', name: 'Customized Bookings', description: 'Customized tours, quotations & payments' },
+  { route: '/bookings/cancellations', name: 'Cancellation Requests', description: 'Review booking cancellations and process refunds' },
   { route: '/users', name: 'Users', description: 'User accounts and blocking/activation' },
   { route: '/tourism', name: 'Tourism Packages', description: 'Tour packages, itinerary & destinations' },
   { route: '/testimonials', name: 'Testimonials', description: 'Customer reviews and ratings' },

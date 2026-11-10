@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import {
@@ -13,6 +13,11 @@ import {
   Clock,
   IndianRupee,
   FileText,
+  AlertTriangle,
+  ArrowRight,
+  RotateCcw,
+  Lock,
+  ShieldAlert,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +33,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { _axios } from '@/lib/axios'
+import { usePermissions } from '@/lib/usePermissions'
 
 export const Route = createFileRoute('/bookings/$id')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -53,6 +59,7 @@ const STANDARD_STATUSES = [
   'REFUND_PROCESSING',
   'PARTIALLY_REFUNDED',
   'REFUNDED',
+  'CANCELLATION_REQUESTED',
 ]
 
 const CUSTOMIZED_STATUSES = [
@@ -64,6 +71,7 @@ const CUSTOMIZED_STATUSES = [
   'BOOKED',
   'COMPLETED',
   'ENQUIRY_CANCELLED',
+  'CANCELLATION_REQUESTED',
 ]
 
 function BookingDetailsComponent() {
@@ -71,6 +79,7 @@ function BookingDetailsComponent() {
   const { type } = Route.useSearch()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { canEdit } = usePermissions()
 
   // Quotation form state
   const [quoteAmount, setQuoteAmount] = useState('')
@@ -200,6 +209,23 @@ function BookingDetailsComponent() {
   }
 
   const booking = bookingData
+  const isCustomized = booking.bookingType === 'CUSTOMIZED'
+  const currentRoute = isCustomized
+    ? '/bookings/customized'
+    : '/bookings/standard'
+  const userCanEdit = canEdit(currentRoute)
+
+  const TERMINAL_STATUSES = [
+    'CANCELLED',
+    'COMPLETED',
+    'ENQUIRY_CANCELLED',
+    'REFUNDED',
+  ]
+  const isTerminalStatus = TERMINAL_STATUSES.includes(booking.status)
+  const isCancellationRequested = booking.status === 'CANCELLATION_REQUESTED'
+  const isStatusLocked =
+    isTerminalStatus || isCancellationRequested || !userCanEdit
+
   const availableStatuses =
     booking.bookingType === 'CUSTOMIZED'
       ? CUSTOMIZED_STATUSES
@@ -258,6 +284,8 @@ function BookingDetailsComponent() {
         return 'bg-amber-50 text-amber-700 border-amber-200'
       case 'TRAVEL_STARTED':
         return 'bg-indigo-50 text-indigo-700 border-indigo-200'
+      case 'CANCELLATION_REQUESTED':
+        return 'bg-amber-100 text-amber-900 border-amber-300 font-bold'
       case 'CANCELLED':
       case 'ENQUIRY_CANCELLED':
         return 'bg-red-50 text-red-700 border-red-200'
@@ -345,6 +373,91 @@ function BookingDetailsComponent() {
           </span>
         </div>
       </div>
+
+      {/* Cancellation Request Banner */}
+      {booking.status === 'CANCELLATION_REQUESTED' &&
+        booking.cancellationRequest?.status === 'PENDING' && (
+          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-700 dark:text-amber-300">
+                <RotateCcw className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-bold text-sm">
+                  Cancellation Request Pending Review
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                  Customer submitted a cancellation request: "
+                  {booking.cancellationRequest?.reason || 'Reason provided'}".
+                  Total paid:{' '}
+                  <strong>
+                    ₹
+                    {Number(
+                      booking.cancellationRequest?.totalPaidAmount ||
+                        booking.paymentDetails?.totalPaidAmount ||
+                        0,
+                    ).toLocaleString('en-IN')}
+                  </strong>
+                  .
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/bookings/cancellations/$id"
+              params={{
+                id:
+                  booking.cancellationRequest?._id ||
+                  booking.cancellationRequestId,
+              }}
+              className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+            >
+              Review &amp; Settle Refund <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        )}
+
+      {/* Completed Cancellation Banner */}
+      {booking.cancellationRequest?.status === 'COMPLETED' && (
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl text-emerald-700 dark:text-emerald-300">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">
+                Booking Cancelled &amp; Refund Settled
+              </p>
+              <p className="text-xs text-emerald-800 dark:text-emerald-300 mt-0.5">
+                Refund amount:{' '}
+                <strong>
+                  ₹
+                  {Number(
+                    booking.cancellationRequest?.adminRefundDetails
+                      ?.refundAmount || 0,
+                  ).toLocaleString('en-IN')}
+                </strong>{' '}
+                paid via{' '}
+                {booking.cancellationRequest?.adminRefundDetails?.paymentMode}{' '}
+                (Ref:{' '}
+                {booking.cancellationRequest?.adminRefundDetails
+                  ?.transactionReference || 'N/A'}
+                ).
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/bookings/cancellations/$id"
+            params={{
+              id:
+                booking.cancellationRequest?._id ||
+                booking.cancellationRequestId,
+            }}
+            className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:underline"
+          >
+            View Refund Record <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* LEFT COLUMN: Customer Info & Package Details */}
@@ -587,7 +700,14 @@ function BookingDetailsComponent() {
                   )}
 
                   {/* Simplified Record Transaction Form */}
-                  {pendingAmount > 0 ? (
+                  {['CANCELLED', 'ENQUIRY_CANCELLED'].includes(
+                    booking.status,
+                  ) ? (
+                    <div className="bg-muted/50 border border-border text-muted-foreground p-3.5 rounded-xl text-xs font-medium flex items-center gap-1.5 justify-center">
+                      <Lock size={13} /> Payments cannot be recorded for
+                      cancelled bookings.
+                    </div>
+                  ) : pendingAmount > 0 ? (
                     <div className="bg-muted/20 p-4 rounded-xl border space-y-3">
                       <h4 className="text-xs font-bold text-foreground">
                         Record Payment Entry
@@ -606,6 +726,7 @@ function BookingDetailsComponent() {
                             min={0.01}
                             max={pendingAmount}
                             step="any"
+                            disabled={!userCanEdit}
                             placeholder={`Max: ₹${pendingAmount.toLocaleString('en-IN')}`}
                             value={txAmount}
                             onChange={(e) => setTxAmount(e.target.value)}
@@ -619,10 +740,15 @@ function BookingDetailsComponent() {
                           >
                             Payment Mode *
                           </Label>
-                          <Select value={txMode} onValueChange={setTxMode}>
+                          <Select
+                            value={txMode}
+                            onValueChange={setTxMode}
+                            disabled={!userCanEdit}
+                          >
                             <SelectTrigger
                               id="txMode"
                               className="h-8 text-xs bg-background"
+                              disabled={!userCanEdit}
                             >
                               <SelectValue placeholder="Mode" />
                             </SelectTrigger>
@@ -641,17 +767,20 @@ function BookingDetailsComponent() {
                       <Button
                         onClick={() => transactionMutation.mutate()}
                         disabled={
+                          !userCanEdit ||
                           transactionMutation.isPending ||
                           !txAmount ||
                           Number(txAmount) <= 0 ||
                           Number(txAmount) > pendingAmount
                         }
-                        className="w-full h-8 text-xs gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="w-full h-8 text-xs gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <CheckCircle2 size={12} />
                         {transactionMutation.isPending
                           ? 'Recording...'
-                          : 'Record Payment'}
+                          : !userCanEdit
+                            ? 'No Edit Permission'
+                            : 'Record Payment'}
                       </Button>
                     </div>
                   ) : finalAmount > 0 ? (
@@ -791,12 +920,25 @@ function BookingDetailsComponent() {
             (() => {
               const hasTransactions =
                 booking.transactions && booking.transactions.length > 0
+              const isQuotationLocked =
+                hasTransactions ||
+                isTerminalStatus ||
+                isCancellationRequested ||
+                !userCanEdit
+
               return (
                 <div className="rounded-2xl border bg-card p-5 space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-purple-600" /> Prepare
-                    Quotation
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-purple-600" /> Prepare
+                      Quotation
+                    </h3>
+                    {(hasTransactions || isTerminalStatus) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border">
+                        <Lock className="w-3 h-3" /> Locked
+                      </span>
+                    )}
+                  </div>
 
                   {hasTransactions && (
                     <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl text-xs space-y-1">
@@ -806,6 +948,18 @@ function BookingDetailsComponent() {
                       <p>
                         The final package amount cannot be edited because
                         payment transactions have already been recorded.
+                      </p>
+                    </div>
+                  )}
+
+                  {isTerminalStatus && !hasTransactions && (
+                    <div className="bg-muted/50 border border-border text-muted-foreground p-3 rounded-xl text-xs space-y-1">
+                      <p className="font-semibold flex items-center gap-1 text-foreground">
+                        <Lock className="w-3.5 h-3.5" /> Quotation Locked
+                      </p>
+                      <p className="text-[11px]">
+                        Quotation cannot be edited because this booking is{' '}
+                        {booking.status.replace(/_/g, ' ')}.
                       </p>
                     </div>
                   )}
@@ -822,11 +976,11 @@ function BookingDetailsComponent() {
                         id="quoteAmount"
                         type="number"
                         min={1}
-                        disabled={hasTransactions}
+                        disabled={isQuotationLocked}
                         placeholder="e.g. 45000"
                         value={quoteAmount}
                         onChange={(e) => setQuoteAmount(e.target.value)}
-                        className="h-9 text-xs"
+                        className="h-9 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                       />
                     </div>
 
@@ -840,11 +994,11 @@ function BookingDetailsComponent() {
                       <Textarea
                         id="quoteNotes"
                         rows={3}
-                        disabled={hasTransactions}
+                        disabled={isQuotationLocked}
                         placeholder="Include flight details, hotel categories, inclusions..."
                         value={quoteNotes}
                         onChange={(e) => setQuoteNotes(e.target.value)}
-                        className="text-xs"
+                        className="text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                       />
                     </div>
 
@@ -853,14 +1007,18 @@ function BookingDetailsComponent() {
                       disabled={
                         quotationMutation.isPending ||
                         !quoteAmount ||
-                        hasTransactions
+                        isQuotationLocked
                       }
-                      className="w-full h-9 text-xs gap-1.5 cursor-pointer bg-purple-700 hover:bg-purple-800 text-white"
+                      className="w-full h-9 text-xs gap-1.5 cursor-pointer bg-purple-700 hover:bg-purple-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CheckCircle2 size={14} />
                       {quotationMutation.isPending
                         ? 'Saving...'
-                        : 'Save & Share Quotation'}
+                        : isTerminalStatus
+                          ? 'Quotation Locked'
+                          : !userCanEdit
+                            ? 'No Edit Permission'
+                            : 'Save & Share Quotation'}
                     </Button>
                   </div>
                 </div>
@@ -869,9 +1027,45 @@ function BookingDetailsComponent() {
 
           {/* Booking Status Manager */}
           <div className="rounded-2xl border bg-card p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" /> Update Booking Status
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" /> Update Booking Status
+              </h3>
+              {/* {isTerminalStatus && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border">
+                  <Lock className="w-3 h-3" /> Status Finalized
+                </span>
+              )} */}
+              {isCancellationRequested && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                  <RotateCcw className="w-3 h-3" /> Review Pending
+                </span>
+              )}
+            </div>
+
+            {isCancellationRequested && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-xl text-xs space-y-1">
+                <p className="font-semibold flex items-center gap-1.5 text-amber-950">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+                  Cancellation Request Pending
+                </p>
+                <p className="text-[11px] leading-relaxed text-amber-800">
+                  This booking has an open cancellation request awaiting review.
+                  Please use the <strong>Review &amp; Settle Refund</strong>{' '}
+                  button above to approve or reject the request.
+                </p>
+              </div>
+            )}
+
+            {!userCanEdit && !isTerminalStatus && !isCancellationRequested && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs flex items-center gap-1.5">
+                <ShieldAlert size={14} className="shrink-0" />
+                <span>
+                  You have view-only access. You cannot update the status of
+                  this booking.
+                </span>
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="space-y-1.5">
@@ -881,10 +1075,12 @@ function BookingDetailsComponent() {
                 <Select
                   value={selectedStatus}
                   onValueChange={setSelectedStatus}
+                  disabled={isStatusLocked}
                 >
                   <SelectTrigger
                     id="status"
-                    className="h-9 text-xs bg-background"
+                    className="h-9 text-xs bg-background disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isStatusLocked}
                   >
                     <SelectValue placeholder="Choose status..." />
                   </SelectTrigger>
@@ -908,16 +1104,36 @@ function BookingDetailsComponent() {
                   placeholder="Reason for status change or internal notes..."
                   value={statusNotes}
                   onChange={(e) => setStatusNotes(e.target.value)}
-                  className="text-xs"
+                  className="text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={isStatusLocked}
                 />
               </div>
 
               <Button
                 onClick={() => statusMutation.mutate()}
-                disabled={statusMutation.isPending || !selectedStatus}
-                className="w-full h-9 text-xs gap-1.5 cursor-pointer"
+                disabled={
+                  isStatusLocked ||
+                  statusMutation.isPending ||
+                  !selectedStatus ||
+                  selectedStatus === booking.status
+                }
+                className="w-full h-9 text-xs gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {statusMutation.isPending ? 'Updating...' : 'Update Status'}
+                {statusMutation.isPending ? (
+                  'Updating...'
+                ) : isTerminalStatus ? (
+                  <>
+                    <Lock size={14} /> Update Status
+                  </>
+                ) : isCancellationRequested ? (
+                  <>
+                    <RotateCcw size={14} /> Cancellation Pending Review
+                  </>
+                ) : !userCanEdit ? (
+                  'View Only (No Permission)'
+                ) : (
+                  'Update Status'
+                )}
               </Button>
             </div>
           </div>
