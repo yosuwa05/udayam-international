@@ -21,6 +21,8 @@ import {
     amountToPaise,
 } from "@helper/paymentValidation.helper"
 import { recordStaffActivity } from "@helper/staffLogger"
+import { generateBookingConfirmationNumber } from "@helper/numberGenerator.helper"
+import { generateAndSaveReceiptVoucher } from "../receipt-download/receipt-download.service"
 
 
 // ─── HELPER: Coupon Validator Logic ──────────────────────────────────────────
@@ -465,6 +467,11 @@ export const confirmBookingFromPaymentPayload = async (
         payment.razorpaySignature = razorpaySignature
         await payment.save()
 
+        // Generate Receipt Voucher for subsequent payment in background
+        generateAndSaveReceiptVoucher(payment._id).catch((err) =>
+            console.error("Error generating subsequent receipt voucher:", err)
+        )
+
         const booking = await BookingModel.findById(payment.bookingId)
         if (!booking) {
             throw new Error("Associated booking not found for payment")
@@ -553,6 +560,11 @@ export const confirmBookingFromPaymentPayload = async (
     payment.razorpaySignature = razorpaySignature
     payment.bookingId = booking._id
     await payment.save()
+
+    // Generate Receipt Voucher for initial payment in background
+    generateAndSaveReceiptVoucher(payment._id).catch((err) =>
+        console.error("Error generating initial booking receipt voucher:", err)
+    )
 
     // Consume Coupon if applicable
     if (booking.couponId) {
@@ -1477,14 +1489,24 @@ export const updateBookingStatus = async (ctx: Context<{ params: { id: string } 
 
         const oldStatus = booking.status
         booking.status = status as BookingStatus
+
+        // When status is confirmed by admin, generate booking confirmation reference if not already generated
+        if (status === "CONFIRMED" && !booking.bookingConfirmationNumber) {
+            booking.bookingConfirmationNumber = await generateBookingConfirmationNumber()
+        }
+
         await booking.save()
+
+        const confirmationNote = booking.bookingConfirmationNumber
+            ? ` (Confirmed Ref: ${booking.bookingConfirmationNumber})`
+            : ""
 
         await BookingStatusHistoryModel.create({
             bookingId: booking._id,
             fromStatus: oldStatus,
             toStatus: status,
             changedBy: new Types.ObjectId(adminId),
-            notes: notes || `Booking status changed from ${oldStatus} to ${status}`,
+            notes: notes ? `${notes}${confirmationNote}` : `Booking status changed from ${oldStatus} to ${status}${confirmationNote}`,
         })
 
         const isCustom = booking.bookingType === "CUSTOMIZED"
@@ -1495,8 +1517,11 @@ export const updateBookingStatus = async (ctx: Context<{ params: { id: string } 
             recordId: params.id,
             recordTitle: booking.bookingNumber,
             previousData: { status: oldStatus },
-            updatedData: { status },
-            details: `Updated booking status from ${oldStatus} to ${status} for ${booking.bookingNumber}`,
+            updatedData: {
+                status,
+                ...(booking.bookingConfirmationNumber ? { bookingConfirmationNumber: booking.bookingConfirmationNumber } : {}),
+            },
+            details: `Updated booking status from ${oldStatus} to ${status} for ${booking.bookingNumber}${confirmationNote}`,
         })
 
         return {
@@ -1587,9 +1612,25 @@ export const recordCustomizedTransaction = async (ctx: Context<{ params: { id: s
         }
         booking.transactions.push(newTransaction as any)
 
-        // If the pending amount is fully paid, we can optionally check but let's keep status update manual or auto.
-        // It says "defaulty create date in backend show the pending and percentage and progress".
+        const paymentRecord = await PaymentModel.create({
+            bookingId: booking._id,
+            amount: Number(amount),
+            currency: "INR",
+            status: "SUCCESS",
+            bookingPayload: { paymentMode, notes },
+            stageLabel: notes?.trim() || `${paymentMode} Payment`,
+        })
+
+        if (!booking.payments) {
+            booking.payments = []
+        }
+        booking.payments.push(paymentRecord._id as any)
+
         await booking.save()
+
+        generateAndSaveReceiptVoucher(paymentRecord._id).catch((err) =>
+            console.error("Error generating customized payment receipt voucher:", err)
+        )
 
         // Create Status History entry (timeline record)
         await BookingStatusHistoryModel.create({
@@ -1882,9 +1923,9 @@ export const getAdminCancellationRequestDetails = async (ctx: Context<{ params: 
                     },
                 }
             )
-            ;(request.bookingId as any).status = "CANCELLED"
+                ; (request.bookingId as any).status = "CANCELLED"
             if ((request.bookingId as any).paymentDetails) {
-                ;(request.bookingId as any).paymentDetails.paymentStatus = paymentStatus
+                ; (request.bookingId as any).paymentDetails.paymentStatus = paymentStatus
             }
         }
 

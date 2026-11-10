@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Receipt Voucher</title>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 18mm 20mm;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      body {
+        font-family: 'Georgia', 'Times New Roman', Times, serif;
+        color: #000000;
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .bold {
+        font-weight: 700;
+      }
+      .italic {
+        font-style: italic;
+      }
+      .title {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 25px;
+      }
+      .header-grid {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+      }
+      .company-details {
+        width: 55%;
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+      .company-name {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .voucher-meta {
+        width: 45%;
+        text-align: left;
+        padding-left: 20px;
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+      .section-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 20px;
+        margin-bottom: 8px;
+      }
+      .details-block {
+        margin-bottom: 20px;
+        font-size: 12.5px;
+        line-height: 1.55;
+      }
+      .details-row {
+        display: flex;
+        margin-bottom: 2px;
+      }
+      .details-label {
+        min-width: 140px;
+        font-weight: 600;
+      }
+      .details-value {
+        flex: 1;
+      }
+      .particulars-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        margin-bottom: 25px;
+        font-size: 12.5px;
+      }
+      .particulars-table th {
+        padding: 8px 0;
+        font-weight: 700;
+        text-align: left;
+        border-bottom: 1px solid #111;
+      }
+      .particulars-table th.amount,
+      .particulars-table td.amount {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .particulars-table td {
+        padding: 5px 0;
+      }
+      .total-row td {
+        border-top: 1px solid #111;
+        border-bottom: 1px solid #111;
+        font-weight: 700;
+        padding: 7px 0;
+      }
+      .summary-row td {
+        font-weight: 600;
+        padding: 4px 0;
+      }
+      .footer-info {
+        margin-top: 25px;
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+      .amount-words {
+        margin-top: 18px;
+        margin-bottom: 22px;
+        font-size: 12.5px;
+      }
+      .disclaimer {
+        font-size: 11.5px;
+        color: #333;
+        font-style: italic;
+        margin-top: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title">RECEIPT VOUCHER</div>
+
+    <div class="header-grid">
+      <div class="company-details">
+        <div class="company-name">UDAYAM INTERNATIONAL</div>
+        <div>No : 7/136 A , Periavilai ,</div>
+        <div>Palliyadi Post - 62 91 69</div>
+        <div>Kanyakumari District</div>
+        <div>Tamilnadu , India</div>
+        <div>State Name : Tamilnadu , Code : 33</div>
+        <div>GSTIN : 33AAPPE7454H2ZK</div>
+        <div>E.Mail : info@udayaminternational.com</div>
+        <div>Website : www.udayaminternational.com</div>
+      </div>
+
+      <div class="voucher-meta">
+        <div><span class="bold">RV No. :</span> {{rvNumber}}</div>
+        <div><span class="bold">Date :</span> {{date}}</div>
+        <div>
+          <span class="bold">Booking Reference:</span> {{bookingReference}}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">CUSTOMER DETAILS</div>
+    <div class="details-block">
+      <div class="details-row">
+        <div class="details-label">Customer Name :</div>
+        <div class="details-value">{{customerName}}</div>
+      </div>
+      <div class="details-row">
+        <div class="details-label">Address:</div>
+        <div class="details-value">{{customerAddress}}</div>
+      </div>
+      <div class="details-row">
+        <div class="details-label">State :</div>
+        <div class="details-value">{{customerState}}</div>
+      </div>
+      <div class="details-row">
+        <div class="details-label">GSTIN :</div>
+        <div class="details-value">{{customerGstin}}</div>
+      </div>
+    </div>
+
+    <div class="section-title">BOOKING DETAILS:</div>
+    <div class="details-block">
+      <div class="details-row">
+        <div class="details-label">Tour Package:</div>
+        <div class="details-value">{{packageTitle}}</div>
+      </div>
+      <div class="details-row">
+        <div class="details-label">Travel Date:</div>
+        <div class="details-value">{{travelDate}}</div>
+      </div>
+      <div class="details-row">
+        <div class="details-label">Payment Stage:</div>
+        <div class="details-value">{{paymentStage}}</div>
+      </div>
+    </div>
+
+    <table class="particulars-table">
+      <thead>
+        <tr>
+          <th>Particulars</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Payment / Taxable Amount</td>
+          <td class="amount">₹ {{taxableAmount}}</td>
+        </tr>
+        {{taxRowsHtml}}
+        <tr class="total-row">
+          <td>Total Amount Received</td>
+          <td class="amount">₹ {{totalAmountReceived}}</td>
+        </tr>
+        <tr class="summary-row" style="padding-top: 8px">
+          <td>Total Package Value incl. GST</td>
+          <td class="amount">₹ {{totalPackageValue}}</td>
+        </tr>
+        <tr class="summary-row">
+          <td>Total Payments Received incl. Current Payment</td>
+          <td class="amount">₹ {{totalPaymentsReceived}}</td>
+        </tr>
+        <tr class="summary-row">
+          <td>Balance Payable incl . GST</td>
+          <td class="amount">₹ {{balancePayable}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer-info">
+      <div><span class="bold">Payment Mode:</span> {{paymentMode}}</div>
+      <div><span class="bold">Transaction ID:</span> {{transactionId}}</div>
+      <div><span class="bold">Place of Supply:</span> {{placeOfSupply}}</div>
+      <div><span class="bold">Reverse Charge:</span> No</div>
+    </div>
+
+    <div class="amount-words">
+      <span class="bold">Amount Received in Words:</span> {{amountInWords}}
+    </div>
+
+    <div class="disclaimer">
+      This is a computer-generated Receipt Voucher and does not require a
+      physical signature.
+    </div>
+  </body>
+</html>

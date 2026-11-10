@@ -4,6 +4,8 @@ export type PaymentStatus = "CREATED" | "PROCESSING" | "SUCCESS" | "FAILED" | "R
 
 export interface IPayment {
     bookingId?: Types.ObjectId
+    paymentReceiptUrl: string
+    receiptVoucherNumber?: string
     razorpayOrderId: string
     razorpayPaymentId?: string
     razorpaySignature?: string
@@ -22,6 +24,8 @@ export interface IPayment {
 const paymentSchema = new Schema<IPayment>(
     {
         bookingId: { type: Schema.Types.ObjectId, ref: "booking" },
+        paymentReceiptUrl: { type: String },
+        receiptVoucherNumber: { type: String, sparse: true, unique: true, index: true },
         razorpayOrderId: { type: String, required: true, index: true },
         razorpayPaymentId: { type: String, index: true },
         razorpaySignature: { type: String },

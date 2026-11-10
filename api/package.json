@@ -14,7 +14,9 @@
     "cron": "^4.4.0",
     "dayjs": "^1.11.21",
     "elysia": "latest",
-    "nodemailer": "^6.9.13"
+    "nodemailer": "^6.9.13",
+    "puppeteer": "^25.16.0",
+    "to-words": "^7.4.2"
   },
   "devDependencies": {
     "@elysiajs/cors": "^1.3.3",

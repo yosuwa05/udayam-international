@@ -84,6 +84,9 @@ export interface IPaymentDetails {
 
 export interface IBooking {
     bookingNumber: string
+    bookingConfirmationNumber?: string
+    taxInvoiceNumber?: string
+    invoiceUrl?: string
     packageId: Types.ObjectId
     userId: Types.ObjectId
     bookingType: BookingType
@@ -163,6 +166,9 @@ const customizedTransactionSchema = new Schema<ICustomizedTransaction>(
 const bookingSchema = new Schema<IBooking>(
     {
         bookingNumber: { type: String, required: true, unique: true, index: true },
+        bookingConfirmationNumber: { type: String, sparse: true, unique: true, index: true },
+        taxInvoiceNumber: { type: String, sparse: true, unique: true, index: true },
+        invoiceUrl: { type: String },
         packageId: { type: Schema.Types.ObjectId, ref: "tourism", required: true },
         userId: { type: Schema.Types.ObjectId, ref: "user", required: true },
         bookingType: { type: String, enum: ["STANDARD", "CUSTOMIZED"], required: true },

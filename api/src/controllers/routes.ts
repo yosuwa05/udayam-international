@@ -9,6 +9,7 @@ import { triptypesRouter } from "./triptypes/triptypes.router";
 import { regionRouter } from "./region/region.router";
 import { paymentPlanSettingsRouter } from "./paymentPlanSettings/paymentPlanSettings.router";
 import { staffRouter } from "./staff/staff.router";
+import { receiptDownloadRouter } from "./receipt-download/receipt-download.router";
 
 const BaseRouter = new Elysia({
     prefix: "/api/V1",
@@ -25,5 +26,6 @@ const BaseRouter = new Elysia({
     .use(regionRouter)
     .use(paymentPlanSettingsRouter)
     .use(staffRouter)
+    .use(receiptDownloadRouter)
 
 export { BaseRouter }

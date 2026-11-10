@@ -67,6 +67,29 @@ export const saveFile = async (
     }
 };
 
+export const uploadBufferToS3 = async (
+    buffer: Buffer,
+    key: string,
+    contentType: string = "application/pdf"
+): Promise<{ ok: boolean; url: string }> => {
+    try {
+        await s3Client.send(
+            new PutObjectCommand({
+                Bucket: bucketName,
+                Key: key,
+                Body: buffer,
+                ContentType: contentType,
+            })
+        );
+        const bucketRegion = APP_CONSTANTS.REGION as string;
+        const baseUrl = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com`;
+        return { ok: true, url: `${baseUrl}/${key}` };
+    } catch (error) {
+        console.error("uploadBufferToS3 error:", error);
+        return { ok: false, url: "" };
+    }
+};
+
 export const deleteFile = async (key: any) => {
     try {
         await s3Client.send(

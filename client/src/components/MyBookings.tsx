@@ -627,20 +627,35 @@ export const MyBookings: React.FC = () => {
                             <Eye size={14} /> View Details
                           </button>
 
-                          {/* Download Invoice */}
-                          <button
-                            onClick={() => handleDownloadPdf(bk._id, bk.bookingNumber)}
-                            disabled={downloadingId === bk._id}
-                            title="Download PDF Invoice"
-                            className="flex items-center gap-2 rounded-xl border border-[#1B2B6B]/20 bg-white px-4 py-2 text-xs font-bold text-[#1B2B6B] transition-all hover:bg-[#1B2B6B] hover:text-white hover:border-[#1B2B6B] disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            {downloadingId === bk._id ? (
-                              <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                              <Download size={14} />
-                            )}
-                            {downloadingId === bk._id ? "Generating..." : "Invoice PDF"}
-                          </button>
+                          {/* Download Invoice or Official Tax Invoice */}
+                          {bk.status === 'COMPLETED' ? (
+                            <a
+                              href={
+                                bk.invoiceUrl ||
+                                `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/invoice/${bk._id}?download=true`
+                              }
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Download Official GST Tax Invoice"
+                              className="flex items-center gap-1.5 rounded-xl border border-teal-600 bg-teal-50 px-3.5 py-2 text-xs font-bold text-teal-800 transition-all hover:bg-teal-700 hover:text-white"
+                            >
+                              <FileText size={14} /> Tax Invoice
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => handleDownloadPdf(bk._id, bk.bookingNumber)}
+                              disabled={downloadingId === bk._id}
+                              title="Download PDF Invoice"
+                              className="flex items-center gap-2 rounded-xl border border-[#1B2B6B]/20 bg-white px-4 py-2 text-xs font-bold text-[#1B2B6B] transition-all hover:bg-[#1B2B6B] hover:text-white hover:border-[#1B2B6B] disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {downloadingId === bk._id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Download size={14} />
+                              )}
+                              {downloadingId === bk._id ? "Generating..." : "Invoice PDF"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -755,6 +770,36 @@ export const MyBookings: React.FC = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* ── OFFICIAL GST TAX INVOICE (COMPLETED BOOKINGS) ── */}
+                  {bookingDetailsData.status === "COMPLETED" && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-teal-50 border border-teal-200 text-teal-950">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                          <FileText size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-xs">Official GST Tax Invoice</p>
+                          <p className="text-[11px] text-teal-700 mt-0.5">
+                            {bookingDetailsData.taxInvoiceNumber
+                              ? `Invoice No: ${bookingDetailsData.taxInvoiceNumber}`
+                              : "Your booking is completed. You can download your official tax invoice."}
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href={
+                          bookingDetailsData.invoiceUrl ||
+                          `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/invoice/${bookingDetailsData._id}?download=true`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-xs transition-all"
+                      >
+                        <FileText size={13} /> Download Tax Invoice
+                      </a>
+                    </div>
+                  )}
 
                   {/* ── CANCELLATION REQUEST DETAILS & REFUND BANNER ── */}
                   {bookingDetailsData.cancellationRequest && (
@@ -931,7 +976,7 @@ export const MyBookings: React.FC = () => {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center justify-between sm:justify-end gap-3">
+                                <div className="flex items-center justify-between sm:justify-end gap-2.5">
                                   <span className="text-[11px] text-gray-400">
                                     {p.paidAt ? new Date(p.paidAt).toLocaleString("en-IN", {
                                       day: "2-digit",
@@ -941,9 +986,21 @@ export const MyBookings: React.FC = () => {
                                       minute: "2-digit",
                                     }) : "Verified"}
                                   </span>
-                                  <span className="font-bold text-emerald-700 bg-emerald-100/60 px-2.5 py-1 rounded-md">
+                                  <span className="font-bold text-emerald-700 bg-emerald-100/60 px-2.5 py-1 rounded-md text-xs">
                                     ₹{p.amount.toLocaleString("en-IN")}
                                   </span>
+                                  <a
+                                    href={
+                                      p.paymentReceiptUrl ||
+                                      `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/receipt/${p._id || p.id}?download=true`
+                                    }
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50 transition-colors shadow-xs"
+                                    title="Download Receipt Voucher PDF"
+                                  >
+                                    <FileText size={12} /> Receipt
+                                  </a>
                                 </div>
                               </div>
                             ))}

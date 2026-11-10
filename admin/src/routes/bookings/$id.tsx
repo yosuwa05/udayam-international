@@ -13,6 +13,7 @@ import {
   Clock,
   IndianRupee,
   FileText,
+  Receipt,
   AlertTriangle,
   ArrowRight,
   RotateCcw,
@@ -172,6 +173,25 @@ function BookingDetailsComponent() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.error || 'Failed to record transaction')
+    },
+  })
+
+  // Generate Tax Invoice Mutation
+  const generateInvoiceMutation = useMutation({
+    mutationFn: async () => {
+      const res = await _axios.post(`/receipt-download/invoice/${id}/generate`)
+      return res.data
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Tax Invoice generated successfully!')
+      queryClient.invalidateQueries({ queryKey: ['admin-booking-detail', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
+      if (data?.data?.invoiceUrl) {
+        window.open(data.data.invoiceUrl, '_blank')
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error || 'Failed to generate tax invoice')
     },
   })
 
@@ -359,6 +379,16 @@ function BookingDetailsComponent() {
             <p className="text-xs text-muted-foreground mt-0.5">
               Created on {formatDateTime(booking.createdAt)}
             </p>
+            {booking.bookingConfirmationNumber && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Booking Ref:
+                </span>
+                <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  {booking.bookingConfirmationNumber}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -456,6 +486,58 @@ function BookingDetailsComponent() {
           >
             View Refund Record <ArrowRight className="h-3 w-3" />
           </Link>
+        </div>
+      )}
+
+      {/* Completed Booking Tax Invoice Banner */}
+      {booking.status === 'COMPLETED' && (
+        <div className="p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/50 text-teal-950 dark:text-teal-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-teal-100 dark:bg-teal-900/50 rounded-xl text-teal-700 dark:text-teal-300">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">Official GST Tax Invoice</p>
+              <p className="text-xs text-teal-800 dark:text-teal-300 mt-0.5">
+                {booking.invoiceUrl ? (
+                  <>
+                    Invoice Reference:{' '}
+                    <strong className="font-mono font-bold">
+                      {booking.taxInvoiceNumber}
+                    </strong>
+                  </>
+                ) : (
+                  'This tour booking is completed. You can now generate the official GST Tax Invoice.'
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {booking.invoiceUrl ? (
+              <a
+                href={booking.invoiceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+              >
+                <FileText className="h-3.5 w-3.5" /> Download Tax Invoice
+              </a>
+            ) : (
+              <Button
+                onClick={() => generateInvoiceMutation.mutate()}
+                disabled={generateInvoiceMutation.isPending}
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                {generateInvoiceMutation.isPending ? (
+                  'Generating...'
+                ) : (
+                  <>
+                    <FileText className="h-3.5 w-3.5" /> Generate Tax Invoice
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -892,11 +974,73 @@ function BookingDetailsComponent() {
               </div>
             )}
 
-            {booking.paymentId && (
-              <div className="bg-muted/30 p-3 rounded-xl text-xs space-y-1.5 border">
-                <div className="font-semibold text-foreground">
-                  Razorpay Payment Record:
+            {booking.paymentSummary?.successfulPayments?.length > 0 ? (
+              <div className="space-y-3">
+                <div className="text-xs font-semibold text-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Receipt size={13} className="text-primary" /> Receipt Vouchers
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {booking.paymentSummary.successfulPayments.length} Payment{booking.paymentSummary.successfulPayments.length > 1 ? 's' : ''}
+                  </span>
                 </div>
+                {booking.paymentSummary.successfulPayments.map((p: any, idx: number) => (
+                  <div key={idx} className="bg-muted/30 p-3 rounded-xl text-xs space-y-1.5 border">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-foreground">
+                        {p.stageLabel || `Stage ${p.stage || idx + 1}`}
+                      </span>
+                      <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
+                        ₹{Number(p.amount).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    {p.receiptVoucherNumber && (
+                      <div className="text-[11px]">
+                        <span className="text-muted-foreground">RV: </span>
+                        <span className="font-mono font-bold text-foreground">
+                          {p.receiptVoucherNumber}
+                        </span>
+                      </div>
+                    )}
+                    {p.razorpayPaymentId && (
+                      <div className="text-muted-foreground font-mono text-[10px] truncate">
+                        ID: {p.razorpayPaymentId}
+                      </div>
+                    )}
+                    <div className="pt-1.5 border-t flex justify-end">
+                      <a
+                        href={
+                          p.paymentReceiptUrl ||
+                          `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/receipt/${p._id}?download=true`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                      >
+                        <FileText size={12} /> View Receipt Voucher
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : booking.paymentId ? (
+              <div className="bg-muted/30 p-3.5 rounded-xl text-xs space-y-2 border">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-foreground">
+                    Razorpay Payment Record:
+                  </span>
+                  <span className="font-bold text-green-700 text-[11px] bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                    {booking.paymentId.status}
+                  </span>
+                </div>
+                {booking.paymentId.receiptVoucherNumber && (
+                  <div className="text-[11px]">
+                    <span className="text-muted-foreground">RV No.: </span>
+                    <span className="font-mono font-bold text-foreground">
+                      {booking.paymentId.receiptVoucherNumber}
+                    </span>
+                  </div>
+                )}
                 <div className="text-muted-foreground font-mono text-[11px] truncate">
                   Order ID: {booking.paymentId.razorpayOrderId}
                 </div>
@@ -905,14 +1049,21 @@ function BookingDetailsComponent() {
                     Payment ID: {booking.paymentId.razorpayPaymentId}
                   </div>
                 )}
-                <div className="flex items-center gap-1 text-[11px]">
-                  <span>Status:</span>
-                  <span className="font-bold text-green-700">
-                    {booking.paymentId.status}
-                  </span>
+                <div className="pt-1.5 border-t flex justify-end">
+                  <a
+                    href={
+                      booking.paymentId.paymentReceiptUrl ||
+                      `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/receipt/${booking.paymentId._id || booking.paymentId}?download=true`
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                  >
+                    <FileText size={13} /> View / Download Receipt Voucher
+                  </a>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Quotation Manager (For Customized Packages) */}

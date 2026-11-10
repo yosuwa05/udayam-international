@@ -143,6 +143,8 @@ export interface IBookingPaymentSummary {
         stage?: number
         stageLabel?: string
         razorpayPaymentId?: string
+        receiptVoucherNumber?: string
+        paymentReceiptUrl?: string
         paidAt?: Date
     }>
 }
@@ -174,6 +176,8 @@ export const getBookingPaymentSummary = async (
         stage: p.stage,
         stageLabel: p.stageLabel,
         razorpayPaymentId: p.razorpayPaymentId,
+        receiptVoucherNumber: p.receiptVoucherNumber,
+        paymentReceiptUrl: p.paymentReceiptUrl,
         paidAt: p.updatedAt || p.createdAt,
     }))
 
