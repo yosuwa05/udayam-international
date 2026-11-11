@@ -89,7 +89,8 @@ function TripTypesIndexComponent() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
-  const { canEdit, canDelete } = usePermissions()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const hasCreate = canCreate('/trip-types')
   const hasEdit = canEdit('/trip-types')
   const hasDelete = canDelete('/trip-types')
 
@@ -239,7 +240,7 @@ function TripTypesIndexComponent() {
             packages
           </p>
         </div>
-        {hasEdit && (
+        {hasCreate && (
           <Button
             className="gap-2 shrink-0 cursor-pointer"
             onClick={() => setIsAddOpen(true)}

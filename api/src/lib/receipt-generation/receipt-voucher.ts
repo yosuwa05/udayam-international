@@ -42,14 +42,19 @@ export async function generateReceiptVoucherPDF(data: IReceiptVoucherData): Prom
         customer?.fullName ||
         "Customer"
 
+    const travellerAddrParts = [
+        booking.travellerInfo?.address,
+        booking.travellerInfo?.landmark ? `Near ${booking.travellerInfo.landmark}` : "",
+        booking.travellerInfo?.pincode ? `PIN: ${booking.travellerInfo.pincode}` : "",
+    ].filter(Boolean)
     const customerAddress =
-        customer?.address ||
-        booking.travellerInfo?.address ||
-        FALLBACK
+        travellerAddrParts.length > 0
+            ? travellerAddrParts.join(", ")
+            : (customer?.address || FALLBACK)
 
     const customerState =
-        customer?.state ||
         booking.travellerInfo?.state ||
+        customer?.state ||
         "Tamil Nadu"
 
     const customerGstin =

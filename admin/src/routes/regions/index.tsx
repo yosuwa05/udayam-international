@@ -89,7 +89,8 @@ function RegionsIndexComponent() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
-  const { canEdit, canDelete } = usePermissions()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const hasCreate = canCreate('/regions')
   const hasEdit = canEdit('/regions')
   const hasDelete = canDelete('/regions')
 
@@ -239,7 +240,7 @@ function RegionsIndexComponent() {
             packages
           </p>
         </div>
-        {hasEdit && (
+        {hasCreate && (
           <Button
             className="gap-2 shrink-0 cursor-pointer"
             onClick={() => setIsAddOpen(true)}

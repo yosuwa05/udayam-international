@@ -235,6 +235,7 @@ function StaffManagementComponent() {
             ) : (
               staffList.map((staff: StaffMember) => {
                 const viewCount = staff.permissions?.filter((p) => p.view).length || 0
+                const createCount = staff.permissions?.filter((p) => p.create).length || 0
                 const editCount = staff.permissions?.filter((p) => p.edit).length || 0
                 const deleteCount = staff.permissions?.filter((p) => p.delete).length || 0
 
@@ -271,6 +272,9 @@ function StaffManagementComponent() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">
                           <Eye size={12} /> {viewCount} View
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-200">
+                          <Plus size={12} /> {createCount} Create
                         </span>
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
                           <Edit size={12} /> {editCount} Edit

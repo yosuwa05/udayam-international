@@ -27,6 +27,7 @@ import LoginModal from "./components/LoginModal"
 import { Toaster } from "./components/ui/sonner"
 import TourTermsAndConditions from "./components/TourTermsAndCondition"
 import PrivacyPolicy from "./components/PrivacyPolicy"
+import CancellationRefundPolicy from "./components/CancellationRefundPolicy"
 import { isTourismDomain } from "./utils"
 
 function ScrollToTop() {
@@ -46,6 +47,7 @@ const NO_INTRO_ROUTES = [
   "/tour-terms-and-conditions",
   "/terms-and-conditions",
   "/privacy-policy",
+  "/cancellation-and-refund-policy",
 ]
 
 export function App() {
@@ -103,6 +105,10 @@ function AppShell() {
             element={<TourTermsAndConditions />}
           />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route
+            path="/cancellation-and-refund-policy"
+            element={<CancellationRefundPolicy />}
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

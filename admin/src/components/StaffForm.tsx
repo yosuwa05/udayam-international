@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   CheckCheck,
   Eye,
+  PlusCircle,
   Edit,
   Trash,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ export interface RoutePermission {
   route: string
   name: string
   view: boolean
+  create: boolean
   edit: boolean
   delete: boolean
 }
@@ -72,6 +74,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({
         route: m.route,
         name: m.name,
         view: existing ? existing.view : false,
+        create: existing ? (existing.create ?? false) : false,
         edit: existing ? existing.edit : false,
         delete: existing ? existing.delete : false,
       }
@@ -91,6 +94,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({
             route: m.route,
             name: m.name,
             view: existing ? existing.view : false,
+            create: existing ? (existing.create ?? false) : false,
             edit: existing ? existing.edit : false,
             delete: existing ? existing.delete : false,
           }
@@ -102,7 +106,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({
   // Permission toggles
   const handleTogglePermission = (
     index: number,
-    field: 'view' | 'edit' | 'delete'
+    field: 'view' | 'create' | 'edit' | 'delete'
   ) => {
     setFormData((prev) => {
       const updated = [...prev.permissions]
@@ -110,12 +114,13 @@ export const StaffForm: React.FC<StaffFormProps> = ({
       const newVal = !currentVal
       updated[index] = { ...updated[index], [field]: newVal }
 
-      // If user enables edit or delete, automatically enable view
-      if (newVal && (field === 'edit' || field === 'delete')) {
+      // If user enables create, edit or delete, automatically enable view
+      if (newVal && (field === 'create' || field === 'edit' || field === 'delete')) {
         updated[index].view = true
       }
-      // If user disables view, automatically disable edit and delete
+      // If user disables view, automatically disable create, edit and delete
       if (!newVal && field === 'view') {
+        updated[index].create = false
         updated[index].edit = false
         updated[index].delete = false
       }
@@ -125,14 +130,17 @@ export const StaffForm: React.FC<StaffFormProps> = ({
   }
 
   // Quick permission helpers
-  const handleSelectAll = (field?: 'view' | 'edit' | 'delete') => {
+  const handleSelectAll = (field?: 'view' | 'create' | 'edit' | 'delete') => {
     setFormData((prev) => {
       const updated = prev.permissions.map((p) => {
         if (!field) {
-          return { ...p, view: true, edit: true, delete: true }
+          return { ...p, view: true, create: true, edit: true, delete: true }
         }
         if (field === 'view') {
           return { ...p, view: true }
+        }
+        if (field === 'create') {
+          return { ...p, view: true, create: true }
         }
         if (field === 'edit') {
           return { ...p, view: true, edit: true }
@@ -152,6 +160,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({
       permissions: prev.permissions.map((p) => ({
         ...p,
         view: false,
+        create: false,
         edit: false,
         delete: false,
       })),
@@ -287,6 +296,13 @@ export const StaffForm: React.FC<StaffFormProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => handleSelectAll('create')}
+              className="text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              All Create
+            </button>
+            <button
+              type="button"
               onClick={() => handleSelectAll('edit')}
               className="text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
@@ -308,19 +324,24 @@ export const StaffForm: React.FC<StaffFormProps> = ({
             <thead className="bg-slate-50/90 text-slate-700 font-semibold border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Layout Menu / Route</th>
-                <th className="py-3 px-4 text-center w-36">
+                <th className="py-3 px-4 text-center w-32">
                   <div className="flex items-center justify-center gap-1 text-emerald-700">
-                    <Eye size={13} /> View Permission
+                    <Eye size={13} /> View
                   </div>
                 </th>
-                <th className="py-3 px-4 text-center w-36">
+                <th className="py-3 px-4 text-center w-32">
+                  <div className="flex items-center justify-center gap-1 text-purple-700">
+                    <PlusCircle size={13} /> Create
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-center w-32">
                   <div className="flex items-center justify-center gap-1 text-blue-700">
-                    <Edit size={13} /> Edit Permission
+                    <Edit size={13} /> Edit
                   </div>
                 </th>
-                <th className="py-3 px-4 text-center w-36">
+                <th className="py-3 px-4 text-center w-32">
                   <div className="flex items-center justify-center gap-1 text-rose-700">
-                    <Trash size={13} /> Delete Permission
+                    <Trash size={13} /> Delete
                   </div>
                 </th>
               </tr>
@@ -349,6 +370,21 @@ export const StaffForm: React.FC<StaffFormProps> = ({
                         />
                         <span className={`text-xs font-semibold ${perm.view ? 'text-emerald-700' : 'text-slate-400'}`}>
                           {perm.view ? 'Allowed' : 'Restricted'}
+                        </span>
+                      </label>
+                    </td>
+
+                    {/* Create Switch */}
+                    <td className="py-3 px-4 text-center">
+                      <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-50/80 px-2.5 py-1.5 rounded-lg border border-slate-200">
+                        <input
+                          type="checkbox"
+                          checked={perm.create}
+                          onChange={() => handleTogglePermission(idx, 'create')}
+                          className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <span className={`text-xs font-semibold ${perm.create ? 'text-purple-700' : 'text-slate-400'}`}>
+                          {perm.create ? 'Allowed' : 'Restricted'}
                         </span>
                       </label>
                     </td>

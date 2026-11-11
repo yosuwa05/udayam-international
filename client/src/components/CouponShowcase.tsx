@@ -1018,7 +1018,10 @@ export const CouponShowcase: React.FC = () => {
                         style={{ backgroundColor: GREEN }}
                       />
                       Min. Tour Package Cost{" "}
-                      <strong className="font-semibold" style={{ color: NAVY }}>
+                      <strong
+                        className="font-inter font-semibold"
+                        style={{ color: NAVY }}
+                      >
                         ₹{coupon.minimumBookingAmount.toLocaleString("en-IN")}
                       </strong>
                     </span>
@@ -1065,7 +1068,10 @@ export const CouponShowcase: React.FC = () => {
                   <span className="flex items-center gap-1.5">
                     <CalendarClock className="h-3.5 w-3.5 shrink-0 text-gray-400" />
                     Valid till{" "}
-                    <strong className="font-semibold" style={{ color: NAVY }}>
+                    <strong
+                      className="font-inter font-semibold"
+                      style={{ color: NAVY }}
+                    >
                       {meta.formattedDate}
                     </strong>
                   </span>

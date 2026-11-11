@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Lock,
   ShieldAlert,
+  MapPin,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,19 +48,10 @@ export const Route = createFileRoute('/bookings/$id')({
 })
 
 const STANDARD_STATUSES = [
-  'PAYMENT_PENDING',
-  'PAYMENT_PROCESSING',
-  'PAYMENT_SUCCESS',
   'BOOKED',
   'CONFIRMED',
-  'TRAVEL_STARTED',
   'COMPLETED',
   'CANCELLED',
-  'PAYMENT_FAILED',
-  'REFUND_PENDING',
-  'REFUND_PROCESSING',
-  'PARTIALLY_REFUNDED',
-  'REFUNDED',
   'CANCELLATION_REQUESTED',
 ]
 
@@ -191,7 +183,9 @@ function BookingDetailsComponent() {
       }
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.error || 'Failed to generate tax invoice')
+      toast.error(
+        err?.response?.data?.error || 'Failed to generate tax invoice',
+      )
     },
   })
 
@@ -230,6 +224,18 @@ function BookingDetailsComponent() {
 
   const booking = bookingData
   const isCustomized = booking.bookingType === 'CUSTOMIZED'
+  const isStandardBooking = booking.bookingType === 'STANDARD'
+  const isFullyPaidStandard =
+    isStandardBooking &&
+    (booking.paymentDetails?.isFullyPaid ||
+      (booking.paymentDetails?.remainingAmount === 0 &&
+        (booking.paymentDetails?.totalPaidAmount || 0) > 0))
+
+  const canShowTaxInvoice = Boolean(
+    booking.invoiceUrl ||
+      isFullyPaidStandard ||
+      (isCustomized && booking.status === 'COMPLETED'),
+  )
   const currentRoute = isCustomized
     ? '/bookings/customized'
     : '/bookings/standard'
@@ -489,8 +495,8 @@ function BookingDetailsComponent() {
         </div>
       )}
 
-      {/* Completed Booking Tax Invoice Banner */}
-      {booking.status === 'COMPLETED' && (
+      {/* Official GST Tax Invoice Banner */}
+      {canShowTaxInvoice && (
         <div className="p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/50 text-teal-950 dark:text-teal-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-teal-100 dark:bg-teal-900/50 rounded-xl text-teal-700 dark:text-teal-300">
@@ -506,6 +512,8 @@ function BookingDetailsComponent() {
                       {booking.taxInvoiceNumber}
                     </strong>
                   </>
+                ) : isStandardBooking ? (
+                  'Full payment (100%) completed. You can now generate the official GST Tax Invoice.'
                 ) : (
                   'This tour booking is completed. You can now generate the official GST Tax Invoice.'
                 )}
@@ -615,6 +623,26 @@ function BookingDetailsComponent() {
                   )}
                 </div>
               </div>
+
+              {booking.travellerInfo?.address && (
+                <div className="sm:col-span-2 border-t pt-3">
+                  <div className="text-muted-foreground flex items-center gap-1">
+                    <MapPin size={12} /> Residential & Billing Address:
+                  </div>
+                  <div className="font-medium text-xs mt-0.5 text-foreground">
+                    {booking.travellerInfo.address}
+                    {booking.travellerInfo.landmark
+                      ? `, Near ${booking.travellerInfo.landmark}`
+                      : ''}
+                    {booking.travellerInfo.state
+                      ? `, ${booking.travellerInfo.state}`
+                      : ''}
+                    {booking.travellerInfo.pincode
+                      ? ` - ${booking.travellerInfo.pincode}`
+                      : ''}
+                  </div>
+                </div>
+              )}
             </div>
 
             {booking.travellerInfo?.specialRequests && (
@@ -945,15 +973,61 @@ function BookingDetailsComponent() {
                   </span>
                 </div>
               )}
-              {booking.pricingDetails?.gstAmount > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>GST ({booking.pricingDetails.gstPercentage}%):</span>
-                  <span>
-                    + ₹
-                    {booking.pricingDetails.gstAmount.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              )}
+              {booking.pricingDetails?.gstAmount > 0 &&
+                ((booking.pricingDetails?.isTamilNadu ??
+                booking.travellerInfo?.state
+                  ?.toLowerCase()
+                  ?.includes('tamil')) ? (
+                  <>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>
+                        CGST (
+                        {booking.pricingDetails.cgstPercentage ??
+                          booking.pricingDetails.gstPercentage / 2}
+                        %):
+                      </span>
+                      <span>
+                        + ₹
+                        {(
+                          booking.pricingDetails.cgstAmount ??
+                          Math.round(booking.pricingDetails.gstAmount / 2)
+                        ).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>
+                        SGST (
+                        {booking.pricingDetails.sgstPercentage ??
+                          booking.pricingDetails.gstPercentage / 2}
+                        %):
+                      </span>
+                      <span>
+                        + ₹
+                        {(
+                          booking.pricingDetails.sgstAmount ??
+                          booking.pricingDetails.gstAmount -
+                            Math.round(booking.pricingDetails.gstAmount / 2)
+                        ).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>
+                      IGST (
+                      {booking.pricingDetails.igstPercentage ||
+                        booking.pricingDetails.gstPercentage}
+                      %):
+                    </span>
+                    <span>
+                      + ₹
+                      {(
+                        booking.pricingDetails.igstAmount ||
+                        booking.pricingDetails.gstAmount
+                      ).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                ))}
               <div className="flex justify-between text-sm font-bold text-primary pt-2 border-t">
                 <span>Final Payable Amount:</span>
                 <span>
@@ -978,50 +1052,59 @@ function BookingDetailsComponent() {
               <div className="space-y-3">
                 <div className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Receipt size={13} className="text-primary" /> Receipt Vouchers
+                    <Receipt size={13} className="text-primary" /> Receipt
+                    Vouchers
                   </span>
                   <span className="text-[10px] text-muted-foreground font-mono">
-                    {booking.paymentSummary.successfulPayments.length} Payment{booking.paymentSummary.successfulPayments.length > 1 ? 's' : ''}
+                    {booking.paymentSummary.successfulPayments.length} Payment
+                    {booking.paymentSummary.successfulPayments.length > 1
+                      ? 's'
+                      : ''}
                   </span>
                 </div>
-                {booking.paymentSummary.successfulPayments.map((p: any, idx: number) => (
-                  <div key={idx} className="bg-muted/30 p-3 rounded-xl text-xs space-y-1.5 border">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-foreground">
-                        {p.stageLabel || `Stage ${p.stage || idx + 1}`}
-                      </span>
-                      <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
-                        ₹{Number(p.amount).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    {p.receiptVoucherNumber && (
-                      <div className="text-[11px]">
-                        <span className="text-muted-foreground">RV: </span>
-                        <span className="font-mono font-bold text-foreground">
-                          {p.receiptVoucherNumber}
+                {booking.paymentSummary.successfulPayments.map(
+                  (p: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="bg-muted/30 p-3 rounded-xl text-xs space-y-1.5 border"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground">
+                          {p.stageLabel || `Stage ${p.stage || idx + 1}`}
+                        </span>
+                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
+                          ₹{Number(p.amount).toLocaleString('en-IN')}
                         </span>
                       </div>
-                    )}
-                    {p.razorpayPaymentId && (
-                      <div className="text-muted-foreground font-mono text-[10px] truncate">
-                        ID: {p.razorpayPaymentId}
+                      {p.receiptVoucherNumber && (
+                        <div className="text-[11px]">
+                          <span className="text-muted-foreground">RV: </span>
+                          <span className="font-mono font-bold text-foreground">
+                            {p.receiptVoucherNumber}
+                          </span>
+                        </div>
+                      )}
+                      {p.razorpayPaymentId && (
+                        <div className="text-muted-foreground font-mono text-[10px] truncate">
+                          ID: {p.razorpayPaymentId}
+                        </div>
+                      )}
+                      <div className="pt-1.5 border-t flex justify-end">
+                        <a
+                          href={
+                            p.paymentReceiptUrl ||
+                            `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/receipt/${p._id}?download=true`
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                        >
+                          <FileText size={12} /> View Receipt Voucher
+                        </a>
                       </div>
-                    )}
-                    <div className="pt-1.5 border-t flex justify-end">
-                      <a
-                        href={
-                          p.paymentReceiptUrl ||
-                          `${_axios.defaults.baseURL || '/api/V1'}/receipt-download/receipt/${p._id}?download=true`
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
-                      >
-                        <FileText size={12} /> View Receipt Voucher
-                      </a>
                     </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             ) : booking.paymentId ? (
               <div className="bg-muted/30 p-3.5 rounded-xl text-xs space-y-2 border">

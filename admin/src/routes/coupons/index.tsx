@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePermissions } from '@/lib/usePermissions'
 import { Plus, Pencil, Trash2, Check, X, Tag } from 'lucide-react'
 import { SearchInput } from '@/components/SearchInput'
 import { toast } from 'sonner'
@@ -96,6 +97,10 @@ function CouponsIndexComponent() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const hasCreate = canCreate('/coupons')
+  const hasEdit = canEdit('/coupons')
+  const hasDelete = canDelete('/coupons')
 
   const page = searchParams.page ?? 1
   const limit = searchParams.limit ?? 10
@@ -190,12 +195,14 @@ function CouponsIndexComponent() {
             Create, manage, and configure discount coupons for users and packages
           </p>
         </div>
-        <Link to="/coupons/add" search={(prev) => prev}>
-          <Button className="gap-2 shrink-0 cursor-pointer">
-            <Plus className="w-4 h-4" />
-            Add Coupon
-          </Button>
-        </Link>
+        {hasCreate && (
+          <Link to="/coupons/add" search={(prev) => prev}>
+            <Button className="gap-2 shrink-0 cursor-pointer">
+              <Plus className="w-4 h-4" />
+              Add Coupon
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Filter Bar */}

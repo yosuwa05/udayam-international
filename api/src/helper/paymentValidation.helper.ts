@@ -86,12 +86,15 @@ export const calculatePaymentStages = (
     const minAdvanceAmount = roundCurrency((cleanFinalAmount * minAdvancePct) / 100)
 
     const calculatedStages: ICalculatedStage[] = (settings.stages || []).map((stage) => {
-        const minAmount = roundCurrency((cleanFinalAmount * stage.minimumPercentage) / 100)
+        let minPercentage = stage.minimumPercentage
+        let minAmount = roundCurrency((cleanFinalAmount * minPercentage) / 100)
         let description = ""
         if (stage.stage === 1) {
             description = `Minimum ${stage.minimumPercentage}% (₹${minAmount.toLocaleString("en-IN")}) required at booking confirmation. You may also pay more up to 100%.`
         } else if (stage.stage === settings.maximumPaymentStages) {
             description = `Final settlement to clear the remaining balance.`
+        } else if (stage.stage === 2) {
+            description = `Second payment to ensure at least 50% cumulative booking total (min ${stage.minimumPercentage}% if 10% was paid initially, or ₹${minAmount.toLocaleString("en-IN")}). Dynamically calculated based on amount already paid.`
         } else {
             description = `Minimum ${stage.minimumPercentage}% (₹${minAmount.toLocaleString("en-IN")}). You may pay more or clear the remaining balance.`
         }
@@ -99,7 +102,7 @@ export const calculatePaymentStages = (
         return {
             stage: stage.stage,
             label: stage.label,
-            minimumPercentage: stage.minimumPercentage,
+            minimumPercentage: minPercentage,
             minimumAmount: minAmount,
             description,
         }
@@ -214,6 +217,19 @@ export const getBookingPaymentSummary = async (
             // At the final stage, user MUST pay the full remaining balance
             nextStageMinimumAmount = remainingAmount
             nextStageMinimumPercentage = finalAmount > 0 ? roundCurrency((remainingAmount / finalAmount) * 100) : 100
+        } else if (currentStageNumber === 2) {
+            // Stage 2 requirement: Cumulative paid must reach at least 50% of the total booking amount
+            const targetCumulativePct = 50
+            const targetCumulativeAmount = roundCurrency((finalAmount * targetCumulativePct) / 100)
+            const neededToReach50 = Math.max(0, roundCurrency(targetCumulativeAmount - totalPaidAmount))
+            if (neededToReach50 > 0) {
+                nextStageMinimumAmount = Math.min(neededToReach50, remainingAmount)
+                nextStageMinimumPercentage = finalAmount > 0 ? roundCurrency((nextStageMinimumAmount / finalAmount) * 100) : 0
+            } else {
+                // User already paid >= 50% in stage 1, allow proceeding with nominal minimum
+                nextStageMinimumAmount = Math.min(1, remainingAmount)
+                nextStageMinimumPercentage = finalAmount > 0 ? roundCurrency((nextStageMinimumAmount / finalAmount) * 100) : 0
+            }
         } else {
             // Stage minimum amount cannot exceed remaining balance
             const nominalMin = roundCurrency((finalAmount * nextStageMinimumPercentage) / 100)
@@ -480,6 +496,17 @@ export const validateSubsequentBookingPayment = async (params: {
     } else {
         // Not the final stage: check stage minimum amount
         if (cleanAmount < summary.nextStageMinimumAmount) {
+            if (summary.currentStageNumber === 2) {
+                const targetCumulativeAmount = roundCurrency((summary.finalAmount * 50) / 100)
+                return {
+                    isValid: false,
+                    error: `Stage 2 requires cumulative payments to reach at least 50% of the total booking amount (₹${targetCumulativeAmount.toLocaleString("en-IN")}). You have already paid ₹${summary.totalPaidAmount.toLocaleString("en-IN")} (${summary.paidPercentage}%), so you must pay at least ₹${summary.nextStageMinimumAmount.toLocaleString("en-IN")} (${summary.nextStageMinimumPercentage}%) to proceed.`,
+                    summary,
+                    stageNumber: summary.currentStageNumber,
+                    stageLabel: summary.nextStageLabel,
+                    isFinalStage: false,
+                }
+            }
             return {
                 isValid: false,
                 error: `Minimum payment for Stage ${summary.currentStageNumber} (${summary.nextStageLabel}) is ₹${summary.nextStageMinimumAmount.toLocaleString("en-IN")} (${summary.nextStageMinimumPercentage}%).`,

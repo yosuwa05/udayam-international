@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePermissions } from '@/lib/usePermissions'
 import { Plus, Pencil, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -66,6 +67,10 @@ function TestimonialsIndexComponent() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const hasCreate = canCreate('/testimonials')
+  const hasEdit = canEdit('/testimonials')
+  const hasDelete = canDelete('/testimonials')
 
   const page = searchParams.page ?? 1
   const limit = searchParams.limit ?? 10
@@ -144,12 +149,14 @@ function TestimonialsIndexComponent() {
             Manage client testimonials displayed on Home, Tourism, and Medical pages
           </p>
         </div>
-        <Link to="/testimonials/add" search={(prev) => prev}>
-          <Button className="gap-2 cursor-pointer">
-            <Plus className="w-4 h-4" />
-            Add Testimonial
-          </Button>
-        </Link>
+        {hasCreate && (
+          <Link to="/testimonials/add" search={(prev) => prev}>
+            <Button className="gap-2 cursor-pointer">
+              <Plus className="w-4 h-4" />
+              Add Testimonial
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Filter Bar */}

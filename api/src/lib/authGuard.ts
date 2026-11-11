@@ -124,24 +124,45 @@ export const roleGuard = async (
 
             // Determine required permission type from HTTP method
             const method = request.method?.toUpperCase() || "GET";
-            const reqAction: "view" | "edit" | "delete" =
-                method === "DELETE"
-                    ? "delete"
-                    : ["POST", "PUT", "PATCH"].includes(method)
-                    ? "edit"
-                    : "view";
+            let reqAction: "view" | "create" | "edit" | "delete" = "view";
+
+            try {
+                const pathname = new URL(request.url, "http://localhost").pathname;
+                if (method === "DELETE") {
+                    reqAction = "delete";
+                } else if (method === "POST") {
+                    const isUpdateAction =
+                        pathname.includes("/transaction") ||
+                        pathname.includes("/quotation") ||
+                        pathname.includes("/process") ||
+                        pathname.includes("/status");
+                    reqAction = isUpdateAction ? "edit" : "create";
+                } else if (["PUT", "PATCH"].includes(method)) {
+                    reqAction = "edit";
+                } else {
+                    reqAction = "view";
+                }
+            } catch {
+                reqAction = method === "DELETE" ? "delete" : method === "POST" ? "create" : ["PUT", "PATCH"].includes(method) ? "edit" : "view";
+            }
 
             const { route, secondaryRoute } = mapUrlToModuleRoute(request.url);
 
             const staffPermissions = staff.permissions || [];
-            const perm = staffPermissions.find((p) => p.route === route);
-            const secondaryPerm = secondaryRoute
+            const perm: any = staffPermissions.find((p) => p.route === route);
+            const secondaryPerm: any = secondaryRoute
                 ? staffPermissions.find((p) => p.route === secondaryRoute)
                 : null;
 
-            const hasPermission =
-                (perm && perm[reqAction]) ||
-                (secondaryPerm && secondaryPerm[reqAction]);
+            const checkPerm = (p: any) => {
+                if (!p) return false;
+                if (reqAction === "create") {
+                    return p.create !== undefined ? Boolean(p.create) : Boolean(p.edit);
+                }
+                return Boolean(p[reqAction]);
+            };
+
+            const hasPermission = checkPerm(perm) || checkPerm(secondaryPerm);
 
             if (!hasPermission) {
                 set.status = 403;

@@ -24,15 +24,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePermissions } from '@/lib/usePermissions'
 import { SearchInput } from '@/components/SearchInput'
 import {
   MapPin,
@@ -193,6 +187,10 @@ function RouteComponent() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const hasCreate = canCreate('/tourism')
+  const hasEdit = canEdit('/tourism')
+  const hasDelete = canDelete('/tourism')
 
   const page = searchParams.page ?? 1
   const limit = searchParams.limit ?? 10
@@ -350,12 +348,14 @@ function RouteComponent() {
             Manage all travel packages
           </p>
         </div>
-        <Link to="/tourism/add" search={(prev) => prev}>
-          <Button className="gap-2 cursor-pointer">
-            <Plus className="w-4 h-4" />
-            Add Package
-          </Button>
-        </Link>
+        {hasCreate && (
+          <Link to="/tourism/add" search={(prev) => prev}>
+            <Button className="gap-2 cursor-pointer">
+              <Plus className="w-4 h-4" />
+              Add Package
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Search + filter bar */}
@@ -747,7 +747,7 @@ function RouteComponent() {
                     <Switch
                       checked={pkg.isActive}
                       onCheckedChange={() => toggleActiveMutation.mutate(pkg._id)}
-                      disabled={toggleActiveMutation.isPending}
+                      disabled={toggleActiveMutation.isPending || !hasEdit}
                       title={pkg.isActive ? 'Active (Click to deactivate)' : 'Inactive (Click to activate)'}
                     />
                   </TableCell>
@@ -757,7 +757,7 @@ function RouteComponent() {
                       size="icon"
                       className="h-8 w-8 hover:bg-muted cursor-pointer"
                       onClick={() => toggleFeaturedMutation.mutate(pkg._id)}
-                      disabled={toggleFeaturedMutation.isPending}
+                      disabled={toggleFeaturedMutation.isPending || !hasEdit}
                       title="Toggle Featured"
                     >
                       <Star
@@ -771,27 +771,33 @@ function RouteComponent() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Link
-                        to="/tourism/$id/edit"
-                        params={{ id: pkg._id }}
-                        search={(prev) => prev}
-                      >
+                      {hasEdit && (
+                        <Link
+                          to="/tourism/$id/edit"
+                          params={{ id: pkg._id }}
+                          search={(prev) => prev}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 cursor-pointer"
+                            title="Edit Package"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        </Link>
+                      )}
+                      {hasDelete && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 cursor-pointer"
+                          className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                          onClick={() => setDeleteId(pkg._id)}
+                          title="Delete Package"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
-                        onClick={() => setDeleteId(pkg._id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

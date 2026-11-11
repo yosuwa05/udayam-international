@@ -5,6 +5,7 @@ export interface IRoutePermission {
     route: string;
     name: string;
     view: boolean;
+    create: boolean;
     edit: boolean;
     delete: boolean;
 }
@@ -26,6 +27,7 @@ const routePermissionSchema = new Schema<IRoutePermission>(
         route: { type: String, required: true },
         name: { type: String, required: true },
         view: { type: Boolean, default: false },
+        create: { type: Boolean, default: false },
         edit: { type: Boolean, default: false },
         delete: { type: Boolean, default: false },
     },

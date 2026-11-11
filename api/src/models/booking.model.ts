@@ -46,6 +46,11 @@ export interface ITravellerInfo {
     travelDate: Date
     travelType: string
     specialRequests?: string
+    address?: string
+    landmark?: string
+    pincode?: string
+    state?: string
+    stateCode?: string
     travellers: ITraveller[]
 }
 
@@ -56,6 +61,13 @@ export interface IPricingDetails {
     gstPercentage: number
     finalAmount: number
     currency: string
+    isTamilNadu?: boolean
+    cgstAmount?: number
+    cgstPercentage?: number
+    sgstAmount?: number
+    sgstPercentage?: number
+    igstAmount?: number
+    igstPercentage?: number
 }
 
 export interface IQuotation {
@@ -122,6 +134,11 @@ const travellerInfoSchema = new Schema<ITravellerInfo>(
         travelDate: { type: Date, required: true },
         travelType: { type: String, required: true, trim: true },
         specialRequests: { type: String, trim: true },
+        address: { type: String, trim: true },
+        landmark: { type: String, trim: true },
+        pincode: { type: String, trim: true },
+        state: { type: String, trim: true },
+        stateCode: { type: String, trim: true },
         travellers: { type: [travellerSchema], default: [] },
     },
     { _id: false }
@@ -135,6 +152,13 @@ const pricingDetailsSchema = new Schema<IPricingDetails>(
         gstPercentage: { type: Number, required: true, default: 0, min: 0 },
         finalAmount: { type: Number, required: true, default: 0, min: 0 },
         currency: { type: String, required: true, default: "INR" },
+        isTamilNadu: { type: Boolean, default: true },
+        cgstAmount: { type: Number, default: 0 },
+        cgstPercentage: { type: Number, default: 0 },
+        sgstAmount: { type: Number, default: 0 },
+        sgstPercentage: { type: Number, default: 0 },
+        igstAmount: { type: Number, default: 0 },
+        igstPercentage: { type: Number, default: 0 },
     },
     { _id: false }
 )

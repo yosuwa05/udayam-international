@@ -117,6 +117,7 @@ const Footer = () => {
               {[
                 { label: "Privacy Policy", href: "/privacy-policy" },
                 { label: "Terms & Conditions", href: "/tour-terms-and-conditions" },
+                { label: "Cancellation & Refund Policy", href: "/cancellation-and-refund-policy" },
               ].map((item) => (
                 <li key={item.label}>
                   <a

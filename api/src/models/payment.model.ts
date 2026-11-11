@@ -26,7 +26,7 @@ const paymentSchema = new Schema<IPayment>(
         bookingId: { type: Schema.Types.ObjectId, ref: "booking" },
         paymentReceiptUrl: { type: String },
         receiptVoucherNumber: { type: String, sparse: true, unique: true, index: true },
-        razorpayOrderId: { type: String, required: true, index: true },
+        razorpayOrderId: { type: String, index: true },
         razorpayPaymentId: { type: String, index: true },
         razorpaySignature: { type: String },
         amount: { type: Number, required: true, min: 0 },

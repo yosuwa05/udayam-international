@@ -4,6 +4,7 @@ export const permissionSchema = t.Object({
     route: t.String(),
     name: t.String(),
     view: t.Boolean({ default: false }),
+    create: t.Optional(t.Boolean({ default: false })),
     edit: t.Boolean({ default: false }),
     delete: t.Boolean({ default: false }),
 });

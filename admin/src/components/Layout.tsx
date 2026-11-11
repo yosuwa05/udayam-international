@@ -55,15 +55,29 @@ const allLinks: NavLink[] = [
     icon: CalendarCheck,
   },
   { name: 'Customized Bookings', href: '/bookings/customized', icon: Sparkles },
-  { name: 'Cancellation Requests', href: '/bookings/cancellations', icon: RotateCcw },
+  {
+    name: 'Cancellation Requests',
+    href: '/bookings/cancellations',
+    icon: RotateCcw,
+  },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Tourism', href: '/tourism', icon: MapIcon },
   { name: 'Testimonials', href: '/testimonials', icon: MessageSquare },
   { name: 'Coupons', href: '/coupons', icon: TicketPercent },
   { name: 'Trip Types', href: '/trip-types', icon: Tag },
   { name: 'Regions', href: '/regions', icon: Globe },
-  { name: 'Staff Management', href: '/staff', icon: ShieldCheck, adminOnly: true },
-  { name: 'Activity Logs', href: '/staff-logs', icon: Activity, adminOnly: true },
+  {
+    name: 'Staff Management',
+    href: '/staff',
+    icon: ShieldCheck,
+    adminOnly: true,
+  },
+  {
+    name: 'Activity Logs',
+    href: '/staff-logs',
+    icon: Activity,
+    adminOnly: true,
+  },
 ]
 
 interface LayoutProps {
@@ -95,7 +109,7 @@ export default function Layout({ session, userType }: LayoutProps) {
         .map((p: any) => p.route)
 
       const permittedLinks = allLinks.filter(
-        (l) => !l.adminOnly && allowedRoutes.includes(l.href)
+        (l) => !l.adminOnly && allowedRoutes.includes(l.href),
       )
       setLinks(permittedLinks)
 
@@ -124,13 +138,22 @@ export default function Layout({ session, userType }: LayoutProps) {
             : new URLSearchParams(search || '').get('type')
         )?.toLowerCase()
 
-        if (currentPath === '/bookings/cancellations' || currentPath.startsWith('/bookings/cancellations/')) {
+        if (
+          currentPath === '/bookings/cancellations' ||
+          currentPath.startsWith('/bookings/cancellations/')
+        ) {
           isAllowed =
             allowedRoutes.includes('/bookings/cancellations') ||
             allowedRoutes.includes('/bookings/standard')
-        } else if (currentPath === '/bookings/standard' || currentPath.startsWith('/bookings/standard/')) {
+        } else if (
+          currentPath === '/bookings/standard' ||
+          currentPath.startsWith('/bookings/standard/')
+        ) {
           isAllowed = allowedRoutes.includes('/bookings/standard')
-        } else if (currentPath === '/bookings/customized' || currentPath.startsWith('/bookings/customized/')) {
+        } else if (
+          currentPath === '/bookings/customized' ||
+          currentPath.startsWith('/bookings/customized/')
+        ) {
           isAllowed = allowedRoutes.includes('/bookings/customized')
         } else if (typeParam === 'customized') {
           isAllowed = allowedRoutes.includes('/bookings/customized')
@@ -145,12 +168,15 @@ export default function Layout({ session, userType }: LayoutProps) {
         }
       } else {
         isAllowed = allowedRoutes.some(
-          (r: string) => r !== '/' && (currentPath === r || currentPath.startsWith(r + '/'))
+          (r: string) =>
+            r !== '/' && (currentPath === r || currentPath.startsWith(r + '/')),
         )
       }
 
       if (!isAllowed && permittedLinks.length > 0) {
-        toast.error('Access restricted: You do not have view permission for this page.')
+        toast.error(
+          'Access restricted: You do not have view permission for this page.',
+        )
         navigate({ to: permittedLinks[0].href })
       }
     } else {
@@ -251,9 +277,13 @@ export default function Layout({ session, userType }: LayoutProps) {
               loading="lazy"
             /> */}
 
-            <div className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${
-              collapsed && isLarge ? 'max-w-0 opacity-0' : 'max-w-48 opacity-100'
-            }`}>
+            <div
+              className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${
+                collapsed && isLarge
+                  ? 'max-w-0 opacity-0'
+                  : 'max-w-48 opacity-100'
+              }`}
+            >
               <p className="font-bold tracking-wide text-base text-white">
                 UDAYAM
               </p>
@@ -302,9 +332,13 @@ export default function Layout({ session, userType }: LayoutProps) {
                       }}
                     >
                       <link.icon size={18} className="shrink-0" />
-                      <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${
-                        collapsed && isLarge ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-48 opacity-100'
-                      }`}>
+                      <span
+                        className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${
+                          collapsed && isLarge
+                            ? 'max-w-0 opacity-0 pointer-events-none'
+                            : 'max-w-48 opacity-100'
+                        }`}
+                      >
                         {link.name}
                       </span>
                     </button>
@@ -315,7 +349,7 @@ export default function Layout({ session, userType }: LayoutProps) {
                       style={{
                         backgroundColor: '#0f172a',
                         color: '#f8fafc',
-                        border: '1px solid #1e293b'
+                        border: '1px solid #1e293b',
                       }}
                       side="right"
                     >
@@ -353,9 +387,13 @@ export default function Layout({ session, userType }: LayoutProps) {
                   }}
                   className="shrink-0"
                 />
-                <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${
-                  collapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-48 opacity-100'
-                }`}>
+                <span
+                  className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${
+                    collapsed
+                      ? 'max-w-0 opacity-0 pointer-events-none'
+                      : 'max-w-48 opacity-100'
+                  }`}
+                >
                   Collapse Sidebar
                 </span>
               </button>

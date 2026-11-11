@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { _axios } from '@/lib/axios'
 import { TourismForm, type TourismFormValues } from '@/components/TourismForm'
+import { usePermissions } from '@/lib/usePermissions'
+import { ShieldAlert } from 'lucide-react'
 
 export const Route = createFileRoute('/tourism/add')({
   validateSearch: (search: Record<string, unknown>) => search,
@@ -14,6 +16,8 @@ export const Route = createFileRoute('/tourism/add')({
 function RouteComponent() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { canCreate } = usePermissions()
+  const hasCreate = canCreate('/tourism')
 
   const mutation = useMutation({
     mutationFn: async (values: TourismFormValues) => {
@@ -84,6 +88,26 @@ function RouteComponent() {
       toast.error(err?.response?.data?.error ?? 'Failed to create package')
     },
   })
+
+  if (!hasCreate) {
+    return (
+      <div className="max-w-md mx-auto my-16 p-6 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-3">
+        <ShieldAlert className="h-10 w-10 text-rose-600 mx-auto" />
+        <h2 className="text-base font-bold text-rose-950">Access Restricted</h2>
+        <p className="text-xs text-rose-700">
+          You do not have permission to create new tourism packages. Please contact an administrator.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate({ to: '/tourism', search: (prev) => prev })}
+          className="cursor-pointer"
+        >
+          Back to Packages
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">

@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { _axios } from '@/lib/axios'
 import { CouponForm, type CouponFormValues } from '@/components/CouponForm'
+import { usePermissions } from '@/lib/usePermissions'
 
 export const Route = createFileRoute('/coupons/add')({
   validateSearch: (search: Record<string, unknown>) => search,
@@ -14,6 +15,8 @@ export const Route = createFileRoute('/coupons/add')({
 function RouteComponent() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { canCreate } = usePermissions()
+  const hasCreate = canCreate('/coupons')
 
   const mutation = useMutation({
     mutationFn: async (values: CouponFormValues) => {
@@ -67,6 +70,26 @@ function RouteComponent() {
       toast.error(err?.error ?? 'Failed to create coupon')
     },
   })
+
+  if (!hasCreate) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-6 bg-rose-50 border border-rose-200 rounded-xl text-center space-y-3">
+        <ShieldAlert className="h-10 w-10 text-rose-600 mx-auto" />
+        <h2 className="text-base font-bold text-rose-950">Access Restricted</h2>
+        <p className="text-xs text-rose-700">
+          You do not have permission to create new coupons. Please contact an administrator.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate({ to: '/coupons', search: (prev) => prev })}
+          className="cursor-pointer"
+        >
+          Back to Coupons
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">

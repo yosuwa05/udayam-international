@@ -41,11 +41,13 @@ export const getIndianStates = async (ctx: Context<{ query: getStatesSchema }>) 
             );
         }
 
+        const sortedStates = [...states].sort((a, b) => a.name.localeCompare(b.name));
+
         set.status = 200;
         return {
             status: true,
             message: "States fetched successfully",
-            states: states.map((s) => ({
+            states: sortedStates.map((s) => ({
                 name: s.name,
                 iso2: String(s.id),
             })),

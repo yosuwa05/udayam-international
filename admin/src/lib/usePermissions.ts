@@ -5,6 +5,7 @@ export interface RoutePermission {
   route: string
   name: string
   view: boolean
+  create: boolean
   edit: boolean
   delete: boolean
 }
@@ -50,6 +51,27 @@ export function usePermissions() {
     }
     const perm = getPermission(route)
     return perm?.view ?? false
+  }
+
+  const canCreate = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
+    if (isAdmin) return true
+    if (route.startsWith('/bookings')) {
+      if (bookingType === 'customized') {
+        const perm = getPermission('/bookings/customized')
+        return perm?.create !== undefined ? perm.create : (perm?.edit ?? false)
+      }
+      if (bookingType === 'standard') {
+        const perm = getPermission('/bookings/standard')
+        return perm?.create !== undefined ? perm.create : (perm?.edit ?? false)
+      }
+      const std = getPermission('/bookings/standard')
+      const cust = getPermission('/bookings/customized')
+      const stdCreate = std?.create !== undefined ? std.create : (std?.edit ?? false)
+      const custCreate = cust?.create !== undefined ? cust.create : (cust?.edit ?? false)
+      return stdCreate || custCreate
+    }
+    const perm = getPermission(route)
+    return perm?.create !== undefined ? perm.create : (perm?.edit ?? false)
   }
 
   const canEdit = (route: string, bookingType?: 'standard' | 'customized'): boolean => {
@@ -102,6 +124,7 @@ export function usePermissions() {
     permissions,
     getPermission,
     canView,
+    canCreate,
     canEdit,
     canDelete,
   }

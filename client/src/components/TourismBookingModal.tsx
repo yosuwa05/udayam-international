@@ -13,7 +13,6 @@ import {
   Sparkles,
   Info,
   Calendar,
-  Layers,
   ArrowRight,
   Receipt,
   Users,
@@ -79,6 +78,67 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
   ])
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
+  // Address & State Form state
+  const [address, setAddress] = useState("")
+  const [landmark, setLandmark] = useState("")
+  const [pincode, setPincode] = useState("")
+  const [selectedState, setSelectedState] = useState("Tamil Nadu")
+
+  // Fetch Indian states from backend API (/api/V1/states/indian)
+  const { data: indianStatesData } = useQuery({
+    queryKey: ["indian-states-list"],
+    queryFn: async () => {
+      const res = await _axios.get("/states/indian")
+      return res.data?.states || []
+    },
+    staleTime: 60 * 60 * 1000,
+  })
+
+  const fallbackIndianStates = [
+    "Andaman and Nicobar Islands",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Lakshadweep",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+  ]
+
+  const availableStates: string[] = useMemo(() => {
+    if (indianStatesData && indianStatesData.length > 0) {
+      return indianStatesData.map((s: any) => s.name)
+    }
+    return fallbackIndianStates
+  }, [indianStatesData])
+
   // Coupon state
   const [couponCodeInput, setCouponCodeInput] = useState("")
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
@@ -86,9 +146,10 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
   const [couponError, setCouponError] = useState<string | null>(null)
 
   // Multi-Stage Payment Option state ("FULL" | "ADVANCE" | "CUSTOM")
-  const [paymentChoice, setPaymentChoice] = useState<"FULL" | "ADVANCE" | "CUSTOM">("FULL")
+  const [paymentChoice, setPaymentChoice] = useState<
+    "FULL" | "ADVANCE" | "CUSTOM"
+  >("FULL")
   const [customPaymentInput, setCustomPaymentInput] = useState<string>("")
-  const [showStageBreakdown, setShowStageBreakdown] = useState<boolean>(true)
 
   // Fetch Payment Plan Settings from backend
   const { data: planSettings } = useQuery({
@@ -154,6 +215,10 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
       setNumberOfPersons(1)
       setTravelType("")
       setSpecialRequests("")
+      setAddress("")
+      setLandmark("")
+      setPincode("")
+      setSelectedState("Tamil Nadu")
       setTravellers([emptyTraveller()])
       setStep("FORM")
       setAppliedCoupon(null)
@@ -162,7 +227,6 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
       setSuccessBooking(null)
       setPaymentChoice("FULL")
       setCustomPaymentInput("")
-      setShowStageBreakdown(true)
     }
   }, [isOpen, pkg, user])
 
@@ -202,13 +266,28 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
   const gstAmount = Math.round((amountAfterDiscount * gstPercentage) / 100)
   const finalPayable = amountAfterDiscount + gstAmount
 
+  // ── GST Breakdown based on selected state (Tamil Nadu vs Other States) ──
+  const isTamilNadu = useMemo(() => {
+    return (selectedState || "").trim().toLowerCase().includes("tamil")
+  }, [selectedState])
+
+  const cgstPercentage = isTamilNadu
+    ? Number((gstPercentage / 2).toFixed(2))
+    : 0
+  const sgstPercentage = isTamilNadu
+    ? Number((gstPercentage / 2).toFixed(2))
+    : 0
+  const cgstAmount = isTamilNadu ? Math.round(gstAmount / 2) : 0
+  const sgstAmount = isTamilNadu ? gstAmount - cgstAmount : 0
+  const igstPercentage = !isTamilNadu ? gstPercentage : 0
+  const igstAmount = !isTamilNadu ? gstAmount : 0
+
   // Multi-stage calculations
   const minAdvancePercentage = planSettings?.minimumAdvancePercentage ?? 10
-  const minAdvanceAmount = Math.max(1, Math.round((finalPayable * minAdvancePercentage) / 100))
-
-  const stage2Config = planSettings?.stages?.find((s: any) => s.stage === 2)
-  const stage2MinPercentage = stage2Config?.minimumPercentage ?? 40
-  const stage2NominalMinAmount = Math.round((finalPayable * stage2MinPercentage) / 100)
+  const minAdvanceAmount = Math.max(
+    1,
+    Math.round((finalPayable * minAdvancePercentage) / 100)
+  )
 
   // Current amount to pay today
   const payableToday = useMemo(() => {
@@ -253,7 +332,8 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
       }
     } catch (err: any) {
       setCouponError(
-        err?.response?.data?.error || "This coupon can't be applied. Please check the coupon conditions"
+        err?.response?.data?.error ||
+          "This coupon can't be applied. Please check the coupon conditions"
       )
     } finally {
       setValidatingCoupon(false)
@@ -316,6 +396,24 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
       return
     }
 
+    // --- Address & State validation ---
+    if (!address.trim()) {
+      toast.error("Please enter your residential/billing address")
+      return
+    }
+    if (!selectedState.trim()) {
+      toast.error("Please select your state")
+      return
+    }
+    if (!pincode.trim()) {
+      toast.error("Please enter your PIN code")
+      return
+    }
+    if (pincode.trim().length !== 6 || isNaN(Number(pincode.trim()))) {
+      toast.error("Please enter a valid 6-digit PIN code")
+      return
+    }
+
     // --- Traveller list validation ---
     for (let i = 0; i < travellers.length; i++) {
       const t = travellers[i]
@@ -362,7 +460,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
     }
 
     if (!agreedToTerms) {
-      toast.error("Please agree to the Terms & Conditions before proceeding")
+      toast.error(
+        "Please agree to the Terms & Conditions, Privacy Policy, and Cancellation & Refund Policy before proceeding"
+      )
       return
     }
 
@@ -372,6 +472,10 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
         fullName: fullName.trim(),
         mobileNumber: mobileNumber.trim(),
         email: email.trim(),
+        address: address.trim(),
+        landmark: landmark.trim(),
+        pincode: pincode.trim(),
+        state: selectedState.trim(),
         numberOfPersons,
         travelDate,
         travelType,
@@ -585,7 +689,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
           >
             {pkg.bookingType === "CUSTOMIZED"
               ? "✨ Customized Package Enquiry"
-              : "⚡ Instant Online Booking with Flexible Stages"}
+              : "⚡ Instant Online Booking"}
           </div>
           <h2
             style={{
@@ -649,8 +753,8 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 {pkg.bookingType === "CUSTOMIZED"
                   ? "Enquiry Received!"
                   : isFullPayment
-                  ? "Booking Confirmed & Fully Paid!"
-                  : "Booking Confirmed with Advance!"}
+                    ? "Booking Confirmed & Fully Paid!"
+                    : "Booking Confirmed with Advance!"}
               </h3>
               <p
                 style={{
@@ -666,8 +770,8 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 {pkg.bookingType === "CUSTOMIZED"
                   ? "Thank you for reaching out! Our travel specialist will prepare a customized itinerary and quote for you within 24 hours."
                   : isFullPayment
-                  ? "Your tour booking is 100% confirmed with full payment. We have sent confirmation details to your registered email and phone."
-                  : "Your tour booking is confirmed with your Stage 1 advance payment! You can pay your remaining balance in flexible installments anytime from your My Bookings dashboard."}
+                    ? ""
+                    : ""}
               </p>
 
               {successBooking && (
@@ -717,7 +821,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     <div
                       style={{
                         background: isFullPayment ? "#F0FDF4" : "#FFFBEB",
-                        border: isFullPayment ? "1px solid #BBF7D0" : "1px solid #FDE68A",
+                        border: isFullPayment
+                          ? "1px solid #BBF7D0"
+                          : "1px solid #FDE68A",
                         borderRadius: 12,
                         padding: "12px 14px",
                         marginBottom: 12,
@@ -735,7 +841,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         }}
                       >
                         <span>Amount Paid Today:</span>
-                        <span>₹{(payableToday || 0).toLocaleString("en-IN")}</span>
+                        <span>
+                          ₹{(payableToday || 0).toLocaleString("en-IN")}
+                        </span>
                       </div>
                       <div
                         style={{
@@ -765,7 +873,10 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                             lineHeight: 1.4,
                           }}
                         >
-                          📌 Note: You can make subsequent payments for the remaining ₹{remainingAfterToday.toLocaleString("en-IN")} in up to 2 more installments from your "My Bookings" page.
+                          📌 Note: You can make subsequent payments for the
+                          remaining ₹
+                          {remainingAfterToday.toLocaleString("en-IN")} in up to
+                          2 more installments from your "My Bookings" page.
                         </p>
                       )}
                     </div>
@@ -854,10 +965,51 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       {successBooking.travellerInfo?.numberOfPersons} Pax
                     </span>
                   </div>
+
+                  {successBooking.travellerInfo?.address && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginTop: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".78rem",
+                          color: "#9494b0",
+                        }}
+                      >
+                        Address & State:
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".82rem",
+                          fontWeight: 600,
+                          color: "#1a1a2e",
+                          textAlign: "right",
+                          maxWidth: "60%",
+                        }}
+                      >
+                        {successBooking.travellerInfo.address}
+                        {successBooking.travellerInfo.landmark
+                          ? `, Near ${successBooking.travellerInfo.landmark}`
+                          : ""}
+                        , {successBooking.travellerInfo.state || "Tamil Nadu"}
+                        {successBooking.travellerInfo.pincode
+                          ? ` - ${successBooking.travellerInfo.pincode}`
+                          : ""}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <div
+                style={{ display: "flex", gap: 12, justifyContent: "center" }}
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -1043,7 +1195,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 </div>
               </div>
 
-              {/* 2. Trip Logistics */}
+              {/* 2. Communication & Billing Address */}
               <div>
                 <div
                   style={{
@@ -1056,7 +1208,156 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     marginBottom: 8,
                   }}
                 >
-                  2. Trip Logistics
+                  2. Residential & Billing Address (For GST & Invoicing)
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label
+                      style={{
+                        display: "block",
+                        fontFamily: f,
+                        fontSize: ".78rem",
+                        fontWeight: 600,
+                        color: "#374151",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Street / Flat / Door Address *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 12/A, Gandhi Street, Anna Nagar"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        border: "1.5px solid #E8E4DC",
+                        borderRadius: 10,
+                        fontFamily: f,
+                        fontSize: ".85rem",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontFamily: f,
+                        fontSize: ".78rem",
+                        fontWeight: 600,
+                        color: "#374151",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Landmark / Locality (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Near Bus Stand / Temple"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        border: "1.5px solid #E8E4DC",
+                        borderRadius: 10,
+                        fontFamily: f,
+                        fontSize: ".85rem",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontFamily: f,
+                        fontSize: ".78rem",
+                        fontWeight: 600,
+                        color: "#374151",
+                        marginBottom: 4,
+                      }}
+                    >
+                      PIN Code *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      placeholder="6-digit PIN code"
+                      value={pincode}
+                      onChange={(e) =>
+                        setPincode(
+                          e.target.value.replace(/\D/g, "").slice(0, 6)
+                        )
+                      }
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        border: "1.5px solid #E8E4DC",
+                        borderRadius: 10,
+                        fontFamily: f,
+                        fontSize: ".85rem",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label
+                      style={{
+                        display: "block",
+                        fontFamily: f,
+                        fontSize: ".78rem",
+                        fontWeight: 600,
+                        color: "#374151",
+                        marginBottom: 4,
+                      }}
+                    >
+                      State*
+                    </label>
+                    <select
+                      required
+                      value={selectedState}
+                      onChange={(e) => setSelectedState(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        border: "1.5px solid #E8E4DC",
+                        borderRadius: 10,
+                        fontFamily: f,
+                        fontSize: ".85rem",
+                        outline: "none",
+                        background: "#fff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {availableStates.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Trip Logistics */}
+              <div>
+                <div
+                  style={{
+                    fontFamily: f,
+                    fontSize: ".72rem",
+                    fontWeight: 700,
+                    color: "#9494b0",
+                    textTransform: "uppercase",
+                    letterSpacing: ".08em",
+                    marginBottom: 8,
+                  }}
+                >
+                  3. Trip Logistics
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
@@ -1162,7 +1463,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 </div>
               </div>
 
-              {/* 3. Dynamic Travellers List */}
+              {/* 4. Dynamic Travellers List */}
               <div>
                 <div
                   style={{
@@ -1182,7 +1483,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       letterSpacing: ".08em",
                     }}
                   >
-                    3. Traveller Details ({travellers.length})
+                    4. Traveller Details ({travellers.length})
                   </div>
                   <button
                     type="button"
@@ -1344,7 +1645,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 </div>
               </div>
 
-              {/* 4. Special Requests */}
+              {/* 5. Special Requests */}
               <div>
                 <label
                   style={{
@@ -1376,7 +1677,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 />
               </div>
 
-              {/* 5. Coupon & Pricing Summary (Standard Only) */}
+              {/* 6. Coupon & Pricing Summary (Standard Only) */}
               {pkg.bookingType === "STANDARD" && (
                 <div
                   style={{
@@ -1415,7 +1716,13 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         justifyContent: "space-between",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
                         <span style={{ fontSize: 16 }}>🎉</span>
                         <div>
                           <div
@@ -1435,7 +1742,11 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                               color: "#388E3C",
                             }}
                           >
-                            Saved ₹{appliedCoupon.discountAmount.toLocaleString("en-IN")} on your booking
+                            Saved ₹
+                            {appliedCoupon.discountAmount.toLocaleString(
+                              "en-IN"
+                            )}{" "}
+                            on your booking
                           </div>
                         </div>
                       </div>
@@ -1552,20 +1863,48 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         <span>- ₹{discountAmount.toLocaleString("en-IN")}</span>
                       </div>
                     )}
-                    {gstAmount > 0 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          fontFamily: f,
-                          fontSize: ".78rem",
-                          color: "#5a5a7a",
-                        }}
-                      >
-                        <span>GST ({gstPercentage}%):</span>
-                        <span>+ ₹{gstAmount.toLocaleString("en-IN")}</span>
-                      </div>
-                    )}
+                    {gstAmount > 0 &&
+                      (isTamilNadu ? (
+                        <>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              fontFamily: f,
+                              fontSize: ".78rem",
+                              color: "#5a5a7a",
+                            }}
+                          >
+                            <span>CGST ({cgstPercentage}%):</span>
+                            <span>+ ₹{cgstAmount.toLocaleString("en-IN")}</span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              fontFamily: f,
+                              fontSize: ".78rem",
+                              color: "#5a5a7a",
+                            }}
+                          >
+                            <span>SGST ({sgstPercentage}%):</span>
+                            <span>+ ₹{sgstAmount.toLocaleString("en-IN")}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontFamily: f,
+                            fontSize: ".78rem",
+                            color: "#5a5a7a",
+                          }}
+                        >
+                          <span>IGST ({igstPercentage}%):</span>
+                          <span>+ ₹{igstAmount.toLocaleString("en-IN")}</span>
+                        </div>
+                      ))}
                     <div
                       style={{
                         display: "flex",
@@ -1585,7 +1924,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                 </div>
               )}
 
-              {/* 6. Multi-Stage Payment Option Selector (Standard Only) */}
+              {/* 7. Multi-Stage Payment Option Selector (Standard Only) */}
               {pkg.bookingType === "STANDARD" && (
                 <div
                   style={{
@@ -1599,8 +1938,16 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     boxShadow: "0 6px 20px rgba(27,43,107,0.06)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
                       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8ECFA] text-[#1B2B6B]">
                         <CreditCard size={16} />
                       </span>
@@ -1624,7 +1971,8 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                             color: "#6B7280",
                           }}
                         >
-                          Pay in full now or confirm with a flexible advance (min {minAdvancePercentage}%)
+                          Pay in full now or confirm with a flexible advance
+                          (min {minAdvancePercentage}%)
                         </div>
                       </div>
                     </div>
@@ -1636,8 +1984,12 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     <div
                       onClick={() => setPaymentChoice("FULL")}
                       style={{
-                        border: paymentChoice === "FULL" ? "2px solid #1B2B6B" : "1.5px solid #E8E4DC",
-                        background: paymentChoice === "FULL" ? "#F4F6FB" : "#fff",
+                        border:
+                          paymentChoice === "FULL"
+                            ? "2px solid #1B2B6B"
+                            : "1.5px solid #E8E4DC",
+                        background:
+                          paymentChoice === "FULL" ? "#F4F6FB" : "#fff",
                         borderRadius: 12,
                         padding: "12px 14px",
                         cursor: "pointer",
@@ -1692,8 +2044,12 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     <div
                       onClick={() => setPaymentChoice("ADVANCE")}
                       style={{
-                        border: paymentChoice === "ADVANCE" ? "2px solid #1B2B6B" : "1.5px solid #E8E4DC",
-                        background: paymentChoice === "ADVANCE" ? "#F4F6FB" : "#fff",
+                        border:
+                          paymentChoice === "ADVANCE"
+                            ? "2px solid #1B2B6B"
+                            : "1.5px solid #E8E4DC",
+                        background:
+                          paymentChoice === "ADVANCE" ? "#F4F6FB" : "#fff",
                         borderRadius: 12,
                         padding: "12px 14px",
                         cursor: "pointer",
@@ -1731,25 +2087,18 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       >
                         ₹{minAdvanceAmount.toLocaleString("en-IN")}
                       </div>
-                      <div
-                        style={{
-                          fontFamily: f,
-                          fontSize: ".7rem",
-                          color: "#B45309",
-                          marginTop: 4,
-                          fontWeight: 600,
-                        }}
-                      >
-                        ⚡ Reserve seats now
-                      </div>
                     </div>
 
                     {/* Option 3: Custom Advance */}
                     <div
                       onClick={() => setPaymentChoice("CUSTOM")}
                       style={{
-                        border: paymentChoice === "CUSTOM" ? "2px solid #1B2B6B" : "1.5px solid #E8E4DC",
-                        background: paymentChoice === "CUSTOM" ? "#F4F6FB" : "#fff",
+                        border:
+                          paymentChoice === "CUSTOM"
+                            ? "2px solid #1B2B6B"
+                            : "1.5px solid #E8E4DC",
+                        background:
+                          paymentChoice === "CUSTOM" ? "#F4F6FB" : "#fff",
                         borderRadius: 12,
                         padding: "12px 14px",
                         cursor: "pointer",
@@ -1810,7 +2159,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         padding: "12px 14px",
                       }}
                     >
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="mb-1.5 flex items-center justify-between">
                         <label
                           style={{
                             fontFamily: f,
@@ -1828,13 +2177,14 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                             color: "#6B7280",
                           }}
                         >
-                          Min: ₹{minAdvanceAmount.toLocaleString("en-IN")} • Max: ₹{finalPayable.toLocaleString("en-IN")}
+                          Min: ₹{minAdvanceAmount.toLocaleString("en-IN")} •
+                          Max: ₹{finalPayable.toLocaleString("en-IN")}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <div className="relative flex-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">
+                          <span className="absolute top-1/2 left-3 -translate-y-1/2 text-xs font-bold text-gray-500">
                             ₹
                           </span>
                           <input
@@ -1843,7 +2193,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                             max={finalPayable}
                             placeholder={`e.g. ${Math.round(finalPayable * 0.25)}`}
                             value={customPaymentInput}
-                            onChange={(e) => setCustomPaymentInput(e.target.value)}
+                            onChange={(e) =>
+                              setCustomPaymentInput(e.target.value)
+                            }
                             style={{
                               width: "100%",
                               padding: "8px 12px 8px 24px",
@@ -1865,7 +2217,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                               <button
                                 key={pct}
                                 type="button"
-                                onClick={() => setCustomPaymentInput(String(val))}
+                                onClick={() =>
+                                  setCustomPaymentInput(String(val))
+                                }
                                 style={{
                                   fontFamily: f,
                                   fontSize: ".72rem",
@@ -1885,19 +2239,22 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         </div>
                       </div>
 
-                      {Number(customPaymentInput) > 0 && Number(customPaymentInput) < minAdvanceAmount && (
-                        <p
-                          style={{
-                            fontFamily: f,
-                            fontSize: ".72rem",
-                            color: "#E53E3E",
-                            marginTop: 4,
-                            marginBottom: 0,
-                          }}
-                        >
-                          ⚠️ Amount must be at least ₹{minAdvanceAmount.toLocaleString("en-IN")} ({minAdvancePercentage}% advance).
-                        </p>
-                      )}
+                      {Number(customPaymentInput) > 0 &&
+                        Number(customPaymentInput) < minAdvanceAmount && (
+                          <p
+                            style={{
+                              fontFamily: f,
+                              fontSize: ".72rem",
+                              color: "#E53E3E",
+                              marginTop: 4,
+                              marginBottom: 0,
+                            }}
+                          >
+                            ⚠️ Amount must be at least ₹
+                            {minAdvanceAmount.toLocaleString("en-IN")} (
+                            {minAdvancePercentage}% advance).
+                          </p>
+                        )}
                       {Number(customPaymentInput) > finalPayable && (
                         <p
                           style={{
@@ -1908,127 +2265,76 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                             marginBottom: 0,
                           }}
                         >
-                          ⚠️ Amount cannot exceed total package cost ₹{finalPayable.toLocaleString("en-IN")}.
+                          ⚠️ Amount cannot exceed total package cost ₹
+                          {finalPayable.toLocaleString("en-IN")}.
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* Stage Plan Breakdown Timeline */}
+                  {/* Highlighted Balance Payable Amount */}
                   {!isFullPayment && (
                     <div
                       style={{
-                        background: "#F7F5F0",
-                        border: "1px solid #E8E4DC",
+                        background: "#FFFBEB",
+                        border: "1.5px solid #FCD34D",
                         borderRadius: 12,
-                        padding: "12px 14px",
+                        padding: "14px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
                       }}
                     >
-                      <div
-                        onClick={() => setShowStageBreakdown(!showStageBreakdown)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <Layers size={14} className="text-[#1B2B6B]" />
-                          <span
-                            style={{
-                              fontFamily: f,
-                              fontSize: ".76rem",
-                              fontWeight: 700,
-                              color: "#1B2B6B",
-                            }}
-                          >
-                            Flexible 3-Stage Payment Schedule
-                          </span>
+                      <div>
+                        <div
+                          style={{
+                            fontFamily: f,
+                            fontSize: ".75rem",
+                            fontWeight: 700,
+                            color: "#92400E",
+                            textTransform: "uppercase",
+                            letterSpacing: ".06em",
+                          }}
+                        >
+                          Balance Payable Amount
                         </div>
+                        <p
+                          style={{
+                            fontFamily: f,
+                            fontSize: ".78rem",
+                            color: "#B45309",
+                            marginTop: 3,
+                            marginBottom: 0,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          Remaining balance to be paid before departure from
+                          your <strong>My Bookings</strong> dashboard.
+                        </p>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
                         <span
+                          style={{
+                            fontFamily: "'Libre Baskerville', serif",
+                            fontSize: "1.25rem",
+                            fontWeight: 700,
+                            color: "#B45309",
+                          }}
+                        >
+                          ₹{remainingAfterToday.toLocaleString("en-IN")}
+                        </span>
+                        <div
                           style={{
                             fontFamily: f,
                             fontSize: ".7rem",
-                            color: "#6B7280",
-                            textDecoration: "underline",
+                            color: "#D97706",
+                            fontWeight: 600,
                           }}
                         >
-                          {showStageBreakdown ? "Hide Details" : "View Breakdown"}
-                        </span>
-                      </div>
-
-                      {showStageBreakdown && (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                            marginTop: 10,
-                            paddingTop: 10,
-                            borderTop: "1px dashed #E2E8F0",
-                          }}
-                        >
-                          {/* Stage 1: Payable Today */}
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1B2B6B] text-[10px] font-bold text-white">
-                                1
-                              </span>
-                              <span style={{ fontFamily: f, fontWeight: 600, color: "#1B2B6B" }}>
-                                Stage 1: Booking Advance (Today)
-                              </span>
-                            </div>
-                            <span style={{ fontFamily: f, fontWeight: 700, color: "#1B2B6B" }}>
-                              ₹{payableToday.toLocaleString("en-IN")}
-                            </span>
-                          </div>
-
-                          {/* Stage 2: Second Payment */}
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                                2
-                              </span>
-                              <span style={{ fontFamily: f, color: "#4B5563" }}>
-                                Stage 2: Second Payment (Min {stage2MinPercentage}%)
-                              </span>
-                            </div>
-                            <span style={{ fontFamily: f, fontWeight: 600, color: "#4B5563" }}>
-                              ~ ₹{Math.min(stage2NominalMinAmount, remainingAfterToday).toLocaleString("en-IN")}
-                            </span>
-                          </div>
-
-                          {/* Stage 3: Final Settlement */}
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
-                                3
-                              </span>
-                              <span style={{ fontFamily: f, color: "#4B5563" }}>
-                                Stage 3: Final Payment
-                              </span>
-                            </div>
-                            <span style={{ fontFamily: f, fontWeight: 600, color: "#4B5563" }}>
-                              Remaining Balance
-                            </span>
-                          </div>
-
-                          <div
-                            style={{
-                              fontFamily: f,
-                              fontSize: ".7rem",
-                              color: "#6B7280",
-                              background: "#fff",
-                              borderRadius: 6,
-                              padding: "6px 8px",
-                              marginTop: 4,
-                            }}
-                          >
-                            💡 Standard stages are minimums. You can pay more or clear your remaining balance (₹{remainingAfterToday.toLocaleString("en-IN")}) at any time from your My Bookings dashboard.
-                          </div>
+                          Remaining
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
 
@@ -2158,8 +2464,8 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       }}
                     >
                       Terms &amp; Conditions
-                    </a>{" "}
-                    and{" "}
+                    </a>
+                    ,{" "}
                     <a
                       href="/privacy-policy"
                       target="_blank"
@@ -2172,6 +2478,20 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       }}
                     >
                       Privacy Policy
+                    </a>
+                    , and{" "}
+                    <a
+                      href="/cancellation-and-refund-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: "#1B2B6B",
+                        fontWeight: 700,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Cancellation &amp; Refund Policy
                     </a>
                     . *
                   </label>
@@ -2224,10 +2544,10 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                   {isSubmitting
                     ? "Processing…"
                     : pkg.bookingType === "CUSTOMIZED"
-                    ? "Submit Enquiry →"
-                    : isFullPayment
-                    ? `Pay ₹${finalPayable.toLocaleString("en-IN")} & Book →`
-                    : `Pay ₹${payableToday.toLocaleString("en-IN")} Advance & Confirm →`}
+                      ? "Submit Enquiry →"
+                      : isFullPayment
+                        ? `Pay ₹${finalPayable.toLocaleString("en-IN")} & Book →`
+                        : `Pay ₹${payableToday.toLocaleString("en-IN")} Advance & Confirm →`}
                 </button>
               </div>
             </form>

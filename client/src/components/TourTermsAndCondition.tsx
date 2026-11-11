@@ -247,16 +247,28 @@ export const TourTermsAndConditions: React.FC = () => {
           }}
         >
           <span>© 2026 UV Holidays — Udayam International. All rights reserved.</span>
-          <a
-            href="/privacy-policy"
-            style={{
-              color: "#1B2B6B",
-              fontWeight: 600,
-              textDecoration: "underline",
-            }}
-          >
-            View Privacy Policy →
-          </a>
+          <div style={{ display: "flex", gap: 16 }}>
+            <a
+              href="/privacy-policy"
+              style={{
+                color: "#1B2B6B",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              Privacy Policy →
+            </a>
+            <a
+              href="/cancellation-and-refund-policy"
+              style={{
+                color: "#1B2B6B",
+                fontWeight: 600,
+                textDecoration: "underline",
+              }}
+            >
+              Cancellation &amp; Refund Policy →
+            </a>
+          </div>
         </div>
       </div>
     </div>

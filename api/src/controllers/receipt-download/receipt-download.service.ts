@@ -7,6 +7,7 @@ import { TourismModel } from "@models/tourism.model"
 import {
     generateReceiptVoucherNumber,
     generateTaxInvoiceNumber,
+    generateBookingConfirmationNumber,
 } from "@helper/numberGenerator.helper"
 import { generateReceiptVoucherPDF } from "@lib/receipt-generation/receipt-voucher"
 import { generateTaxInvoicePDF } from "@lib/receipt-generation/tax-invoice"
@@ -141,7 +142,80 @@ export async function getReceiptVoucherHandler(ctx: Context<{ params: { paymentI
 }
 
 /**
- * Controller: Generate Tax Invoice for a Completed Booking (Admin)
+ * Helper to ensure a booking has a Tax Invoice generated, uploaded to S3, and persisted.
+ */
+export async function generateAndSaveTaxInvoice(bookingId: string | Types.ObjectId) {
+    const booking = await BookingModel.findById(bookingId)
+    if (!booking) {
+        throw new Error("Booking record not found")
+    }
+
+    // Idempotent: If already generated and S3 URL is present, return existing
+    if (booking.invoiceUrl && booking.taxInvoiceNumber) {
+        return {
+            booking,
+            taxInvoiceNumber: booking.taxInvoiceNumber,
+            invoiceUrl: booking.invoiceUrl,
+        }
+    }
+
+    // Ensure booking confirmation reference is generated
+    if (!booking.bookingConfirmationNumber) {
+        booking.bookingConfirmationNumber = await generateBookingConfirmationNumber()
+    }
+
+    // Generate Tax Invoice Number if not already present
+    if (!booking.taxInvoiceNumber) {
+        booking.taxInvoiceNumber = await generateTaxInvoiceNumber()
+    }
+
+    // Fetch all successful payments for this booking
+    const payments = await PaymentModel.find({
+        bookingId: booking._id,
+        status: "SUCCESS",
+    }).sort({ createdAt: 1 })
+
+    // Ensure every successful payment has a receipt voucher number
+    for (const p of payments) {
+        if (!p.receiptVoucherNumber) {
+            p.receiptVoucherNumber = await generateReceiptVoucherNumber(p.createdAt || new Date())
+            await p.save()
+        }
+    }
+
+    const pkg = await TourismModel.findById(booking.packageId)
+    const customer = await UserModel.findById(booking.userId)
+
+    // Generate Tax Invoice PDF buffer
+    const pdfBuffer = await generateTaxInvoicePDF({
+        booking,
+        payments,
+        customer,
+        pkg,
+        invoiceDate: new Date(),
+    })
+
+    // Upload to S3
+    const safeInvNumber = booking.taxInvoiceNumber.replace(/[^a-zA-Z0-9_-]/g, "-")
+    const s3Key = `invoices/invoice-${safeInvNumber}-${booking._id}.pdf`
+    const uploadRes = await uploadBufferToS3(pdfBuffer, s3Key, "application/pdf")
+
+    if (uploadRes.ok && uploadRes.url) {
+        booking.invoiceUrl = uploadRes.url
+    }
+
+    await booking.save()
+
+    return {
+        booking,
+        pdfBuffer,
+        taxInvoiceNumber: booking.taxInvoiceNumber,
+        invoiceUrl: booking.invoiceUrl,
+    }
+}
+
+/**
+ * Controller: Generate Tax Invoice for a Booking (Admin)
  * POST /api/V1/receipt-download/invoice/:bookingId/generate
  */
 export async function generateTaxInvoiceHandler(ctx: Context<{ params: { bookingId: string } }>) {
@@ -160,56 +234,33 @@ export async function generateTaxInvoiceHandler(ctx: Context<{ params: { booking
             return { status: false, error: "Booking not found" }
         }
 
-        // Verification: Tax Invoice should be generated only after the booking is completed
-        if (booking.status !== "COMPLETED") {
-            set.status = 400
-            return {
-                status: false,
-                error: `Tax Invoice can only be generated for COMPLETED bookings. Current status is ${booking.status.replace(/_/g, " ")}.`,
+        const isStandard = booking.bookingType === "STANDARD"
+
+        if (isStandard) {
+            // For standard package: full payment (100%) must be completed
+            const isFullyPaid =
+                booking.paymentDetails?.isFullyPaid ||
+                (booking.paymentDetails?.remainingAmount === 0 && (booking.paymentDetails?.totalPaidAmount || 0) > 0)
+
+            if (!isFullyPaid) {
+                set.status = 400
+                return {
+                    status: false,
+                    error: `For standard packages, the tax invoice can only be generated after full payment (100%) is completed. Remaining balance is ₹${booking.paymentDetails?.remainingAmount ?? 0}.`,
+                }
+            }
+        } else {
+            // For customized package: keep existing flow (booking must be COMPLETED)
+            if (booking.status !== "COMPLETED") {
+                set.status = 400
+                return {
+                    status: false,
+                    error: `Tax Invoice can only be generated for COMPLETED bookings. Current status is ${booking.status.replace(/_/g, " ")}.`,
+                }
             }
         }
 
-        // Generate Tax Invoice Number if not already present
-        if (!booking.taxInvoiceNumber) {
-            booking.taxInvoiceNumber = await generateTaxInvoiceNumber()
-        }
-
-        // Fetch all successful payments for this booking
-        const payments = await PaymentModel.find({
-            bookingId: booking._id,
-            status: "SUCCESS",
-        }).sort({ createdAt: 1 })
-
-        // Ensure every payment has a receipt voucher number
-        for (const p of payments) {
-            if (!p.receiptVoucherNumber) {
-                p.receiptVoucherNumber = await generateReceiptVoucherNumber(p.createdAt || new Date())
-                await p.save()
-            }
-        }
-
-        const pkg = await TourismModel.findById(booking.packageId)
-        const customer = await UserModel.findById(booking.userId)
-
-        // Generate Tax Invoice PDF buffer
-        const pdfBuffer = await generateTaxInvoicePDF({
-            booking,
-            payments,
-            customer,
-            pkg,
-            invoiceDate: new Date(),
-        })
-
-        // Upload to S3
-        const safeInvNumber = booking.taxInvoiceNumber.replace(/[^a-zA-Z0-9_-]/g, "-")
-        const s3Key = `invoices/invoice-${safeInvNumber}-${booking._id}.pdf`
-        const uploadRes = await uploadBufferToS3(pdfBuffer, s3Key, "application/pdf")
-
-        if (uploadRes.ok && uploadRes.url) {
-            booking.invoiceUrl = uploadRes.url
-        }
-
-        await booking.save()
+        const result = await generateAndSaveTaxInvoice(booking._id)
 
         // Staff audit log
         await recordStaffActivity(ctx, {
@@ -219,10 +270,10 @@ export async function generateTaxInvoiceHandler(ctx: Context<{ params: { booking
             recordId: booking._id.toString(),
             recordTitle: booking.bookingNumber,
             updatedData: {
-                taxInvoiceNumber: booking.taxInvoiceNumber,
-                invoiceUrl: booking.invoiceUrl,
+                taxInvoiceNumber: result.taxInvoiceNumber,
+                invoiceUrl: result.invoiceUrl,
             },
-            details: `Generated Tax Invoice ${booking.taxInvoiceNumber} for booking ${booking.bookingNumber}`,
+            details: `Generated Tax Invoice ${result.taxInvoiceNumber} for booking ${booking.bookingNumber}`,
         })
 
         return {
@@ -230,8 +281,8 @@ export async function generateTaxInvoiceHandler(ctx: Context<{ params: { booking
             message: "Tax invoice generated successfully",
             data: {
                 bookingId: booking._id,
-                taxInvoiceNumber: booking.taxInvoiceNumber,
-                invoiceUrl: booking.invoiceUrl,
+                taxInvoiceNumber: result.taxInvoiceNumber,
+                invoiceUrl: result.invoiceUrl,
             },
         }
     } catch (error: any) {
@@ -268,50 +319,32 @@ export async function getTaxInvoiceHandler(ctx: Context<{ params: { bookingId: s
             return { status: false, error: "You are not authorized to view this invoice" }
         }
 
-        // If not yet generated and booking is COMPLETED, auto-generate
-        if (!booking.invoiceUrl && booking.status === "COMPLETED") {
-            const payments = await PaymentModel.find({
-                bookingId: booking._id,
-                status: "SUCCESS",
-            }).sort({ createdAt: 1 })
+        const isStandard = booking.bookingType === "STANDARD"
+        const isStandardFullyPaid =
+            isStandard &&
+            (booking.paymentDetails?.isFullyPaid ||
+                (booking.paymentDetails?.remainingAmount === 0 && (booking.paymentDetails?.totalPaidAmount || 0) > 0))
 
-            for (const p of payments) {
-                if (!p.receiptVoucherNumber) {
-                    p.receiptVoucherNumber = await generateReceiptVoucherNumber(p.createdAt || new Date())
-                    await p.save()
-                }
+        // Auto-generate if not yet generated and criteria are satisfied:
+        // 1. Standard: 100% full payment completed
+        // 2. Customized: Booking status is COMPLETED
+        if (!booking.invoiceUrl) {
+            if (isStandard && isStandardFullyPaid) {
+                await generateAndSaveTaxInvoice(booking._id)
+            } else if (!isStandard && booking.status === "COMPLETED") {
+                await generateAndSaveTaxInvoice(booking._id)
             }
-
-            if (!booking.taxInvoiceNumber) {
-                booking.taxInvoiceNumber = await generateTaxInvoiceNumber()
-            }
-
-            const pkg = await TourismModel.findById(booking.packageId)
-            const customer = await UserModel.findById(booking.userId)
-
-            const pdfBuffer = await generateTaxInvoicePDF({
-                booking,
-                payments,
-                customer,
-                pkg,
-                invoiceDate: new Date(),
-            })
-
-            const safeInvNumber = booking.taxInvoiceNumber.replace(/[^a-zA-Z0-9_-]/g, "-")
-            const s3Key = `invoices/invoice-${safeInvNumber}-${booking._id}.pdf`
-            const uploadRes = await uploadBufferToS3(pdfBuffer, s3Key, "application/pdf")
-            if (uploadRes.ok && uploadRes.url) {
-                booking.invoiceUrl = uploadRes.url
-            }
-            await booking.save()
         }
 
-        if (!booking.invoiceUrl) {
+        const updatedBooking = await BookingModel.findById(booking._id)
+        if (!updatedBooking?.invoiceUrl) {
             set.status = 404
             return {
                 status: false,
-                error: booking.status !== "COMPLETED"
-                    ? "Tax Invoice is generated once the booking is completed."
+                error: isStandard
+                    ? `Tax Invoice for standard packages is generated automatically once full payment (100%) is completed. Remaining balance is ₹${booking.paymentDetails?.remainingAmount ?? 0}.`
+                    : booking.status !== "COMPLETED"
+                    ? "Tax Invoice for customized bookings is generated once the booking is completed."
                     : "Tax invoice has not been generated for this booking yet.",
             }
         }
@@ -319,32 +352,32 @@ export async function getTaxInvoiceHandler(ctx: Context<{ params: { bookingId: s
         // If stream download requested
         if (query.download === "true") {
             const payments = await PaymentModel.find({
-                bookingId: booking._id,
+                bookingId: updatedBooking._id,
                 status: "SUCCESS",
             }).sort({ createdAt: 1 })
 
-            const pkg = await TourismModel.findById(booking.packageId)
-            const customer = await UserModel.findById(booking.userId)
+            const pkg = await TourismModel.findById(updatedBooking.packageId)
+            const customer = await UserModel.findById(updatedBooking.userId)
 
             const buffer = await generateTaxInvoicePDF({
-                booking,
+                booking: updatedBooking,
                 payments,
                 customer,
                 pkg,
             })
 
             set.headers["Content-Type"] = "application/pdf"
-            set.headers["Content-Disposition"] = `inline; filename="Tax-Invoice-${booking.taxInvoiceNumber?.replace(/[^a-zA-Z0-9_-]/g, "-") || booking.bookingNumber}.pdf"`
+            set.headers["Content-Disposition"] = `inline; filename="Tax-Invoice-${updatedBooking.taxInvoiceNumber?.replace(/[^a-zA-Z0-9_-]/g, "-") || updatedBooking.bookingNumber}.pdf"`
             return buffer
         }
 
         return {
             status: true,
             data: {
-                bookingId: booking._id,
-                taxInvoiceNumber: booking.taxInvoiceNumber,
-                invoiceUrl: booking.invoiceUrl,
-                status: booking.status,
+                bookingId: updatedBooking._id,
+                taxInvoiceNumber: updatedBooking.taxInvoiceNumber,
+                invoiceUrl: updatedBooking.invoiceUrl,
+                status: updatedBooking.status,
             },
         }
     } catch (error: any) {

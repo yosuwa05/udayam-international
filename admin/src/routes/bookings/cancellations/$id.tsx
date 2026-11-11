@@ -19,6 +19,7 @@ import {
   ExternalLink,
   CreditCard,
   FileText,
+  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,7 +51,9 @@ function CancellationRequestDetailComponent() {
   const [refundAmount, setRefundAmount] = useState<string>('')
   const [paymentMode, setPaymentMode] = useState<string>('BANK_TRANSFER')
   const [transactionReference, setTransactionReference] = useState<string>('')
-  const [refundDate, setRefundDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [refundDate, setRefundDate] = useState<string>(
+    new Date().toISOString().split('T')[0],
+  )
   const [adminNotes, setAdminNotes] = useState<string>('')
 
   // Rejection Form State
@@ -70,35 +73,40 @@ function CancellationRequestDetailComponent() {
     enabled: !!id,
   })
 
-  // Pre-fill default refund amount once data is loaded
-  useEffect(() => {
-    if (request && refundAmount === '' && request.status === 'PENDING') {
-      setRefundAmount(String(request.totalPaidAmount || 0))
-    }
-  }, [request, refundAmount])
-
   // Mutation to process request (Accept/Reject)
   const processMutation = useMutation({
     mutationFn: async (payload: any) => {
       const res = await _axios.post(
         `/booking/admin/cancellation-requests/${id}/process`,
-        payload
+        payload,
       )
       return res.data
     },
     onSuccess: (data) => {
-      toast.success(data?.message || 'Cancellation request processed successfully')
-      queryClient.invalidateQueries({ queryKey: ['admin-cancellation-requests'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-cancellation-detail', id] })
+      toast.success(
+        data?.message || 'Cancellation request processed successfully',
+      )
+      queryClient.invalidateQueries({
+        queryKey: ['admin-cancellation-requests'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['admin-cancellation-detail', id],
+      })
       queryClient.invalidateQueries({ queryKey: ['admin-booking-detail'] })
       queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.error || 'Failed to process cancellation request')
+      toast.error(
+        err?.response?.data?.error || 'Failed to process cancellation request',
+      )
     },
   })
 
   const handleApprove = () => {
+    if (refundAmount === '') {
+      toast.error('Please enter the refund amount')
+      return
+    }
     const num = Number(refundAmount)
     if (isNaN(num) || num < 0) {
       toast.error('Please enter a valid refund amount')
@@ -106,7 +114,7 @@ function CancellationRequestDetailComponent() {
     }
     if (num > (request?.totalPaidAmount || 0)) {
       toast.error(
-        `Refund amount cannot exceed total paid amount (₹${(request?.totalPaidAmount || 0).toLocaleString('en-IN')})`
+        `Refund amount cannot exceed total paid amount (₹${(request?.totalPaidAmount || 0).toLocaleString('en-IN')})`,
       )
       return
     }
@@ -123,7 +131,9 @@ function CancellationRequestDetailComponent() {
 
   const handleReject = () => {
     if (!rejectionReason.trim()) {
-      toast.error('Please provide a reason for declining the cancellation request')
+      toast.error(
+        'Please provide a reason for declining the cancellation request',
+      )
       return
     }
 
@@ -137,7 +147,9 @@ function CancellationRequestDetailComponent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-xs text-muted-foreground">Loading cancellation request...</p>
+        <p className="text-xs text-muted-foreground">
+          Loading cancellation request...
+        </p>
       </div>
     )
   }
@@ -171,7 +183,11 @@ function CancellationRequestDetailComponent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-3">
           <Link to="/bookings/cancellations">
-            <Button variant="ghost" size="icon" className="h-9 w-9 cursor-pointer">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 cursor-pointer"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -207,7 +223,9 @@ function CancellationRequestDetailComponent() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">Status:</span>
+          <span className="text-xs text-muted-foreground font-medium">
+            Status:
+          </span>
           {isPending && (
             <Badge className="bg-amber-100 text-amber-900 border-amber-300 px-3 py-1 text-xs font-bold">
               Pending Review
@@ -241,7 +259,10 @@ function CancellationRequestDetailComponent() {
                   Customer Cancellation Reason
                 </h3>
               </div>
-              <Badge variant="outline" className="text-xs border-amber-300 text-amber-800 bg-amber-100/50">
+              <Badge
+                variant="outline"
+                className="text-xs border-amber-300 text-amber-800 bg-amber-100/50"
+              >
                 {request.reasonCategory || 'General Emergency'}
               </Badge>
             </div>
@@ -250,7 +271,8 @@ function CancellationRequestDetailComponent() {
             </div>
             {request.userNotes && (
               <p className="text-xs text-muted-foreground italic px-1">
-                Additional payout / user notes: <strong>{request.userNotes}</strong>
+                Additional payout / user notes:{' '}
+                <strong>{request.userNotes}</strong>
               </p>
             )}
           </div>
@@ -271,13 +293,18 @@ function CancellationRequestDetailComponent() {
                   <span className="text-muted-foreground">Phone:</span>{' '}
                   <strong>{request.userId?.mobile || 'N/A'}</strong>
                 </p>
-                <p className="text-foreground truncate" title={request.userId?.email}>
+                <p
+                  className="text-foreground truncate"
+                  title={request.userId?.email}
+                >
                   <span className="text-muted-foreground">Email:</span>{' '}
                   <strong>{request.userId?.email || 'N/A'}</strong>
                 </p>
                 <p className="text-foreground">
                   <span className="text-muted-foreground">Travellers:</span>{' '}
-                  <strong>{request.bookingId?.travellerInfo?.numberOfPersons || 1} Pax</strong>
+                  <strong>
+                    {request.bookingId?.travellerInfo?.numberOfPersons || 1} Pax
+                  </strong>
                 </p>
               </div>
             </div>
@@ -288,20 +315,30 @@ function CancellationRequestDetailComponent() {
                 <Building2 className="h-4 w-4" /> Tour Package Details
               </div>
               <div className="text-xs space-y-1 pt-1">
-                <p className="text-foreground font-semibold truncate" title={request.packageId?.title}>
+                <p
+                  className="text-foreground font-semibold truncate"
+                  title={request.packageId?.title}
+                >
                   {request.packageId?.title || 'Tour Package'}
                 </p>
                 <p className="text-muted-foreground">
-                  <span>Destination:</span> <strong>{request.packageId?.destination || 'N/A'}</strong>
+                  <span>Destination:</span>{' '}
+                  <strong>{request.packageId?.destination || 'N/A'}</strong>
                 </p>
                 <p className="text-muted-foreground">
-                  <span>Package Type:</span> <strong>{request.packageId?.packageType || 'N/A'}</strong>
+                  <span>Package Type:</span>{' '}
+                  <strong>{request.packageId?.packageType || 'N/A'}</strong>
                 </p>
                 <div className="pt-1">
                   <Link
                     to="/bookings/$id"
                     params={{ id: request.bookingId?._id || request.bookingId }}
-                    search={{ type: request.bookingType === 'CUSTOMIZED' ? 'customized' : 'standard' }}
+                    search={{
+                      type:
+                        request.bookingType === 'CUSTOMIZED'
+                          ? 'customized'
+                          : 'standard',
+                    }}
                     className="text-primary hover:underline inline-flex items-center gap-1 font-semibold text-xs"
                     target="_blank"
                   >
@@ -316,7 +353,8 @@ function CancellationRequestDetailComponent() {
           <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-xs space-y-3 p-5">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-foreground text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <Receipt className="h-4 w-4 text-primary" /> Customer Payment Transaction Records
+                <Receipt className="h-4 w-4 text-primary" /> Customer Payment
+                Transaction Records
               </h3>
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 Total Paid: ₹{totalPaidAmount.toLocaleString('en-IN')}
@@ -336,22 +374,37 @@ function CancellationRequestDetailComponent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {request.bookingId?.transactions && request.bookingId.transactions.length > 0 ? (
-                      request.bookingId.transactions.map((tx: any, idx: number) => (
-                        <tr key={idx} className="border-b border-border last:border-0">
-                          <td className="p-3">
-                            {new Date(tx.transactionDate || tx.createdAt).toLocaleDateString('en-IN')}
-                          </td>
-                          <td className="p-3 font-semibold">{tx.paymentMode}</td>
-                          <td className="p-3 text-right font-bold text-emerald-600">
-                            ₹{Number(tx.amount).toLocaleString('en-IN')}
-                          </td>
-                          <td className="p-3 text-muted-foreground">{tx.notes || '—'}</td>
-                        </tr>
-                      ))
+                    {request.bookingId?.transactions &&
+                    request.bookingId.transactions.length > 0 ? (
+                      request.bookingId.transactions.map(
+                        (tx: any, idx: number) => (
+                          <tr
+                            key={idx}
+                            className="border-b border-border last:border-0"
+                          >
+                            <td className="p-3">
+                              {new Date(
+                                tx.transactionDate || tx.createdAt,
+                              ).toLocaleDateString('en-IN')}
+                            </td>
+                            <td className="p-3 font-semibold">
+                              {tx.paymentMode}
+                            </td>
+                            <td className="p-3 text-right font-bold text-emerald-600">
+                              ₹{Number(tx.amount).toLocaleString('en-IN')}
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {tx.notes || '—'}
+                            </td>
+                          </tr>
+                        ),
+                      )
                     ) : (
                       <tr>
-                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
+                        <td
+                          colSpan={4}
+                          className="p-4 text-center text-muted-foreground"
+                        >
                           No transactions recorded
                         </td>
                       </tr>
@@ -370,9 +423,13 @@ function CancellationRequestDetailComponent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {request.bookingId?.payments && request.bookingId.payments.length > 0 ? (
+                    {request.bookingId?.payments &&
+                    request.bookingId.payments.length > 0 ? (
                       request.bookingId.payments.map((p: any, idx: number) => (
-                        <tr key={idx} className="border-b border-border last:border-0">
+                        <tr
+                          key={idx}
+                          className="border-b border-border last:border-0"
+                        >
                           <td className="p-3 text-muted-foreground">
                             {new Date(p.createdAt).toLocaleDateString('en-IN')}
                           </td>
@@ -397,8 +454,12 @@ function CancellationRequestDetailComponent() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                          Total paid recorded: ₹{totalPaidAmount.toLocaleString('en-IN')}
+                        <td
+                          colSpan={4}
+                          className="p-4 text-center text-muted-foreground"
+                        >
+                          Total paid recorded: ₹
+                          {totalPaidAmount.toLocaleString('en-IN')}
                         </td>
                       </tr>
                     )}
@@ -421,7 +482,9 @@ function CancellationRequestDetailComponent() {
 
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center py-1 border-b border-border">
-                <span className="text-muted-foreground">Final Package Amount</span>
+                <span className="text-muted-foreground">
+                  Final Package Amount
+                </span>
                 <span className="font-bold text-foreground">
                   ₹{totalBookingPrice.toLocaleString('en-IN')}
                 </span>
@@ -448,95 +511,96 @@ function CancellationRequestDetailComponent() {
           {/* ================================================================= */}
           {isPending ? (
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <h3 className="font-bold text-foreground text-xs uppercase tracking-wider">
-                  Admin Resolution &amp; Settlement
-                </h3>
-                <div className="flex gap-1.5">
-                  <Button
-                    size="sm"
-                    variant={activeTab === 'APPROVE' ? 'default' : 'outline'}
+              {/* Tab Header View */}
+              <div className="space-y-3 border-b border-border pb-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-foreground text-xs uppercase tracking-wider">
+                    Admin Refund
+                  </h3>
+                </div>
+
+                {/* Tab switcher: Proper Segmented Tab View */}
+                <div className="grid grid-cols-2 p-1 bg-muted/80 rounded-xl border border-border/70 gap-1">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'APPROVE'}
                     onClick={() => setActiveTab('APPROVE')}
-                    className="text-xs h-7 px-2.5"
+                    className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      activeTab === 'APPROVE'
+                        ? 'bg-card text-emerald-600 dark:text-emerald-400 font-bold shadow-xs border border-border'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-card/40'
+                    }`}
                   >
-                    <Check className="h-3 w-3 mr-1" /> Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={activeTab === 'REJECT' ? 'destructive' : 'outline'}
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Approve &amp; Refund</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'REJECT'}
                     onClick={() => setActiveTab('REJECT')}
-                    className="text-xs h-7 px-2.5"
+                    className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      activeTab === 'REJECT'
+                        ? 'bg-card text-rose-600 dark:text-rose-400 font-bold shadow-xs border border-border'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-card/40'
+                    }`}
                   >
-                    <X className="h-3 w-3 mr-1" /> Decline
-                  </Button>
+                    <X className="h-3.5 w-3.5" />
+                    <span>Decline Request</span>
+                  </button>
                 </div>
               </div>
 
               {activeTab === 'APPROVE' ? (
                 <div className="space-y-4 text-xs">
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-900/40 text-[11px] leading-relaxed">
-                    💡 <strong>Offline Refund Processing:</strong> Calculate the refund per cancellation terms. Transfer the amount manually via bank or UPI, then record the settlement details below. Confirming marks the booking as <strong>CANCELLED</strong> and payment as <strong>REFUNDED</strong>.
-                  </div>
-
-                  {/* Preset helpers */}
-                  <div>
-                    <label className="block text-[11px] font-semibold text-foreground mb-1.5">
-                      Quick Percentage Calculation:
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-8"
-                        onClick={() => setRefundAmount(String(totalPaidAmount))}
-                      >
-                        100% (₹{totalPaidAmount.toLocaleString('en-IN')})
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-8"
-                        onClick={() => setRefundAmount(String(Math.round(totalPaidAmount * 0.75)))}
-                      >
-                        75% (₹{Math.round(totalPaidAmount * 0.75).toLocaleString('en-IN')})
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-8"
-                        onClick={() => setRefundAmount(String(Math.round(totalPaidAmount * 0.5)))}
-                      >
-                        50% (₹{Math.round(totalPaidAmount * 0.5).toLocaleString('en-IN')})
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-8"
-                        onClick={() => setRefundAmount('0')}
-                      >
-                        0% (No Refund)
-                      </Button>
-                    </div>
-                  </div>
-
                   {/* Refund Amount Input & Deduction */}
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-foreground mb-1">
-                        Refund Amount to Pay User (₹) *
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[11px] font-semibold text-foreground">
+                          Refund Amount to Pay User (₹) *
+                        </label>
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                          Max Refundable:{' '}
+                          <strong className="text-foreground font-bold">
+                            ₹{totalPaidAmount.toLocaleString('en-IN')}
+                          </strong>
+                        </span>
+                      </div>
                       <Input
                         type="number"
                         min="0"
                         max={totalPaidAmount}
                         value={refundAmount}
-                        onChange={(e) => setRefundAmount(e.target.value)}
-                        placeholder="Enter refund amount"
-                        className="h-9 text-xs"
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === '') {
+                            setRefundAmount('')
+                            return
+                          }
+                          const num = Number(val)
+                          if (isNaN(num) || num < 0) return
+                          if (num > totalPaidAmount) {
+                            setRefundAmount(String(totalPaidAmount))
+                            toast.error(
+                              `Cannot exceed total paid amount of ₹${totalPaidAmount.toLocaleString('en-IN')}`,
+                            )
+                            return
+                          }
+                          setRefundAmount(val)
+                        }}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === '-' ||
+                            e.key === '+' ||
+                            e.key === 'e' ||
+                            e.key === 'E'
+                          ) {
+                            e.preventDefault()
+                          }
+                        }}
+                        className="h-9 text-xs font-medium"
                       />
                     </div>
 
@@ -544,11 +608,38 @@ function CancellationRequestDetailComponent() {
                       <label className="block text-[11px] font-semibold text-foreground mb-1">
                         Deduction / Cancellation Charge
                       </label>
-                      <div className="h-9 px-3 flex items-center rounded-md bg-muted border border-border text-xs font-semibold text-foreground">
-                        ₹{Math.max(0, totalPaidAmount - (Number(refundAmount) || 0)).toLocaleString('en-IN')}
-                        <span className="ml-1 text-[11px] text-muted-foreground font-normal">
-                          deducted from ₹{totalPaidAmount.toLocaleString('en-IN')}
-                        </span>
+                      <div className="h-9 px-3 flex items-center justify-between rounded-md border border-border bg-muted text-xs font-semibold text-foreground">
+                        {refundAmount === '' ? (
+                          <span className="text-muted-foreground font-normal">
+                            Enter refund amount above to calculate deduction
+                          </span>
+                        ) : (
+                          <>
+                            <span>
+                              ₹
+                              {Math.max(
+                                0,
+                                totalPaidAmount - (Number(refundAmount) || 0),
+                              ).toLocaleString('en-IN')}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-normal">
+                              deducted from ₹
+                              {totalPaidAmount.toLocaleString('en-IN')}
+                              <span className="ml-1 font-medium text-foreground">
+                                (
+                                {(
+                                  (Math.max(
+                                    0,
+                                    totalPaidAmount - Number(refundAmount),
+                                  ) /
+                                    (totalPaidAmount || 1)) *
+                                  100
+                                ).toFixed(1)}
+                                % charge)
+                              </span>
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -556,13 +647,20 @@ function CancellationRequestDetailComponent() {
                       <label className="block text-[11px] font-semibold text-foreground mb-1">
                         Settlement Mode *
                       </label>
-                      <Select value={paymentMode} onValueChange={setPaymentMode}>
+                      <Select
+                        value={paymentMode}
+                        onValueChange={setPaymentMode}
+                      >
                         <SelectTrigger className="h-9 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="BANK_TRANSFER">Bank Transfer (NEFT/IMPS)</SelectItem>
-                          <SelectItem value="UPI">UPI (GPay / PhonePe / Paytm)</SelectItem>
+                          <SelectItem value="BANK_TRANSFER">
+                            Bank Transfer (NEFT/IMPS)
+                          </SelectItem>
+                          <SelectItem value="UPI">
+                            UPI (GPay / PhonePe / Paytm)
+                          </SelectItem>
                           <SelectItem value="CASH">Cash Settlement</SelectItem>
                           <SelectItem value="ONLINE">Online Gateway</SelectItem>
                           <SelectItem value="OTHER">Other / Cheque</SelectItem>
@@ -576,7 +674,9 @@ function CancellationRequestDetailComponent() {
                       </label>
                       <Input
                         value={transactionReference}
-                        onChange={(e) => setTransactionReference(e.target.value)}
+                        onChange={(e) =>
+                          setTransactionReference(e.target.value)
+                        }
                         placeholder="e.g. UTR987654321"
                         className="h-9 text-xs"
                       />
@@ -609,16 +709,25 @@ function CancellationRequestDetailComponent() {
 
                   <Button
                     onClick={handleApprove}
-                    disabled={processMutation.isPending || !userCanEdit}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 mt-2 cursor-pointer"
+                    disabled={
+                      processMutation.isPending ||
+                      !userCanEdit ||
+                      refundAmount === '' ||
+                      isNaN(Number(refundAmount)) ||
+                      Number(refundAmount) < 0 ||
+                      Number(refundAmount) > totalPaidAmount
+                    }
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 mt-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {processMutation.isPending ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Processing Refund...
+                        <Loader2 className="h-4 w-4 animate-spin mr-1.5" />{' '}
+                        Processing Refund...
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 className="h-4 w-4 mr-1.5" /> Confirm &amp; Mark Refunded
+                        <CheckCircle2 className="h-4 w-4 mr-1.5" /> Confirm
+                        &amp; Mark Refunded
                       </>
                     )}
                   </Button>
@@ -627,7 +736,10 @@ function CancellationRequestDetailComponent() {
                 /* REJECT TAB */
                 <div className="space-y-4 text-xs">
                   <div className="p-3 bg-rose-50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300 rounded-xl border border-rose-200 dark:border-rose-900/40 text-[11px] leading-relaxed">
-                    ⚠️ <strong>Declining Request:</strong> Declining will revert the booking status back to <strong>{request.previousBookingStatus}</strong> and reject the cancellation.
+                    ⚠️ <strong>Declining Request:</strong> Declining will revert
+                    the booking status back to{' '}
+                    <strong>{request.previousBookingStatus}</strong> and reject
+                    the cancellation.
                   </div>
 
                   <div>
@@ -645,16 +757,22 @@ function CancellationRequestDetailComponent() {
                   <Button
                     variant="destructive"
                     onClick={handleReject}
-                    disabled={processMutation.isPending || !userCanEdit}
-                    className="w-full font-bold text-xs h-10 cursor-pointer"
+                    disabled={
+                      processMutation.isPending ||
+                      !userCanEdit ||
+                      !rejectionReason.trim()
+                    }
+                    className="w-full font-bold bg-rose-600 hover:bg-rose-700 text-white text-xs h-10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {processMutation.isPending ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Processing...
+                        <Loader2 className="h-4 w-4 animate-spin mr-1.5" />{' '}
+                        Processing...
                       </>
                     ) : (
                       <>
-                        <XCircle className="h-4 w-4 mr-1.5" /> Decline Request &amp; Restore Booking
+                        <XCircle className="h-4 w-4 mr-1.5" /> Decline Request
+                        &amp; Restore Booking
                       </>
                     )}
                   </Button>
@@ -673,36 +791,55 @@ function CancellationRequestDetailComponent() {
                 <div className="flex justify-between py-1 border-b border-border">
                   <span className="text-muted-foreground">Refund Paid:</span>
                   <span className="font-bold text-emerald-600 text-sm">
-                    ₹{Number(request.adminRefundDetails?.refundAmount || 0).toLocaleString('en-IN')}
+                    ₹
+                    {Number(
+                      request.adminRefundDetails?.refundAmount || 0,
+                    ).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1 border-b border-border">
-                  <span className="text-muted-foreground">Deduction / Fee:</span>
+                  <span className="text-muted-foreground">
+                    Deduction / Fee:
+                  </span>
                   <span className="font-bold text-foreground">
-                    ₹{Number(request.adminRefundDetails?.deductionAmount || 0).toLocaleString('en-IN')}
+                    ₹
+                    {Number(
+                      request.adminRefundDetails?.deductionAmount || 0,
+                    ).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1 border-b border-border">
-                  <span className="text-muted-foreground">Settlement Mode:</span>
+                  <span className="text-muted-foreground">
+                    Settlement Mode:
+                  </span>
                   <span className="font-semibold text-foreground">
-                    {request.adminRefundDetails?.paymentMode?.replace(/_/g, ' ')}
+                    {request.adminRefundDetails?.paymentMode?.replace(
+                      /_/g,
+                      ' ',
+                    )}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1 border-b border-border">
-                  <span className="text-muted-foreground">Transaction Ref / UTR:</span>
+                  <span className="text-muted-foreground">
+                    Transaction Ref / UTR:
+                  </span>
                   <span className="font-mono font-medium text-foreground truncate max-w-[140px]">
                     {request.adminRefundDetails?.transactionReference || 'N/A'}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1 border-b border-border">
-                  <span className="text-muted-foreground">Settlement Date:</span>
+                  <span className="text-muted-foreground">
+                    Settlement Date:
+                  </span>
                   <span className="font-medium text-foreground">
                     {request.adminRefundDetails?.refundDate
-                      ? new Date(request.adminRefundDetails.refundDate).toLocaleDateString('en-IN')
+                      ? new Date(
+                          request.adminRefundDetails.refundDate,
+                        ).toLocaleDateString('en-IN')
                       : 'N/A'}
                   </span>
                 </div>
@@ -717,14 +854,20 @@ function CancellationRequestDetailComponent() {
 
               {request.adminRefundDetails?.adminNotes && (
                 <div className="text-xs text-muted-foreground bg-card p-3 rounded-xl border border-border">
-                  <strong>Notes:</strong> {request.adminRefundDetails.adminNotes}
+                  <strong>Notes:</strong>{' '}
+                  {request.adminRefundDetails.adminNotes}
                 </div>
               )}
 
               <Link
                 to="/bookings/$id"
                 params={{ id: request.bookingId?._id || request.bookingId }}
-                search={{ type: request.bookingType === 'CUSTOMIZED' ? 'customized' : 'standard' }}
+                search={{
+                  type:
+                    request.bookingType === 'CUSTOMIZED'
+                      ? 'customized'
+                      : 'standard',
+                }}
                 className="w-full inline-flex items-center justify-center gap-1.5 h-9 bg-primary text-primary-foreground font-semibold rounded-xl text-xs shadow-xs"
               >
                 View Full Booking Page <ExternalLink className="h-3.5 w-3.5" />
@@ -739,16 +882,22 @@ function CancellationRequestDetailComponent() {
               </div>
 
               <div className="bg-card p-4 rounded-xl border border-rose-200 dark:border-rose-900/30 text-xs space-y-2">
-                <span className="text-muted-foreground font-semibold">Decline Reason:</span>
+                <span className="text-muted-foreground font-semibold">
+                  Decline Reason:
+                </span>
                 <p className="font-medium text-foreground">
                   "{request.adminRejectionDetails?.rejectionReason}"
                 </p>
                 <div className="pt-2 border-t border-border flex justify-between text-[11px] text-muted-foreground">
                   <span>
-                    Declined by: <strong>{request.adminRejectionDetails?.rejectedByName || 'Admin'}</strong>
+                    Declined by:{' '}
+                    <strong>
+                      {request.adminRejectionDetails?.rejectedByName || 'Admin'}
+                    </strong>
                   </span>
                   <span>
-                    Booking status: <strong>{request.previousBookingStatus}</strong>
+                    Booking status:{' '}
+                    <strong>{request.previousBookingStatus}</strong>
                   </span>
                 </div>
               </div>
@@ -761,4 +910,3 @@ function CancellationRequestDetailComponent() {
 }
 
 export default CancellationRequestDetailComponent
-

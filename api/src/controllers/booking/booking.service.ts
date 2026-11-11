@@ -22,7 +22,10 @@ import {
 } from "@helper/paymentValidation.helper"
 import { recordStaffActivity } from "@helper/staffLogger"
 import { generateBookingConfirmationNumber } from "@helper/numberGenerator.helper"
-import { generateAndSaveReceiptVoucher } from "../receipt-download/receipt-download.service"
+import {
+    generateAndSaveReceiptVoucher,
+    generateAndSaveTaxInvoice,
+} from "../receipt-download/receipt-download.service"
 
 
 // ─── HELPER: Coupon Validator Logic ──────────────────────────────────────────
@@ -307,6 +310,27 @@ export const createStandardBookingOrder = async (ctx: Context) => {
         const gstAmount = Math.round((finalAmount * gstPercentage) / 100)
         finalAmount = roundCurrency(finalAmount + gstAmount)
 
+        // ── Determine GST Breakdown based on Traveller State (Tamil Nadu vs Other States) ──
+        const selectedState = travellerInfo.state?.trim() || "Tamil Nadu"
+        const isTamilNadu = selectedState.toLowerCase().includes("tamil")
+
+        let cgstAmount = 0
+        let cgstPercentage = 0
+        let sgstAmount = 0
+        let sgstPercentage = 0
+        let igstAmount = 0
+        let igstPercentage = 0
+
+        if (isTamilNadu) {
+            cgstPercentage = Number((gstPercentage / 2).toFixed(2))
+            sgstPercentage = Number((gstPercentage / 2).toFixed(2))
+            cgstAmount = Math.round(gstAmount / 2)
+            sgstAmount = gstAmount - cgstAmount
+        } else {
+            igstPercentage = gstPercentage
+            igstAmount = gstAmount
+        }
+
         // ── Validate payment stage and upfront amount ──
         const planSettings = await getOrCreatePaymentPlanSettings()
         const paymentValidation = validateInitialBookingPayment({
@@ -381,6 +405,11 @@ export const createStandardBookingOrder = async (ctx: Context) => {
                 travelDate: new Date(travellerInfo.travelDate),
                 travelType: travellerInfo.travelType || "FAMILY",
                 specialRequests: travellerInfo.specialRequests,
+                address: travellerInfo.address?.trim() || "",
+                landmark: travellerInfo.landmark?.trim() || "",
+                pincode: travellerInfo.pincode?.trim() || "",
+                state: selectedState,
+                stateCode: travellerInfo.stateCode || (isTamilNadu ? "33" : ""),
                 travellers: travellerInfo.travellers || [],
             },
             pricingDetails: {
@@ -390,6 +419,13 @@ export const createStandardBookingOrder = async (ctx: Context) => {
                 gstPercentage,
                 finalAmount,
                 currency: "INR",
+                isTamilNadu,
+                cgstAmount,
+                cgstPercentage,
+                sgstAmount,
+                sgstPercentage,
+                igstAmount,
+                igstPercentage,
             },
             couponId: couponIdObj ? couponIdObj.toString() : null,
             initialPaymentAmount: payableAmount,
@@ -502,6 +538,13 @@ export const confirmBookingFromPaymentPayload = async (
         }
         await booking.save()
 
+        // Auto-generate Tax Invoice if Standard package is now fully paid (100%)
+        if (summary.isFullyPaid && booking.bookingType === "STANDARD") {
+            generateAndSaveTaxInvoice(booking._id).catch((err) =>
+                console.error("Error auto-generating tax invoice on subsequent full payment:", err)
+            )
+        }
+
         // Audit History Log
         await BookingStatusHistoryModel.create({
             bookingId: booking._id,
@@ -565,6 +608,13 @@ export const confirmBookingFromPaymentPayload = async (
     generateAndSaveReceiptVoucher(payment._id).catch((err) =>
         console.error("Error generating initial booking receipt voucher:", err)
     )
+
+    // Auto-generate Tax Invoice if user completed full payment (100%) upfront for Standard package
+    if (isFullyPaid && booking.bookingType === "STANDARD") {
+        generateAndSaveTaxInvoice(booking._id).catch((err) =>
+            console.error("Error auto-generating tax invoice on initial full payment:", err)
+        )
+    }
 
     // Consume Coupon if applicable
     if (booking.couponId) {
@@ -974,6 +1024,11 @@ export const createCustomizedEnquiry = async (ctx: Context) => {
                 travelDate: new Date(travellerInfo.travelDate),
                 travelType: travellerInfo.travelType || "FAMILY",
                 specialRequests: travellerInfo.specialRequests,
+                address: travellerInfo.address?.trim() || "",
+                landmark: travellerInfo.landmark?.trim() || "",
+                pincode: travellerInfo.pincode?.trim() || "",
+                state: travellerInfo.state?.trim() || "Tamil Nadu",
+                stateCode: travellerInfo.stateCode || (travellerInfo.state?.trim()?.toLowerCase()?.includes("tamil") ? "33" : ""),
                 travellers: travellerInfo.travellers || [],
             },
             pricingDetails: {
