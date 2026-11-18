@@ -207,6 +207,14 @@ function CancellationRequestDetailComponent() {
                 {request.bookingType}
               </Badge>
             </div>
+            {request.cancellationNumber && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-muted-foreground font-medium">Cancellation ID:</span>
+                <span className="font-mono text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900">
+                  {request.cancellationNumber}
+                </span>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-0.5">
               Requested on{' '}
               {request.createdAt
@@ -797,6 +805,15 @@ function CancellationRequestDetailComponent() {
                     ).toLocaleString('en-IN')}
                   </span>
                 </div>
+
+                {request.adminRefundDetails?.refundNumber && (
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground"> Refund ID:</span>
+                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                      {request.adminRefundDetails.refundNumber}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between py-1 border-b border-border">
                   <span className="text-muted-foreground">

@@ -71,6 +71,8 @@ export const MyBookings: React.FC = () => {
   const [cancelReason, setCancelReason] = useState<string>("")
   const [cancelUserNotes, setCancelUserNotes] = useState<string>("")
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false)
+  const [agreedToCancellationPolicy, setAgreedToCancellationPolicy] =
+    useState<boolean>(false)
 
   // Prevent background page scroll when modal is active
   React.useEffect(() => {
@@ -287,6 +289,12 @@ export const MyBookings: React.FC = () => {
       toast.error("Please enter a reason for cancelling your booking")
       return
     }
+    if (!agreedToCancellationPolicy) {
+      toast.error(
+        "Please confirm that you understand and agree to the Cancellation & Refund Policy"
+      )
+      return
+    }
 
     setIsSubmittingCancel(true)
     try {
@@ -308,6 +316,7 @@ export const MyBookings: React.FC = () => {
           queryKey: ["my-booking-details", cancelModalBooking._id],
         })
         setCancelModalBooking(null)
+        setAgreedToCancellationPolicy(false)
       } else {
         toast.error(res.data?.error || "Failed to submit cancellation request")
       }
@@ -626,16 +635,27 @@ export const MyBookings: React.FC = () => {
                             </span>
                           </div>
 
-                          <div className="mt-2 font-mono text-[11px] text-gray-400">
-                            Ref: <strong>{bk.bookingNumber}</strong> • Date:{" "}
-                            {new Date(bk.createdAt).toLocaleDateString(
-                              "en-IN",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              }
+                          <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[11px] text-gray-400">
+                            <span>
+                              Ref: <strong>{bk.bookingNumber}</strong>
+                            </span>
+                            {bk.cancellationNumber && (
+                              <span className="font-semibold text-rose-700">
+                                • Cancel ID: <strong>{bk.cancellationNumber}</strong>
+                              </span>
                             )}
+                            <span>•</span>
+                            <span>
+                              Date:{" "}
+                              {new Date(bk.createdAt).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                }
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -707,6 +727,7 @@ export const MyBookings: React.FC = () => {
                                 setCancelReasonCategory("Personal Emergency")
                                 setCancelReason("")
                                 setCancelUserNotes("")
+                                setAgreedToCancellationPolicy(false)
                               }}
                               className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800"
                             >
@@ -891,9 +912,21 @@ export const MyBookings: React.FC = () => {
                       {bookingDetailsData.cancellationRequest.status ===
                         "PENDING" && (
                         <div className="space-y-2 rounded-2xl border border-amber-300 bg-amber-50/80 p-4 shadow-xs">
-                          <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-amber-900 uppercase">
-                            <Clock size={16} className="text-amber-700" />
-                            Cancellation Request Under Review
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-amber-900 uppercase">
+                              <Clock size={16} className="text-amber-700" />
+                              Cancellation Request Under Review
+                            </div>
+                            {(bookingDetailsData.cancellationRequest.cancellationNumber ||
+                              bookingDetailsData.cancellationNumber) && (
+                              <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-amber-900 bg-amber-100/90 px-2.5 py-1 rounded-lg border border-amber-300">
+                                <span>Cancel ID:</span>
+                                <span>
+                                  {bookingDetailsData.cancellationRequest.cancellationNumber ||
+                                    bookingDetailsData.cancellationNumber}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs text-amber-800">
                             You have submitted a cancellation request for this
@@ -939,18 +972,36 @@ export const MyBookings: React.FC = () => {
                       {bookingDetailsData.cancellationRequest.status ===
                         "COMPLETED" && (
                         <div className="space-y-3 rounded-2xl border border-emerald-300 bg-emerald-50/80 p-5 shadow-xs">
-                          <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-emerald-900 uppercase">
-                            <CheckCircle2
-                              size={16}
-                              className="text-emerald-700"
-                            />
-                            Cancellation Approved &amp; Refund Settled
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold tracking-wider text-emerald-900 uppercase">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2
+                                size={16}
+                                className="text-emerald-700"
+                              />
+                              Cancellation Approved &amp; Refund Settled
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {(bookingDetailsData.cancellationRequest.cancellationNumber ||
+                                bookingDetailsData.cancellationNumber) && (
+                                <span className="font-mono text-[11px] font-semibold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300">
+                                  CAN:{" "}
+                                  {bookingDetailsData.cancellationRequest.cancellationNumber ||
+                                    bookingDetailsData.cancellationNumber}
+                                </span>
+                              )}
+                              {bookingDetailsData.cancellationRequest.adminRefundDetails?.refundNumber && (
+                                <span className="font-mono text-[11px] font-bold text-emerald-950 bg-emerald-200/90 px-2.5 py-1 rounded-lg border border-emerald-400">
+                                  REF:{" "}
+                                  {bookingDetailsData.cancellationRequest.adminRefundDetails.refundNumber}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <p className="text-xs text-emerald-800">
                             This booking was cancelled and your refund has been
                             processed by our team.
                           </p>
-                          <div className="grid grid-cols-2 gap-2.5 rounded-xl border border-emerald-200 bg-white p-3 text-xs sm:grid-cols-4">
+                          <div className="grid grid-cols-2 gap-2.5 rounded-xl border border-emerald-200 bg-white p-3 text-xs sm:grid-cols-5">
                             <div>
                               <span className="text-[11px] text-gray-400">
                                 Refund Amount:
@@ -961,6 +1012,15 @@ export const MyBookings: React.FC = () => {
                                   bookingDetailsData.cancellationRequest
                                     .adminRefundDetails?.refundAmount || 0
                                 ).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-gray-400">
+                                Refund ID:
+                              </span>
+                              <div className="truncate font-mono text-xs font-bold text-[#1B2B6B]">
+                                {bookingDetailsData.cancellationRequest
+                                  .adminRefundDetails?.refundNumber || "N/A"}
                               </div>
                             </div>
                             <div>
@@ -1148,34 +1208,66 @@ export const MyBookings: React.FC = () => {
                                 <div className="flex justify-between border-b border-gray-200 py-1.5 font-inter text-gray-600">
                                   <span>
                                     CGST (
-                                    {bookingDetailsData.pricingDetails.cgstPercentage && bookingDetailsData.pricingDetails.cgstPercentage > 0
-                                      ? bookingDetailsData.pricingDetails.cgstPercentage
-                                      : Number((bookingDetailsData.pricingDetails.gstPercentage / 2).toFixed(2))}
+                                    {bookingDetailsData.pricingDetails
+                                      .cgstPercentage &&
+                                    bookingDetailsData.pricingDetails
+                                      .cgstPercentage > 0
+                                      ? bookingDetailsData.pricingDetails
+                                          .cgstPercentage
+                                      : Number(
+                                          (
+                                            bookingDetailsData.pricingDetails
+                                              .gstPercentage / 2
+                                          ).toFixed(2)
+                                        )}
                                     %):
                                   </span>
                                   <span>
                                     +₹
-                                    {(
-                                      bookingDetailsData.pricingDetails.cgstAmount && bookingDetailsData.pricingDetails.cgstAmount > 0
-                                        ? bookingDetailsData.pricingDetails.cgstAmount
-                                        : Math.round(bookingDetailsData.pricingDetails.gstAmount / 2)
+                                    {(bookingDetailsData.pricingDetails
+                                      .cgstAmount &&
+                                    bookingDetailsData.pricingDetails
+                                      .cgstAmount > 0
+                                      ? bookingDetailsData.pricingDetails
+                                          .cgstAmount
+                                      : Math.round(
+                                          bookingDetailsData.pricingDetails
+                                            .gstAmount / 2
+                                        )
                                     ).toLocaleString("en-IN")}
                                   </span>
                                 </div>
                                 <div className="flex justify-between border-b border-gray-200 py-1.5 font-inter text-gray-600">
                                   <span>
                                     SGST (
-                                    {bookingDetailsData.pricingDetails.sgstPercentage && bookingDetailsData.pricingDetails.sgstPercentage > 0
-                                      ? bookingDetailsData.pricingDetails.sgstPercentage
-                                      : Number((bookingDetailsData.pricingDetails.gstPercentage / 2).toFixed(2))}
+                                    {bookingDetailsData.pricingDetails
+                                      .sgstPercentage &&
+                                    bookingDetailsData.pricingDetails
+                                      .sgstPercentage > 0
+                                      ? bookingDetailsData.pricingDetails
+                                          .sgstPercentage
+                                      : Number(
+                                          (
+                                            bookingDetailsData.pricingDetails
+                                              .gstPercentage / 2
+                                          ).toFixed(2)
+                                        )}
                                     %):
                                   </span>
                                   <span>
                                     +₹
-                                    {(
-                                      bookingDetailsData.pricingDetails.sgstAmount && bookingDetailsData.pricingDetails.sgstAmount > 0
-                                        ? bookingDetailsData.pricingDetails.sgstAmount
-                                        : bookingDetailsData.pricingDetails.gstAmount - Math.round(bookingDetailsData.pricingDetails.gstAmount / 2)
+                                    {(bookingDetailsData.pricingDetails
+                                      .sgstAmount &&
+                                    bookingDetailsData.pricingDetails
+                                      .sgstAmount > 0
+                                      ? bookingDetailsData.pricingDetails
+                                          .sgstAmount
+                                      : bookingDetailsData.pricingDetails
+                                          .gstAmount -
+                                        Math.round(
+                                          bookingDetailsData.pricingDetails
+                                            .gstAmount / 2
+                                        )
                                     ).toLocaleString("en-IN")}
                                   </span>
                                 </div>
@@ -1184,21 +1276,30 @@ export const MyBookings: React.FC = () => {
                               <div className="flex justify-between border-b border-gray-200 py-1.5 font-inter text-gray-600">
                                 <span>
                                   IGST (
-                                  {bookingDetailsData.pricingDetails.igstPercentage && bookingDetailsData.pricingDetails.igstPercentage > 0
-                                    ? bookingDetailsData.pricingDetails.igstPercentage
-                                    : bookingDetailsData.pricingDetails.gstPercentage}
+                                  {bookingDetailsData.pricingDetails
+                                    .igstPercentage &&
+                                  bookingDetailsData.pricingDetails
+                                    .igstPercentage > 0
+                                    ? bookingDetailsData.pricingDetails
+                                        .igstPercentage
+                                    : bookingDetailsData.pricingDetails
+                                        .gstPercentage}
                                   %):
                                 </span>
                                 <span>
                                   +₹
-                                  {(
-                                    bookingDetailsData.pricingDetails.igstAmount && bookingDetailsData.pricingDetails.igstAmount > 0
-                                      ? bookingDetailsData.pricingDetails.igstAmount
-                                      : bookingDetailsData.pricingDetails.gstAmount
+                                  {(bookingDetailsData.pricingDetails
+                                    .igstAmount &&
+                                  bookingDetailsData.pricingDetails.igstAmount >
+                                    0
+                                    ? bookingDetailsData.pricingDetails
+                                        .igstAmount
+                                    : bookingDetailsData.pricingDetails
+                                        .gstAmount
                                   ).toLocaleString("en-IN")}
                                 </span>
                               </div>
-                            ))
+                            ))}
 
                           <div className="flex justify-between pt-2.5 text-sm font-bold text-[#1B2B6B]">
                             <span>Final Total Amount:</span>
@@ -1263,6 +1364,14 @@ export const MyBookings: React.FC = () => {
                           Pax
                         </p>
                       </div>
+                      {bookingDetailsData.travellerInfo?.gstNumber && (
+                        <div>
+                          <span className="text-gray-400">Company GSTIN:</span>
+                          <p className="font-mono font-bold text-[#1B2B6B]">
+                            {bookingDetailsData.travellerInfo.gstNumber}
+                          </p>
+                        </div>
+                      )}
                       {bookingDetailsData.travellerInfo?.address && (
                         <div className="col-span-2 border-t border-gray-100 pt-2 sm:col-span-4">
                           <span className="text-gray-400">
@@ -1842,6 +1951,7 @@ export const MyBookings: React.FC = () => {
           onClick={(e) => {
             if (e.target === e.currentTarget && !isSubmittingCancel) {
               setCancelModalBooking(null)
+              setAgreedToCancellationPolicy(false)
             }
           }}
         >
@@ -1863,7 +1973,10 @@ export const MyBookings: React.FC = () => {
               </div>
               <button
                 disabled={isSubmittingCancel}
-                onClick={() => setCancelModalBooking(null)}
+                onClick={() => {
+                  setCancelModalBooking(null)
+                  setAgreedToCancellationPolicy(false)
+                }}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50"
               >
                 <X size={18} />
@@ -1945,35 +2058,96 @@ export const MyBookings: React.FC = () => {
                 />
               </div>
 
-              {/* Additional notes / Bank details */}
-              {/* <div>
-                <label className="mb-1 block text-[11px] font-bold tracking-wider text-gray-700 uppercase">
-                  Refund Payout Details / Notes (Optional)
+              {/* Cancellation Request Agreement */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold tracking-wider text-gray-700 uppercase">
+                  Cancellation Request:
                 </label>
-                <input
-                  type="text"
-                  value={cancelUserNotes}
-                  onChange={(e) => setCancelUserNotes(e.target.value)}
-                  placeholder="e.g. UPI ID: name@upi or Bank Account & IFSC"
-                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-normal text-gray-800 outline-none focus:border-[#1B2B6B]"
-                />
-              </div> */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    paddingTop: 10,
+                    borderTop: "1px dashed #E2E8F0",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    id="agree-cancellation-policy-checkbox"
+                    checked={agreedToCancellationPolicy}
+                    onChange={(e) =>
+                      setAgreedToCancellationPolicy(e.target.checked)
+                    }
+                    style={{
+                      marginTop: 3,
+                      width: 16,
+                      height: 16,
+                      accentColor: "#1B2B6B",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <label
+                    htmlFor="agree-cancellation-policy-checkbox"
+                    style={{
+                      fontSize: ".8rem",
+                      color: "#374151",
+                      lineHeight: 1.5,
+                      cursor: "pointer",
+                    }}
+                  >
+                    I understand that my cancellation request is subject to the{" "}
+                    <a
+                      href="/cancellation-and-refund-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: "#1B2B6B",
+                        fontWeight: 700,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Cancellation &amp; Refund Policy
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/tour-terms-and-conditions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: "#1B2B6B",
+                        fontWeight: 700,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Terms &amp; Conditions
+                    </a>{" "}
+                    agreed to at the time of booking. *
+                  </label>
+                </div>
+              </div>
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   disabled={isSubmittingCancel}
-                  onClick={() => setCancelModalBooking(null)}
+                  onClick={() => {
+                    setCancelModalBooking(null)
+                    setAgreedToCancellationPolicy(false)
+                  }}
                   className="flex-1 rounded-xl border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 >
                   Keep Booking
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmittingCancel}
+                  disabled={isSubmittingCancel || !agreedToCancellationPolicy}
                   onClick={handleSubmitCancellationRequest}
-                  className="flex flex-[2] cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:from-rose-700 hover:to-rose-800 disabled:opacity-50"
+                  className="flex flex-[2] cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:from-rose-700 hover:to-rose-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmittingCancel ? (
                     <>

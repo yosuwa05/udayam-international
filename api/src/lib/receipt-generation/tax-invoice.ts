@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer"
 import path from "path"
 import { numberToWordsIndian } from "./numberToWords"
+import { getGstStateCode } from "@helper/gstStateCodes.helper"
 
 const FALLBACK = "-"
 
@@ -59,13 +60,20 @@ export async function generateTaxInvoicePDF(data: ITaxInvoiceData): Promise<Buff
         "Tamil Nadu"
 
     const customerGstin =
-        customer?.gstin ||
+        booking.travellerInfo?.gstNumber ||
         booking.travellerInfo?.gstin ||
-        "[If applicable] -"
+        customer?.gstNumber ||
+        customer?.gstin ||
+        "-"
 
     const stateCode =
-        customerState.toLowerCase().includes("tamil") ? "33" : (customer?.stateCode || "33")
+        booking.travellerInfo?.stateCode ||
+        getGstStateCode(customerState, customerGstin !== "-" ? customerGstin : undefined) ||
+        customer?.stateCode ||
+        (customerState.toLowerCase().includes("tamil") ? "33" : "33")
     const placeOfSupply = `${customerState} (Code: ${stateCode})`
+    const isIntraState = stateCode === "33" || customerState.toLowerCase().includes("tamil")
+    const supplyType = isIntraState ? "Intra-State" : "Inter-State"
 
     // Package description
     const pkgTitle = pkg?.title || "Tour Package"
@@ -91,13 +99,17 @@ export async function generateTaxInvoicePDF(data: ITaxInvoiceData): Promise<Buff
 
     // Amounts & Tax calculations
     const finalAmount = Number(booking.pricingDetails?.finalAmount) || 0
-    const gstRate = pkg?.gstPercentage ?? booking.pricingDetails?.gstPercentage ?? 5
+    const gstRate =
+        (pkg?.gstPercentage && pkg.gstPercentage > 0)
+            ? pkg.gstPercentage
+            : (booking.pricingDetails?.gstPercentage && booking.pricingDetails.gstPercentage > 0)
+                ? booking.pricingDetails.gstPercentage
+                : 5
     const taxableValue =
         booking.pricingDetails?.originalAmount ||
         Math.round((finalAmount * 100) / (100 + gstRate))
     const totalTaxAmount = finalAmount - taxableValue
 
-    const isIntraState = stateCode === "33" || customerState.toLowerCase().includes("tamil")
     let taxRowsHtml = ""
 
     if (isIntraState) {
@@ -161,6 +173,7 @@ export async function generateTaxInvoicePDF(data: ITaxInvoiceData): Promise<Buff
         customerState,
         customerGstin,
         placeOfSupply,
+        supplyType,
         packageTitle,
         travelDate,
         numberOfTravellers,

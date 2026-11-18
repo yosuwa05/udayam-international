@@ -76,6 +76,7 @@ function BookingDetailsComponent() {
 
   // Quotation form state
   const [quoteAmount, setQuoteAmount] = useState('')
+  const [quoteGstPercentage, setQuoteGstPercentage] = useState('5')
   const [quoteNotes, setQuoteNotes] = useState('')
 
   // Status update state
@@ -104,9 +105,20 @@ function BookingDetailsComponent() {
     if (bookingData) {
       if (bookingData.quotation?.amount) {
         setQuoteAmount(bookingData.quotation.amount.toString())
+      } else if (bookingData.pricingDetails?.originalAmount) {
+        setQuoteAmount(bookingData.pricingDetails.originalAmount.toString())
       } else if (bookingData.pricingDetails?.finalAmount) {
         setQuoteAmount(bookingData.pricingDetails.finalAmount.toString())
       }
+      const existingGst =
+        bookingData.pricingDetails?.gstPercentage &&
+        bookingData.pricingDetails.gstPercentage > 0
+          ? bookingData.pricingDetails.gstPercentage
+          : bookingData.packageId?.gstPercentage &&
+              bookingData.packageId.gstPercentage > 0
+            ? bookingData.packageId.gstPercentage
+            : 5
+      setQuoteGstPercentage(existingGst.toString())
       setQuoteNotes(bookingData.quotation?.notes || '')
       setSelectedStatus(bookingData.status || '')
     }
@@ -117,6 +129,7 @@ function BookingDetailsComponent() {
     mutationFn: async () => {
       return _axios.patch(`/booking/admin/${id}/quotation`, {
         amount: Number(quoteAmount),
+        gstPercentage: Number(quoteGstPercentage) || 0,
         notes: quoteNotes,
       })
     },
@@ -419,9 +432,18 @@ function BookingDetailsComponent() {
                 <RotateCcw className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-bold text-sm">
-                  Cancellation Request Pending Review
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-bold text-sm">
+                    Cancellation Request Pending Review
+                  </p>
+                  {(booking.cancellationRequest?.cancellationNumber ||
+                    booking.cancellationNumber) && (
+                    <span className="font-mono text-[11px] font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded border border-amber-300">
+                      {booking.cancellationRequest?.cancellationNumber ||
+                        booking.cancellationNumber}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
                   Customer submitted a cancellation request: "
                   {booking.cancellationRequest?.reason || 'Reason provided'}".
@@ -460,9 +482,22 @@ function BookingDetailsComponent() {
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-bold text-sm">
-                Booking Cancelled &amp; Refund Settled
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-bold text-sm">
+                  Booking Cancelled &amp; Refund Settled
+                </p>
+                {(booking.cancellationRequest?.cancellationNumber ||
+                  booking.cancellationNumber) && (
+                  <span className="font-mono text-[11px] font-semibold text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+                    CAN: {booking.cancellationRequest?.cancellationNumber || booking.cancellationNumber}
+                  </span>
+                )}
+                {booking.cancellationRequest?.adminRefundDetails?.refundNumber && (
+                  <span className="font-mono text-[11px] font-bold text-emerald-950 bg-emerald-200/90 px-2 py-0.5 rounded border border-emerald-400">
+                    REF: {booking.cancellationRequest.adminRefundDetails.refundNumber}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-emerald-800 dark:text-emerald-300 mt-0.5">
                 Refund amount:{' '}
                 <strong>
@@ -610,6 +645,16 @@ function BookingDetailsComponent() {
                   {booking.travellerInfo?.email}
                 </div>
               </div>
+              {booking.travellerInfo?.gstNumber && (
+                <div>
+                  <div className="text-muted-foreground flex items-center gap-1">
+                    <FileText size={12} /> Company GSTIN:
+                  </div>
+                  <div className="font-mono font-bold text-sm mt-0.5 text-primary">
+                    {booking.travellerInfo.gstNumber}
+                  </div>
+                </div>
+              )}
               <div>
                 <div className="text-muted-foreground flex items-center gap-1">
                   <Calendar size={12} /> Travel Date & Style:
@@ -973,61 +1018,87 @@ function BookingDetailsComponent() {
                   </span>
                 </div>
               )}
-              {booking.pricingDetails?.gstAmount > 0 &&
-                ((booking.pricingDetails?.isTamilNadu ??
-                booking.travellerInfo?.state
-                  ?.toLowerCase()
-                  ?.includes('tamil')) ? (
-                  <>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>
-                        CGST (
-                        {booking.pricingDetails.cgstPercentage ??
-                          booking.pricingDetails.gstPercentage / 2}
-                        %):
-                      </span>
-                      <span>
-                        + ₹
-                        {(
-                          booking.pricingDetails.cgstAmount ??
-                          Math.round(booking.pricingDetails.gstAmount / 2)
-                        ).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>
-                        SGST (
-                        {booking.pricingDetails.sgstPercentage ??
-                          booking.pricingDetails.gstPercentage / 2}
-                        %):
-                      </span>
-                      <span>
-                        + ₹
-                        {(
-                          booking.pricingDetails.sgstAmount ??
-                          booking.pricingDetails.gstAmount -
-                            Math.round(booking.pricingDetails.gstAmount / 2)
-                        ).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  </>
-                ) : (
+              {(() => {
+                const pd = booking.pricingDetails
+                if (!pd) return null
+
+                // Determine display GST amount (safely compute from final - base if pd.gstAmount is 0)
+                const displayGstAmount =
+                  pd.gstAmount && pd.gstAmount > 0
+                    ? pd.gstAmount
+                    : pd.finalAmount &&
+                        pd.originalAmount &&
+                        pd.finalAmount > pd.originalAmount
+                      ? pd.finalAmount -
+                        pd.originalAmount +
+                        (pd.discountAmount || 0)
+                      : 0
+
+                if (displayGstAmount <= 0) return null
+
+                const displayGstRate =
+                  pd.gstPercentage && pd.gstPercentage > 0
+                    ? pd.gstPercentage
+                    : booking.packageId?.gstPercentage &&
+                        booking.packageId.gstPercentage > 0
+                      ? booking.packageId.gstPercentage
+                      : 5
+
+                const isTamilNadu =
+                  pd.isTamilNadu ??
+                  booking.travellerInfo?.state
+                    ?.toLowerCase()
+                    ?.includes('tamil') ??
+                  true
+
+                if (isTamilNadu) {
+                  const cgstRate =
+                    pd.cgstPercentage && pd.cgstPercentage > 0
+                      ? pd.cgstPercentage
+                      : Number((displayGstRate / 2).toFixed(2))
+                  const cgstAmt =
+                    pd.cgstAmount && pd.cgstAmount > 0
+                      ? pd.cgstAmount
+                      : Math.round(displayGstAmount / 2)
+                  const sgstRate =
+                    pd.sgstPercentage && pd.sgstPercentage > 0
+                      ? pd.sgstPercentage
+                      : Number((displayGstRate / 2).toFixed(2))
+                  const sgstAmt =
+                    pd.sgstAmount && pd.sgstAmount > 0
+                      ? pd.sgstAmount
+                      : displayGstAmount - cgstAmt
+
+                  return (
+                    <>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>CGST ({cgstRate}%):</span>
+                        <span>+ ₹{cgstAmt.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>SGST ({sgstRate}%):</span>
+                        <span>+ ₹{sgstAmt.toLocaleString('en-IN')}</span>
+                      </div>
+                    </>
+                  )
+                }
+
+                const igstRate =
+                  pd.igstPercentage && pd.igstPercentage > 0
+                    ? pd.igstPercentage
+                    : displayGstRate
+                const igstAmt =
+                  pd.igstAmount && pd.igstAmount > 0
+                    ? pd.igstAmount
+                    : displayGstAmount
+
+                return (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>
-                      IGST (
-                      {booking.pricingDetails.igstPercentage ||
-                        booking.pricingDetails.gstPercentage}
-                      %):
-                    </span>
-                    <span>
-                      + ₹
-                      {(
-                        booking.pricingDetails.igstAmount ||
-                        booking.pricingDetails.gstAmount
-                      ).toLocaleString('en-IN')}
-                    </span>
+                    <span>IGST ({igstRate}%):</span>
+                    <span>+ ₹{igstAmt.toLocaleString('en-IN')}</span>
                   </div>
-                ))}
+                )
+              })()}
               <div className="flex justify-between text-sm font-bold text-primary pt-2 border-t">
                 <span>Final Payable Amount:</span>
                 <span>
@@ -1199,24 +1270,87 @@ function BookingDetailsComponent() {
                   )}
 
                   <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label
-                        htmlFor="quoteAmount"
-                        className="text-xs font-semibold"
-                      >
-                        Quotation Amount (₹) *
-                      </Label>
-                      <Input
-                        id="quoteAmount"
-                        type="number"
-                        min={1}
-                        disabled={isQuotationLocked}
-                        placeholder="e.g. 45000"
-                        value={quoteAmount}
-                        onChange={(e) => setQuoteAmount(e.target.value)}
-                        className="h-9 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="quoteAmount"
+                          className="text-xs font-semibold"
+                        >
+                          Quotation Base Amount (₹) *
+                        </Label>
+                        <Input
+                          id="quoteAmount"
+                          type="number"
+                          min={1}
+                          disabled={isQuotationLocked}
+                          placeholder="e.g. 45000"
+                          value={quoteAmount}
+                          onChange={(e) => setQuoteAmount(e.target.value)}
+                          className="h-9 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="quoteGstPercentage"
+                          className="text-xs font-semibold"
+                        >
+                          GST Rate (%)
+                        </Label>
+                        <Input
+                          id="quoteGstPercentage"
+                          type="number"
+                          min={0}
+                          max={100}
+                          disabled={isQuotationLocked}
+                          placeholder="5"
+                          value={quoteGstPercentage}
+                          onChange={(e) =>
+                            setQuoteGstPercentage(e.target.value)
+                          }
+                          className="h-9 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                        />
+                      </div>
                     </div>
+
+                    {/* Live Quotation Summary Preview */}
+                    {Number(quoteAmount) > 0 && (
+                      <div className="p-3 bg-muted/60 rounded-xl border text-xs space-y-1">
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Base Quote:</span>
+                          <span>
+                            ₹{Number(quoteAmount).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>
+                            GST ({Number(quoteGstPercentage) || 0}%):
+                          </span>
+                          <span>
+                            + ₹
+                            {Math.round(
+                              (Number(quoteAmount) *
+                                (Number(quoteGstPercentage) || 0)) /
+                                100,
+                            ).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between font-bold text-foreground border-t pt-1">
+                          <span>Final Payable Amount:</span>
+                          <span className="text-primary font-bold">
+                            ₹
+                            {(
+                              Number(quoteAmount) +
+                              Math.round(
+                                (Number(quoteAmount) *
+                                  (Number(quoteGstPercentage) || 0)) /
+                                  100,
+                              )
+                            ).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-1.5">
                       <Label

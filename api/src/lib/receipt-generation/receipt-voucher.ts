@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer"
 import path from "path"
 import { toWords } from 'to-words';
+import { getGstStateCode } from "@helper/gstStateCodes.helper"
 const FALLBACK = "-"
 
 function formatDate(date: unknown, fallback: string = FALLBACK): string {
@@ -58,13 +59,20 @@ export async function generateReceiptVoucherPDF(data: IReceiptVoucherData): Prom
         "Tamil Nadu"
 
     const customerGstin =
-        customer?.gstin ||
+        booking.travellerInfo?.gstNumber ||
         booking.travellerInfo?.gstin ||
+        customer?.gstNumber ||
+        customer?.gstin ||
         FALLBACK
 
     const stateCode =
-        customerState.toLowerCase().includes("tamil") ? "33" : (customer?.stateCode || "33")
+        booking.travellerInfo?.stateCode ||
+        getGstStateCode(customerState, customerGstin !== FALLBACK ? customerGstin : undefined) ||
+        customer?.stateCode ||
+        (customerState.toLowerCase().includes("tamil") ? "33" : "33")
     const placeOfSupply = `${customerState} (Code: ${stateCode})`
+    const isIntraState = stateCode === "33" || customerState.toLowerCase().includes("tamil")
+    const supplyType = isIntraState ? "Intra-State" : "Inter-State"
 
     // Package details
     const pkgTitle = pkg?.title || "Tour Package"
@@ -88,11 +96,15 @@ export async function generateReceiptVoucherPDF(data: IReceiptVoucherData): Prom
 
     // Amounts & Tax calculations
     const paidAmount = Number(payment.amount) || 0
-    const gstRate = pkg?.gstPercentage ?? booking.pricingDetails?.gstPercentage ?? 5
+    const gstRate =
+        (pkg?.gstPercentage && pkg.gstPercentage > 0)
+            ? pkg.gstPercentage
+            : (booking.pricingDetails?.gstPercentage && booking.pricingDetails.gstPercentage > 0)
+                ? booking.pricingDetails.gstPercentage
+                : 5
     const taxableAmount = Math.round((paidAmount * 100) / (100 + gstRate))
     const totalTax = paidAmount - taxableAmount
 
-    const isIntraState = stateCode === "33" || customerState.toLowerCase().includes("tamil")
     let taxRowsHtml = ""
 
     if (isIntraState) {
@@ -166,6 +178,7 @@ export async function generateReceiptVoucherPDF(data: IReceiptVoucherData): Prom
         paymentMode,
         transactionId,
         placeOfSupply,
+        supplyType,
         amountInWords,
     }
 

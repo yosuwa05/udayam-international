@@ -65,6 +65,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
   const [fullName, setFullName] = useState("")
   const [mobileNumber, setMobileNumber] = useState("")
   const [email, setEmail] = useState("")
+  const [gstNumber, setGstNumber] = useState("")
   const [numberOfPersons, setNumberOfPersons] = useState(1)
   const [travelDate, setTravelDate] = useState(() => {
     const d = new Date()
@@ -212,6 +213,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
         setEmail("")
       }
       setMobileNumber("")
+      setGstNumber("")
       setNumberOfPersons(1)
       setTravelType("")
       setSpecialRequests("")
@@ -387,6 +389,14 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
       toast.error("Please enter a valid email address")
       return
     }
+    if (gstNumber.trim()) {
+      const cleanGst = gstNumber.trim().toUpperCase()
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+      if (!gstRegex.test(cleanGst)) {
+        toast.error("Please enter a valid 15-character GSTIN (e.g. 33AAAAA0000A1Z5)")
+        return
+      }
+    }
     if (!travelDate) {
       toast.error("Please select a travel date")
       return
@@ -472,10 +482,17 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
         fullName: fullName.trim(),
         mobileNumber: mobileNumber.trim(),
         email: email.trim(),
+        gstNumber: gstNumber.trim() ? gstNumber.trim().toUpperCase() : undefined,
         address: address.trim(),
         landmark: landmark.trim(),
         pincode: pincode.trim(),
         state: selectedState.trim(),
+        stateCode:
+          indianStatesData?.find(
+            (s: any) =>
+              s.name.toLowerCase() === selectedState.trim().toLowerCase()
+          )?.gst_code ||
+          (selectedState.toLowerCase().includes("tamil") ? "33" : undefined),
         numberOfPersons,
         travelDate,
         travelType,
@@ -1162,7 +1179,7 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       }}
                     />
                   </div>
-                  <div className="sm:col-span-2">
+                  <div>
                     <label
                       style={{
                         display: "block",
@@ -1189,6 +1206,48 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                         fontFamily: f,
                         fontSize: ".85rem",
                         outline: "none",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: "block",
+                          fontFamily: f,
+                          fontSize: ".78rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
+                        GST Number (Optional)
+                      </label>
+                      
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. 33AAAAA0000A1Z5"
+                      value={gstNumber}
+                      maxLength={15}
+                      onChange={(e) =>
+                        setGstNumber(e.target.value.toUpperCase())
+                      }
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        border: "1.5px solid #E8E4DC",
+                        borderRadius: 10,
+                        fontFamily: f,
+                        fontSize: ".85rem",
+                        outline: "none",
+                        textTransform: "uppercase",
                       }}
                     />
                   </div>

@@ -7,6 +7,8 @@ import {
   useLocation,
 } from "react-router-dom"
 import Navbar from "./components/Navbar"
+import TourismNavbar from "./components/TourismNavbar"
+import TourismHome from "./components/TourismHome"
 import Home from "./components/Home/Home"
 import AboutUs from "./components/Aboutus"
 import Tourism from "./components/Tourism"
@@ -66,7 +68,12 @@ export function App() {
           <LoginModal isOpen={isOpen} onClose={onClose} />
         )}
       >
-        {showIntro && <IntroScreen onComplete={handleIntroDone} />}
+        {showIntro && (
+          <IntroScreen
+            onComplete={handleIntroDone}
+            isTourism={isTourismDomain()}
+          />
+        )}
         <BrowserRouter>
           <ScrollToTop />
           <AppShell />
@@ -82,10 +89,10 @@ function AppShell() {
 
   return (
     <>
-      <Navbar />
+      {isTourism ? <TourismNavbar /> : <Navbar />}
       <main>
         <Routes>
-          <Route path="/" element={isTourism ? <Tourism /> : <Home />} />
+          <Route path="/" element={isTourism ? <TourismHome /> : <Home />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/tourism" element={<Tourism />} />
           <Route path="/medical" element={<MedicalTourism />} />
@@ -113,7 +120,7 @@ function AppShell() {
         </Routes>
       </main>
       <NewsLetter />
-      <Footer />
+      <Footer isTourism={isTourism} />
       <a
         href="https://wa.me/917299771111"
         target="_blank"

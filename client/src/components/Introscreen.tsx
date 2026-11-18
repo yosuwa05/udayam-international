@@ -150,15 +150,25 @@
 //   )
 // }
 import { useEffect, useState, useRef } from "react"
+import { isTourismDomain } from "@/utils"
 
 interface IntroScreenProps {
   onComplete: () => void
+  isTourism?: boolean
 }
 
 const TAGLINE = "Trade  ★   Travel ★   Trust"
+const TOURISM_TAGLINE = "Travel  ★   Trust  ★   Tourism"
 const HOLD_AFTER_TYPED_MS = 400
 
-export default function IntroScreen({ onComplete }: IntroScreenProps) {
+export default function IntroScreen({
+  onComplete,
+  isTourism: isTourismProp,
+}: IntroScreenProps) {
+  const isTourism = isTourismProp ?? isTourismDomain()
+  const brandName = isTourism ? "UV\u00A0Holidays" : "Udayam\u00A0International"
+  const activeTagline = isTourism ? TOURISM_TAGLINE : TAGLINE
+
   const [typed, setTyped] = useState("")
   const [exiting, setExiting] = useState(false)
   const [showBrand, setShowBrand] = useState(false)
@@ -180,9 +190,9 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
     let charIndex = 0
     const typingInterval = setInterval(() => {
       charIndex++
-      setTyped(TAGLINE.slice(0, charIndex))
+      setTyped(activeTagline.slice(0, charIndex))
 
-      if (charIndex >= TAGLINE.length) {
+      if (charIndex >= activeTagline.length) {
         clearInterval(typingInterval)
         setTimeout(finish, HOLD_AFTER_TYPED_MS)
       }
@@ -283,7 +293,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
             }}
             onAnimationEnd={handleBrandAnimationEnd}
           >
-            Udayam&nbsp;International
+            {brandName}
           </h1>
 
           {/* Tagline */}
@@ -301,8 +311,10 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               opacity: showTagline ? 1 : 0,
               transition: "opacity 0.6s ease-in-out",
               borderRight:
-                typed.length < TAGLINE.length ? "1.5px solid #c9a96e" : "none",
-              paddingRight: typed.length < TAGLINE.length ? "3px" : "0",
+                typed.length < activeTagline.length
+                  ? "1.5px solid #c9a96e"
+                  : "none",
+              paddingRight: typed.length < activeTagline.length ? "3px" : "0",
             }}
           >
             {typed || "\u00A0"}

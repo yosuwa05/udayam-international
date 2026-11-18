@@ -1,6 +1,8 @@
 import { SequenceModel } from "@models/sequence.model"
 import { BookingModel } from "@models/booking.model"
 import { PaymentModel } from "@models/payment.model"
+import { BookingCancellationRequestModel } from "@models/cancellationRequest.model"
+import { RefundModel } from "@models/refund.model"
 
 /**
  * Calculates the Indian Financial Year string in "YY-YY" format (e.g. "26-27").
@@ -67,6 +69,56 @@ export async function generateBookingConfirmationNumber(date: Date = new Date())
 }
 
 /**
+ * Booking Cancellation Reference Number Generator
+ *
+ * Format: UVH / CAN / YYMMDD / Serial Number
+ * Example: UVH / CAN / 261001 / 001
+ * CAN represents Cancellation Request.
+ * Serial Number is 3-digit padded (001, 002, ...)
+ */
+export async function generateCancellationNumber(date: Date = new Date()): Promise<string> {
+    const yymmdd = getFormattedYYMMDD(date)
+    const key = `CANCELLATION_${yymmdd}`
+
+    while (true) {
+        const seq = await getNextSequence(key)
+        const serial = String(seq).padStart(3, "0")
+        const candidate = `UVH / CAN / ${yymmdd} / ${serial}`
+
+        // Guarantee uniqueness in database
+        const exists = await BookingCancellationRequestModel.exists({ cancellationNumber: candidate })
+        if (!exists) {
+            return candidate
+        }
+    }
+}
+
+/**
+ * Refund Reference Number Generator
+ *
+ * Format: UVH / REF / YYMMDD / Serial Number
+ * Example: UVH / REF / 261002 / 001
+ * REF represents Refund Settlement.
+ * Serial Number is 3-digit padded (001, 002, ...)
+ */
+export async function generateRefundNumber(date: Date = new Date()): Promise<string> {
+    const yymmdd = getFormattedYYMMDD(date)
+    const key = `REFUND_${yymmdd}`
+
+    while (true) {
+        const seq = await getNextSequence(key)
+        const serial = String(seq).padStart(3, "0")
+        const candidate = `UVH / REF / ${yymmdd} / ${serial}`
+
+        // Guarantee uniqueness in database
+        const exists = await RefundModel.exists({ refundNumber: candidate })
+        if (!exists) {
+            return candidate
+        }
+    }
+}
+
+/**
  * Receipt Voucher Number Generator
  *
  * Format: UI / UVH / RV / FY / Serial Number
@@ -115,4 +167,3 @@ export async function generateTaxInvoiceNumber(date: Date = new Date()): Promise
         }
     }
 }
-

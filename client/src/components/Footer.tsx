@@ -1,9 +1,21 @@
 import { footerServices } from "@/lib/homeData"
 import type { Page } from "@/lib/navData"
 import { useNavigate } from "react-router-dom"
+import { isTourismDomain } from "@/utils"
+import TourismLogo from "../assets/UVHolidays.JPG.jpeg"
 
-const Footer = () => {
+interface FooterProps {
+  isTourism?: boolean
+}
+
+const Footer = ({ isTourism: isTourismProp }: FooterProps = {}) => {
   const navigate = useNavigate()
+  const isTourism = isTourismProp ?? isTourismDomain()
+
+  const displayServices = isTourism
+    ? [{ label: "Tourism", page: "tourism" as Page }]
+    : footerServices
+
   return (
     <footer
       style={{
@@ -23,10 +35,10 @@ const Footer = () => {
           <div className="xl:col-span-2">
             <div className="mb-3.5 flex items-center gap-2.5">
               <img
-                src="/Logo.jpeg"
-                alt="Udayam International"
-                className="h-[52px] w-auto object-contain"
-                style={{ filter: "brightness(1.05)" }}
+                src={isTourism ? TourismLogo : "/Logo.jpeg"}
+                alt={isTourism ? "UV Holidays" : "Udayam International"}
+                className="h-[52px] w-auto rounded-[4px] object-contain"
+                style={{ filter: isTourism ? "none" : "brightness(1.05)" }}
                 onError={(e) =>
                   ((e.currentTarget as HTMLImageElement).style.display = "none")
                 }
@@ -36,12 +48,11 @@ const Footer = () => {
               className="mb-5 max-w-[280px] text-[13px] leading-[1.75]"
               style={{ color: "white" }}
             >
-              Your trusted partner for travel, medical tourism, foreign
-              education, trade, and global recruitment. Connecting lives across
-              the world since 2010.
+              {isTourism
+                ? "UV Holidays is a growing tourism brand offering standard and customised holiday packages, thoughtfully planned tours and personalised travel solutions across domestic and international destinations."
+                : "Your trusted partner for travel, medical tourism, foreign education, trade, and global recruitment. Connecting lives across the world since 2010."}
             </p>
             <div className="flex gap-2">
-              {/* {["📘", "📸", "🐦", "▶️"].map((ico, i) => ( */}
               {["📘", "📸", "🐦", "▶️"].map((ico, i) => (
                 <a
                   key={i}
@@ -67,11 +78,11 @@ const Footer = () => {
               Services
             </h4>
             <ul className="flex list-none flex-col gap-[9px]">
-              {footerServices.map((s) => (
+              {displayServices.map((s) => (
                 <li key={s.page}>
                   <button
                     onClick={() => {
-                      navigate(s.page)
+                      navigate(s.page.startsWith("/") ? s.page : `/${s.page}`)
                       window.scrollTo({ top: 0, behavior: "smooth" })
                     }}
                     className="cursor-pointer border-none bg-transparent text-left text-[13px] transition-colors duration-200"
@@ -96,10 +107,10 @@ const Footer = () => {
               {[
                 { label: "Home", page: "home" as Page },
                 { label: "About Us", page: "about" as Page },
-                {
-                  label: "Contact Us",
-                  page: "contact/#contact-section" as Page,
-                },
+                // {
+                //   label: "Contact Us",
+                //   page: "contact/#contact-section" as Page,
+                // },
               ].map((l) => (
                 <li key={l.label}>
                   <button
@@ -116,8 +127,14 @@ const Footer = () => {
               ))}
               {[
                 { label: "Privacy Policy", href: "/privacy-policy" },
-                { label: "Terms & Conditions", href: "/tour-terms-and-conditions" },
-                { label: "Cancellation & Refund Policy", href: "/cancellation-and-refund-policy" },
+                {
+                  label: "Terms & Conditions",
+                  href: "/tour-terms-and-conditions",
+                },
+                {
+                  label: "Cancellation & Refund Policy",
+                  href: "/cancellation-and-refund-policy",
+                },
               ].map((item) => (
                 <li key={item.label}>
                   <a
@@ -153,6 +170,17 @@ const Footer = () => {
               </address>
               <div> +91 72997 71111</div>
               <div> 04651 - 225 236</div>
+              {isTourism && (
+                <div>
+                  <a
+                    href="mailto:enquiry@uvholidays.net"
+                    className="hover:underline"
+                    style={{ color: "white" }}
+                  >
+                    enquiry@uvholidays.net
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -163,8 +191,16 @@ const Footer = () => {
             className="text-center text-[12px] md:text-left"
             style={{ color: "white" }}
           >
-            © 2026 Udayam International. All rights reserved. | Trade · Travel ·
-            Trust
+            {isTourism ? (
+              <>
+                © 2026 Udayam International · UV Holidays. All rights reserved.
+              </>
+            ) : (
+              <>
+                © 2026 Udayam International. All rights reserved. | Trade ·
+                Travel · Trust
+              </>
+            )}
           </div>
           <div className="flex items-center gap-[7px]">
             <span className="mr-1.5 text-[12px]" style={{ color: "white" }}>

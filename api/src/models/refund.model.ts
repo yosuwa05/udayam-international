@@ -3,6 +3,7 @@ import { Schema, model, Types } from "mongoose"
 export type RefundStatus = "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED"
 
 export interface IRefund {
+    refundNumber?: string
     bookingId: Types.ObjectId
     paymentId?: Types.ObjectId
     cancellationRequestId?: Types.ObjectId
@@ -19,6 +20,7 @@ export interface IRefund {
 
 const refundSchema = new Schema<IRefund>(
     {
+        refundNumber: { type: String, unique: true, sparse: true, index: true },
         bookingId: { type: Schema.Types.ObjectId, ref: "booking", required: true, index: true },
         paymentId: { type: Schema.Types.ObjectId, ref: "payment" },
         cancellationRequestId: { type: Schema.Types.ObjectId, ref: "bookingCancellationRequest", index: true },

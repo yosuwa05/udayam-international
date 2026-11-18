@@ -47,6 +47,19 @@ export const Route = createFileRoute('/bookings/cancellations/')({
   component: CancellationRequestsListComponent,
 })
 
+export const formatISTDateTime = (date: string | Date) => {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }).format(new Date(date))
+}
+
 function CancellationRequestsListComponent() {
   const searchParams = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
@@ -57,7 +70,11 @@ function CancellationRequestsListComponent() {
   const status = searchParams.status || 'ALL'
 
   // Query cancellation requests list
-  const { data: listResponse, isLoading, isError } = useQuery({
+  const {
+    data: listResponse,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['admin-cancellation-requests', page, limit, status, search],
     queryFn: async () => {
       const res = await _axios.get('/booking/admin/cancellation-requests', {
@@ -73,8 +90,18 @@ function CancellationRequestsListComponent() {
   })
 
   const requests = listResponse?.requests || []
-  const counts = listResponse?.counts || { total: 0, pending: 0, completed: 0, rejected: 0 }
-  const pagination = listResponse?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
+  const counts = listResponse?.counts || {
+    total: 0,
+    pending: 0,
+    completed: 0,
+    rejected: 0,
+  }
+  const pagination = listResponse?.pagination || {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -82,10 +109,12 @@ function CancellationRequestsListComponent() {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <RotateCcw className="h-6 w-6 text-primary" /> Booking Cancellation Requests
+            <RotateCcw className="h-6 w-6 text-primary" /> Booking Cancellation
+            Requests
           </h1>
           <p className="text-sm text-muted-foreground">
-            Review user-submitted booking cancellations, calculate deduction charges, and record manual refund settlements.
+            Review user-submitted booking cancellations, calculate deduction
+            charges, and record manual refund settlements.
           </p>
         </div>
       </div>
@@ -93,7 +122,11 @@ function CancellationRequestsListComponent() {
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
-          onClick={() => navigate({ search: (prev) => ({ ...prev, status: 'ALL', page: 1 }) })}
+          onClick={() =>
+            navigate({
+              search: (prev) => ({ ...prev, status: 'ALL', page: 1 }),
+            })
+          }
           className={`cursor-pointer rounded-2xl p-5 border transition-all shadow-sm ${
             status === 'ALL'
               ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
@@ -106,12 +139,20 @@ function CancellationRequestsListComponent() {
             </span>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="mt-2 text-2xl font-bold text-foreground">{counts.total}</div>
-          <p className="mt-1 text-xs text-muted-foreground">All time cancellation requests</p>
+          <div className="mt-2 text-2xl font-bold text-foreground">
+            {counts.total}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            All time cancellation requests
+          </p>
         </div>
 
         <div
-          onClick={() => navigate({ search: (prev) => ({ ...prev, status: 'PENDING', page: 1 }) })}
+          onClick={() =>
+            navigate({
+              search: (prev) => ({ ...prev, status: 'PENDING', page: 1 }),
+            })
+          }
           className={`cursor-pointer rounded-2xl p-5 border transition-all shadow-sm ${
             status === 'PENDING'
               ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/50 dark:bg-amber-950/20'
@@ -127,11 +168,17 @@ function CancellationRequestsListComponent() {
           <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">
             {counts.pending}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Requires admin approval & refund calculation</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Requires admin approval & refund calculation
+          </p>
         </div>
 
         <div
-          onClick={() => navigate({ search: (prev) => ({ ...prev, status: 'COMPLETED', page: 1 }) })}
+          onClick={() =>
+            navigate({
+              search: (prev) => ({ ...prev, status: 'COMPLETED', page: 1 }),
+            })
+          }
           className={`cursor-pointer rounded-2xl p-5 border transition-all shadow-sm ${
             status === 'COMPLETED'
               ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20'
@@ -147,11 +194,17 @@ function CancellationRequestsListComponent() {
           <div className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
             {counts.completed}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Approved and payout recorded</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Approved and payout recorded
+          </p>
         </div>
 
         <div
-          onClick={() => navigate({ search: (prev) => ({ ...prev, status: 'REJECTED', page: 1 }) })}
+          onClick={() =>
+            navigate({
+              search: (prev) => ({ ...prev, status: 'REJECTED', page: 1 }),
+            })
+          }
           className={`cursor-pointer rounded-2xl p-5 border transition-all shadow-sm ${
             status === 'REJECTED'
               ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/50 dark:bg-rose-950/20'
@@ -167,7 +220,9 @@ function CancellationRequestsListComponent() {
           <div className="mt-2 text-2xl font-bold text-rose-600 dark:text-rose-400">
             {counts.rejected}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Declined; bookings remain active</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Declined; bookings remain active
+          </p>
         </div>
       </div>
 
@@ -178,7 +233,13 @@ function CancellationRequestsListComponent() {
             placeholder="Search booking # or reason..."
             value={search}
             onChange={(val) =>
-              navigate({ search: (prev) => ({ ...prev, search: val || undefined, page: 1 }) })
+              navigate({
+                search: (prev) => ({
+                  ...prev,
+                  search: val || undefined,
+                  page: 1,
+                }),
+              })
             }
           />
         </div>
@@ -188,7 +249,9 @@ function CancellationRequestsListComponent() {
           <Select
             value={status}
             onValueChange={(val) =>
-              navigate({ search: (prev) => ({ ...prev, status: val, page: 1 }) })
+              navigate({
+                search: (prev) => ({ ...prev, status: val, page: 1 }),
+              })
             }
           >
             <SelectTrigger className="w-[180px] h-9 text-xs">
@@ -196,9 +259,15 @@ function CancellationRequestsListComponent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Statuses ({counts.total})</SelectItem>
-              <SelectItem value="PENDING">Pending Review ({counts.pending})</SelectItem>
-              <SelectItem value="COMPLETED">Completed ({counts.completed})</SelectItem>
-              <SelectItem value="REJECTED">Rejected ({counts.rejected})</SelectItem>
+              <SelectItem value="PENDING">
+                Pending Review ({counts.pending})
+              </SelectItem>
+              <SelectItem value="COMPLETED">
+                Completed ({counts.completed})
+              </SelectItem>
+              <SelectItem value="REJECTED">
+                Rejected ({counts.rejected})
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -206,7 +275,9 @@ function CancellationRequestsListComponent() {
           <Select
             value={String(limit)}
             onValueChange={(val) =>
-              navigate({ search: (prev) => ({ ...prev, limit: Number(val), page: 1 }) })
+              navigate({
+                search: (prev) => ({ ...prev, limit: Number(val), page: 1 }),
+              })
             }
           >
             <SelectTrigger className="w-[110px] h-9 text-xs">
@@ -227,20 +298,33 @@ function CancellationRequestsListComponent() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="w-[160px] text-xs font-bold">Booking #</TableHead>
+              <TableHead className="w-[160px] text-xs font-bold">
+                Booking #
+              </TableHead>
               <TableHead className="text-xs font-bold">Customer</TableHead>
               <TableHead className="text-xs font-bold">Tour Package</TableHead>
-              <TableHead className="text-xs font-bold text-right">Paid Amount</TableHead>
-              <TableHead className="text-xs font-bold">Cancellation Reason</TableHead>
+              <TableHead className="text-xs font-bold text-right">
+                Paid Amount
+              </TableHead>
+              <TableHead className="text-xs font-bold">
+                Cancellation Reason
+              </TableHead>
               <TableHead className="text-xs font-bold">Requested On</TableHead>
-              <TableHead className="text-xs font-bold text-center">Status</TableHead>
-              <TableHead className="text-xs font-bold text-right">Actions</TableHead>
+              <TableHead className="text-xs font-bold text-center">
+                Status
+              </TableHead>
+              <TableHead className="text-xs font-bold text-right">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-40 text-center text-xs text-muted-foreground">
+                <TableCell
+                  colSpan={8}
+                  className="h-40 text-center text-xs text-muted-foreground"
+                >
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     <span>Loading cancellation requests...</span>
@@ -249,16 +333,25 @@ function CancellationRequestsListComponent() {
               </TableRow>
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-40 text-center text-xs text-rose-500 font-semibold">
-                  Failed to load cancellation requests. Please try refreshing the page.
+                <TableCell
+                  colSpan={8}
+                  className="h-40 text-center text-xs text-rose-500 font-semibold"
+                >
+                  Failed to load cancellation requests. Please try refreshing
+                  the page.
                 </TableCell>
               </TableRow>
             ) : requests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-40 text-center text-xs text-muted-foreground">
+                <TableCell
+                  colSpan={8}
+                  className="h-40 text-center text-xs text-muted-foreground"
+                >
                   <div className="flex flex-col items-center justify-center gap-2">
                     <CheckCircle2 className="h-8 w-8 text-muted-foreground/50" />
-                    <p className="font-semibold text-foreground">No cancellation requests found</p>
+                    <p className="font-semibold text-foreground">
+                      No cancellation requests found
+                    </p>
                     <p className="text-muted-foreground">
                       {status !== 'ALL'
                         ? `There are no requests with status '${status}'.`
@@ -274,19 +367,37 @@ function CancellationRequestsListComponent() {
                 const isRejected = req.status === 'REJECTED'
 
                 return (
-                  <TableRow key={req._id} className="hover:bg-muted/40 transition-colors">
+                  <TableRow
+                    key={req._id}
+                    className="hover:bg-muted/40 transition-colors"
+                  >
                     {/* Booking Number */}
                     <TableCell className="font-mono text-xs font-bold">
                       <div className="flex items-center gap-1.5">
                         <Link
                           to="/bookings/$id"
                           params={{ id: req.bookingId?._id || req.bookingId }}
-                          search={{ type: req.bookingType === 'CUSTOMIZED' ? 'customized' : 'standard' }}
+                          search={{
+                            type:
+                              req.bookingType === 'CUSTOMIZED'
+                                ? 'customized'
+                                : 'standard',
+                          }}
                           className="hover:underline text-primary"
                         >
                           {req.bookingNumber}
                         </Link>
                       </div>
+                      {req.cancellationNumber && (
+                        <div className="mt-1 text-[11px] font-semibold text-rose-700 dark:text-rose-400">
+                          {req.cancellationNumber}
+                        </div>
+                      )}
+                      {req.adminRefundDetails?.refundNumber && (
+                        <div className="mt-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                          REF: {req.adminRefundDetails.refundNumber}
+                        </div>
+                      )}
                       <div className="mt-1">
                         <Badge
                           variant="outline"
@@ -306,7 +417,9 @@ function CancellationRequestsListComponent() {
                       <div className="font-semibold text-foreground">
                         {req.userId?.fullName || 'Customer'}
                       </div>
-                      <div className="text-[11px] text-muted-foreground">{req.userId?.mobile}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {req.userId?.mobile}
+                      </div>
                       <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">
                         {req.userId?.email}
                       </div>
@@ -314,7 +427,10 @@ function CancellationRequestsListComponent() {
 
                     {/* Package */}
                     <TableCell className="text-xs">
-                      <div className="font-semibold text-foreground max-w-[200px] truncate" title={req.packageId?.title}>
+                      <div
+                        className="font-semibold text-foreground max-w-[200px] truncate"
+                        title={req.packageId?.title}
+                      >
                         {req.packageId?.title || 'Tour Package'}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
@@ -325,10 +441,16 @@ function CancellationRequestsListComponent() {
                     {/* Total Paid Amount */}
                     <TableCell className="text-xs text-right">
                       <div className="font-bold text-emerald-600 dark:text-emerald-400">
-                        ₹{Number(req.totalPaidAmount || 0).toLocaleString('en-IN')}
+                        ₹
+                        {Number(req.totalPaidAmount || 0).toLocaleString(
+                          'en-IN',
+                        )}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        of ₹{Number(req.totalBookingAmount || 0).toLocaleString('en-IN')}
+                        of ₹
+                        {Number(req.totalBookingAmount || 0).toLocaleString(
+                          'en-IN',
+                        )}
                       </div>
                     </TableCell>
 
@@ -337,28 +459,17 @@ function CancellationRequestsListComponent() {
                       <div className="inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold bg-muted text-muted-foreground mb-1">
                         {req.reasonCategory || 'General'}
                       </div>
-                      <p className="truncate text-foreground font-medium" title={req.reason}>
+                      <p
+                        className="truncate text-foreground font-medium"
+                        title={req.reason}
+                      >
                         {req.reason}
                       </p>
                     </TableCell>
 
                     {/* Date */}
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {req.createdAt
-                        ? new Date(req.createdAt).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })
-                        : 'N/A'}
-                      <div className="text-[10px]">
-                        {req.createdAt
-                          ? new Date(req.createdAt).toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
-                          : ''}
-                      </div>
+                      {req.createdAt ? formatISTDateTime(req.createdAt) : ''}
                     </TableCell>
 
                     {/* Status Badge */}
@@ -420,8 +531,9 @@ function CancellationRequestsListComponent() {
         {pagination.totalPages > 1 && (
           <div className="p-4 border-t border-border flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              Showing {(page - 1) * limit + 1} to {Math.min(page * limit, pagination.total)} of{' '}
-              {pagination.total} requests
+              Showing {(page - 1) * limit + 1} to{' '}
+              {Math.min(page * limit, pagination.total)} of {pagination.total}{' '}
+              requests
             </p>
             <Pagination
               currentPage={page}
@@ -438,4 +550,3 @@ function CancellationRequestsListComponent() {
 }
 
 export default CancellationRequestsListComponent
-

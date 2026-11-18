@@ -42,6 +42,7 @@ export interface ITravellerInfo {
     fullName: string
     mobileNumber: string
     email: string
+    gstNumber?: string
     numberOfPersons: number
     travelDate: Date
     travelType: string
@@ -110,6 +111,7 @@ export interface IBooking {
     paymentDetails?: IPaymentDetails
     status: BookingStatus
     cancellationRequestId?: Types.ObjectId
+    cancellationNumber?: string
     quotation?: IQuotation
     transactions?: ICustomizedTransaction[]
     createdAt?: Date
@@ -130,6 +132,7 @@ const travellerInfoSchema = new Schema<ITravellerInfo>(
         fullName: { type: String, required: true, trim: true },
         mobileNumber: { type: String, required: true, trim: true },
         email: { type: String, required: true, trim: true, lowercase: true },
+        gstNumber: { type: String, trim: true, uppercase: true },
         numberOfPersons: { type: Number, required: true, min: 1 },
         travelDate: { type: Date, required: true },
         travelType: { type: String, required: true, trim: true },
@@ -246,6 +249,7 @@ const bookingSchema = new Schema<IBooking>(
             ],
         },
         cancellationRequestId: { type: Schema.Types.ObjectId, ref: "bookingCancellationRequest" },
+        cancellationNumber: { type: String, index: true },
         quotation: { type: quotationSchema },
         transactions: { type: [customizedTransactionSchema], default: [] },
     },

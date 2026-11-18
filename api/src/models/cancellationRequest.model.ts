@@ -3,6 +3,7 @@ import { Schema, model, Types } from "mongoose"
 export type CancellationRequestStatus = "PENDING" | "COMPLETED" | "REJECTED"
 
 export interface IAdminRefundDetails {
+    refundNumber?: string
     refundAmount: number
     deductionAmount: number
     paymentMode: "BANK_TRANSFER" | "UPI" | "CASH" | "ONLINE" | "OTHER"
@@ -23,6 +24,7 @@ export interface IAdminRejectionDetails {
 
 export interface IBookingCancellationRequest {
     _id?: Types.ObjectId
+    cancellationNumber?: string
     bookingId: Types.ObjectId
     userId: Types.ObjectId
     bookingNumber: string
@@ -43,6 +45,7 @@ export interface IBookingCancellationRequest {
 
 const adminRefundDetailsSchema = new Schema<IAdminRefundDetails>(
     {
+        refundNumber: { type: String, trim: true },
         refundAmount: { type: Number, required: true, min: 0 },
         deductionAmount: { type: Number, required: true, default: 0, min: 0 },
         paymentMode: {
@@ -73,6 +76,7 @@ const adminRejectionDetailsSchema = new Schema<IAdminRejectionDetails>(
 
 const bookingCancellationRequestSchema = new Schema<IBookingCancellationRequest>(
     {
+        cancellationNumber: { type: String, unique: true, sparse: true, index: true },
         bookingId: { type: Schema.Types.ObjectId, ref: "booking", required: true, index: true },
         userId: { type: Schema.Types.ObjectId, ref: "user", required: true, index: true },
         bookingNumber: { type: String, required: true, index: true },

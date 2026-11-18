@@ -63575,6 +63575,7 @@
         "id": 4006,
         "name": "Meghalaya",
         "country_id": 101,
+        "gst_code": "17",
         "city": [
           { "id": 131520, "name": "Cherrapunji", "state_id": 4006 },
           { "id": 131824, "name": "East G\u0101ro Hills", "state_id": 4006 },
@@ -63600,6 +63601,7 @@
         "id": 4007,
         "name": "Haryana",
         "country_id": 101,
+        "gst_code": "06",
         "city": [
           { "id": 57675, "name": "Amb\u0101la", "state_id": 4007 },
           { "id": 57756, "name": "Ateli Mandi", "state_id": 4007 },
@@ -63702,6 +63704,7 @@
         "id": 4008,
         "name": "Maharashtra",
         "country_id": 101,
+        "gst_code": "27",
         "city": [
           { "id": 57589, "name": "Achalpur", "state_id": 4008 },
           { "id": 57602, "name": "Ahiri", "state_id": 4008 },
@@ -64038,6 +64041,7 @@
         "id": 4009,
         "name": "Goa",
         "country_id": 101,
+        "gst_code": "30",
         "city": [
           { "id": 57638, "name": "Aldona", "state_id": 4009 },
           { "id": 57727, "name": "Arambol", "state_id": 4009 },
@@ -64095,6 +64099,7 @@
         "id": 4010,
         "name": "Manipur",
         "country_id": 101,
+        "gst_code": "14",
         "city": [
           { "id": 58064, "name": "Bishnupur", "state_id": 4010 },
           { "id": 131585, "name": "Churachandpur", "state_id": 4010 },
@@ -64117,6 +64122,7 @@
         "id": 4011,
         "name": "Puducherry",
         "country_id": 101,
+        "gst_code": "34",
         "city": [
           { "id": 132715, "name": "K\u0101raik\u0101l", "state_id": 4011 },
           { "id": 132830, "name": "Mahe", "state_id": 4011 },
@@ -64128,6 +64134,7 @@
         "id": 4012,
         "name": "Telangana",
         "country_id": 101,
+        "gst_code": "36",
         "city": [
           { "id": 57701, "name": "Andol", "state_id": 4012 },
           { "id": 57754, "name": "Asif\u0101b\u0101d", "state_id": 4012 },
@@ -64244,6 +64251,7 @@
         "id": 4013,
         "name": "Odisha",
         "country_id": 101,
+        "gst_code": "21",
         "city": [
           { "id": 57704, "name": "Angul", "state_id": 4013 },
           { "id": 57705, "name": "Angul District", "state_id": 4013 },
@@ -64374,6 +64382,7 @@
         "id": 4014,
         "name": "Rajasthan",
         "country_id": 101,
+        "gst_code": "08",
         "city": [
           { "id": 57584, "name": "Abhaneri", "state_id": 4014 },
           { "id": 57614, "name": "Ajmer", "state_id": 4014 },
@@ -64581,6 +64590,7 @@
         "id": 4015,
         "name": "Punjab",
         "country_id": 101,
+        "gst_code": "03",
         "city": [
           { "id": 57587, "name": "Abohar", "state_id": 4015 },
           { "id": 57592, "name": "Adampur", "state_id": 4015 },
@@ -64707,6 +64717,7 @@
         "id": 4016,
         "name": "Uttarakhand",
         "country_id": 101,
+        "gst_code": "05",
         "city": [
           { "id": 57643, "name": "Almora", "state_id": 4016 },
           { "id": 57800, "name": "Bageshwar", "state_id": 4016 },
@@ -64784,6 +64795,7 @@
         "id": 4017,
         "name": "Andhra Pradesh",
         "country_id": 101,
+        "gst_code": "37",
         "city": [
           { "id": 57593, "name": "Addanki", "state_id": 4017 },
           { "id": 57620, "name": "Akasahebpet", "state_id": 4017 },
@@ -64971,6 +64983,7 @@
         "id": 4018,
         "name": "Nagaland",
         "country_id": 101,
+        "gst_code": "13",
         "city": [
           { "id": 131771, "name": "Dimapur", "state_id": 4018 },
           { "id": 131772, "name": "Dim\u0101pur", "state_id": 4018 },
@@ -64990,6 +65003,7 @@
         "id": 4019,
         "name": "Lakshadweep",
         "country_id": 101,
+        "gst_code": "31",
         "city": [
           { "id": 132432, "name": "Kavaratti", "state_id": 4019 },
           { "id": 132750, "name": "Lakshadweep", "state_id": 4019 }
@@ -64999,6 +65013,7 @@
         "id": 4020,
         "name": "Himachal Pradesh",
         "country_id": 101,
+        "gst_code": "02",
         "city": [
           { "id": 57736, "name": "Arki", "state_id": 4020 },
           { "id": 57789, "name": "Baddi", "state_id": 4020 },
@@ -65064,6 +65079,7 @@
         "id": 4021,
         "name": "Delhi",
         "country_id": 101,
+        "gst_code": "07",
         "city": [
           { "id": 57655, "name": "Al\u012bpur", "state_id": 4021 },
           { "id": 57909, "name": "Baw\u0101na", "state_id": 4021 },
@@ -65090,6 +65106,7 @@
         "id": 4022,
         "name": "Uttar Pradesh",
         "country_id": 101,
+        "gst_code": "09",
         "city": [
           { "id": 57590, "name": "Achhnera", "state_id": 4022 },
           { "id": 57597, "name": "Afzalgarh", "state_id": 4022 },
@@ -65656,6 +65673,7 @@
         "id": 4023,
         "name": "Andaman and Nicobar Islands",
         "country_id": 101,
+        "gst_code": "35",
         "city": [
           { "id": 57837, "name": "Bamboo Flat", "state_id": 4023 },
           { "id": 133213, "name": "Nicobar", "state_id": 4023 },
@@ -65667,6 +65685,7 @@
         "id": 4024,
         "name": "Arunachal Pradesh",
         "country_id": 101,
+        "gst_code": "12",
         "city": [
           { "id": 57645, "name": "Along", "state_id": 4024 },
           { "id": 57708, "name": "Anjaw", "state_id": 4024 },
@@ -65700,6 +65719,7 @@
         "id": 4025,
         "name": "Jharkhand",
         "country_id": 101,
+        "gst_code": "20",
         "city": [
           { "id": 57802, "name": "Bagra", "state_id": 4025 },
           { "id": 57878, "name": "Barki Saria", "state_id": 4025 },
@@ -65802,6 +65822,7 @@
         "id": 4026,
         "name": "Karnataka",
         "country_id": 101,
+        "gst_code": "29",
         "city": [
           { "id": 57598, "name": "Afzalpur", "state_id": 4026 },
           { "id": 57613, "name": "Ajjampur", "state_id": 4026 },
@@ -66072,6 +66093,7 @@
         "id": 4027,
         "name": "Assam",
         "country_id": 101,
+        "gst_code": "18",
         "city": [
           { "id": 57585, "name": "Abhay\u0101puri", "state_id": 4027 },
           { "id": 57679, "name": "Amguri", "state_id": 4027 },
@@ -66176,6 +66198,7 @@
         "id": 4028,
         "name": "Kerala",
         "country_id": 101,
+        "gst_code": "32",
         "city": [
           { "id": 57596, "name": "Ad\u016br", "state_id": 4028 },
           { "id": 57637, "name": "Alappuzha", "state_id": 4028 },
@@ -66294,6 +66317,7 @@
         "id": 4029,
         "name": "Jammu and Kashmir",
         "country_id": 101,
+        "gst_code": "01",
         "city": [
           { "id": 57622, "name": "Akhn\u016br", "state_id": 4029 },
           { "id": 57699, "name": "Anantnag", "state_id": 4029 },
@@ -66369,6 +66393,7 @@
         "id": 4030,
         "name": "Gujarat",
         "country_id": 101,
+        "gst_code": "24",
         "city": [
           { "id": 57588, "name": "Abrama", "state_id": 4030 },
           { "id": 57591, "name": "Adalaj", "state_id": 4030 },
@@ -66601,12 +66626,14 @@
         "id": 4031,
         "name": "Chandigarh",
         "country_id": 101,
+        "gst_code": "04",
         "city": [{ "id": 58190, "name": "Chandigarh", "state_id": 4031 }]
       },
       {
         "id": 4032,
         "name": "Dadra and Nagar Haveli",
         "country_id": 101,
+        "gst_code": "26",
         "city": [
           { "id": 131639, "name": "Dadra", "state_id": 4032 },
           { "id": 131640, "name": "Dadra & Nagar Haveli", "state_id": 4032 },
@@ -66618,6 +66645,7 @@
         "id": 4033,
         "name": "Daman and Diu",
         "country_id": 101,
+        "gst_code": "25",
         "city": [
           { "id": 131649, "name": "Daman", "state_id": 4033 },
           { "id": 131650, "name": "Daman District", "state_id": 4033 },
@@ -66628,6 +66656,7 @@
         "id": 4034,
         "name": "Sikkim",
         "country_id": 101,
+        "gst_code": "11",
         "city": [
           { "id": 131822, "name": "East District", "state_id": 4034 },
           { "id": 131905, "name": "Gangtok", "state_id": 4034 },
@@ -66647,6 +66676,7 @@
         "id": 4035,
         "name": "Tamil Nadu",
         "country_id": 101,
+        "gst_code": "33",
         "city": [
           { "id": 57586, "name": "Abiramam", "state_id": 4035 },
           { "id": 57594, "name": "Adirampattinam", "state_id": 4035 },
@@ -67006,6 +67036,7 @@
         "id": 4036,
         "name": "Mizoram",
         "country_id": 101,
+        "gst_code": "15",
         "city": [
           { "id": 57610, "name": "Aizawl", "state_id": 4036 },
           { "id": 58184, "name": "Champhai", "state_id": 4036 },
@@ -67029,6 +67060,7 @@
         "id": 4037,
         "name": "Bihar",
         "country_id": 101,
+        "gst_code": "10",
         "city": [
           { "id": 57661, "name": "Amarpur", "state_id": 4037 },
           { "id": 57730, "name": "Araria", "state_id": 4037 },
@@ -67182,6 +67214,7 @@
         "id": 4038,
         "name": "Tripura",
         "country_id": 101,
+        "gst_code": "16",
         "city": [
           { "id": 57600, "name": "Agartala", "state_id": 4038 },
           { "id": 57662, "name": "Amarpur", "state_id": 4038 },
@@ -67212,6 +67245,7 @@
         "id": 4039,
         "name": "Madhya Pradesh",
         "country_id": 101,
+        "gst_code": "23",
         "city": [
           { "id": 57599, "name": "Agar", "state_id": 4039 },
           { "id": 57611, "name": "Ajaigarh", "state_id": 4039 },
@@ -67510,6 +67544,7 @@
         "id": 4040,
         "name": "Chhattisgarh",
         "country_id": 101,
+        "gst_code": "22",
         "city": [
           { "id": 57619, "name": "Akaltara", "state_id": 4040 },
           { "id": 57670, "name": "Ambik\u0101pur", "state_id": 4040 },
@@ -67600,6 +67635,7 @@
         "id": 4852,
         "name": "Ladakh",
         "country_id": 101,
+        "gst_code": "38",
         "city": [
           { "id": 132399, "name": "Kargil", "state_id": 4852 },
           { "id": 132762, "name": "Leh", "state_id": 4852 }
@@ -67609,6 +67645,7 @@
         "id": 4853,
         "name": "West Bengal",
         "country_id": 101,
+        "gst_code": "19",
         "city": [
           { "id": 141852, "name": "Ahmedpur", "state_id": 4853 },
           { "id": 141853, "name": "Aistala", "state_id": 4853 },

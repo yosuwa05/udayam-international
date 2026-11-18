@@ -90,7 +90,6 @@ export async function getReceiptVoucherHandler(ctx: Context<{ params: { paymentI
             set.status = 404
             return { status: false, error: "Payment not found" }
         }
-
         const booking = await BookingModel.findById(payment.bookingId)
         if (!booking) {
             set.status = 404
@@ -105,7 +104,7 @@ export async function getReceiptVoucherHandler(ctx: Context<{ params: { paymentI
 
         // Generate and upload if URL is not yet present
         let result: any = null
-        if (!payment.paymentReceiptUrl || !payment.receiptVoucherNumber) {
+        if (!payment.paymentReceiptUrl || !payment.receiptVoucherNumber || !booking.bookingConfirmationNumber) {
             result = await generateAndSaveReceiptVoucher(payment._id)
         }
 
@@ -344,8 +343,8 @@ export async function getTaxInvoiceHandler(ctx: Context<{ params: { bookingId: s
                 error: isStandard
                     ? `Tax Invoice for standard packages is generated automatically once full payment (100%) is completed. Remaining balance is ₹${booking.paymentDetails?.remainingAmount ?? 0}.`
                     : booking.status !== "COMPLETED"
-                    ? "Tax Invoice for customized bookings is generated once the booking is completed."
-                    : "Tax invoice has not been generated for this booking yet.",
+                        ? "Tax Invoice for customized bookings is generated once the booking is completed."
+                        : "Tax invoice has not been generated for this booking yet.",
             }
         }
 

@@ -5,6 +5,7 @@ import { getStatesSchema } from "./state.schema";
 interface State {
     id: number;
     name: string;
+    gst_code?: string;
 }
 
 interface Country {
@@ -50,6 +51,7 @@ export const getIndianStates = async (ctx: Context<{ query: getStatesSchema }>) 
             states: sortedStates.map((s) => ({
                 name: s.name,
                 iso2: String(s.id),
+                gst_code: s.gst_code || "",
             })),
         };
     } catch (error: any) {

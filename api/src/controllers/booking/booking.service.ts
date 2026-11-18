@@ -21,11 +21,16 @@ import {
     amountToPaise,
 } from "@helper/paymentValidation.helper"
 import { recordStaffActivity } from "@helper/staffLogger"
-import { generateBookingConfirmationNumber } from "@helper/numberGenerator.helper"
+import {
+    generateBookingConfirmationNumber,
+    generateCancellationNumber,
+    generateRefundNumber,
+} from "@helper/numberGenerator.helper"
 import {
     generateAndSaveReceiptVoucher,
     generateAndSaveTaxInvoice,
 } from "../receipt-download/receipt-download.service"
+import { getGstStateCode } from "@helper/gstStateCodes.helper"
 
 
 // ─── HELPER: Coupon Validator Logic ──────────────────────────────────────────
@@ -401,6 +406,7 @@ export const createStandardBookingOrder = async (ctx: Context) => {
                 fullName: travellerInfo.fullName,
                 mobileNumber: travellerInfo.mobileNumber,
                 email: travellerInfo.email,
+                gstNumber: travellerInfo.gstNumber?.trim() ? travellerInfo.gstNumber.trim().toUpperCase() : undefined,
                 numberOfPersons: numPersons,
                 travelDate: new Date(travellerInfo.travelDate),
                 travelType: travellerInfo.travelType || "FAMILY",
@@ -409,7 +415,7 @@ export const createStandardBookingOrder = async (ctx: Context) => {
                 landmark: travellerInfo.landmark?.trim() || "",
                 pincode: travellerInfo.pincode?.trim() || "",
                 state: selectedState,
-                stateCode: travellerInfo.stateCode || (isTamilNadu ? "33" : ""),
+                stateCode: travellerInfo.stateCode || getGstStateCode(selectedState, travellerInfo.gstNumber) || (isTamilNadu ? "33" : ""),
                 travellers: travellerInfo.travellers || [],
             },
             pricingDetails: {
@@ -1020,6 +1026,7 @@ export const createCustomizedEnquiry = async (ctx: Context) => {
                 fullName: travellerInfo.fullName,
                 mobileNumber: travellerInfo.mobileNumber,
                 email: travellerInfo.email,
+                gstNumber: travellerInfo.gstNumber?.trim() ? travellerInfo.gstNumber.trim().toUpperCase() : undefined,
                 numberOfPersons: Number(travellerInfo.numberOfPersons),
                 travelDate: new Date(travellerInfo.travelDate),
                 travelType: travellerInfo.travelType || "FAMILY",
@@ -1028,16 +1035,23 @@ export const createCustomizedEnquiry = async (ctx: Context) => {
                 landmark: travellerInfo.landmark?.trim() || "",
                 pincode: travellerInfo.pincode?.trim() || "",
                 state: travellerInfo.state?.trim() || "Tamil Nadu",
-                stateCode: travellerInfo.stateCode || (travellerInfo.state?.trim()?.toLowerCase()?.includes("tamil") ? "33" : ""),
+                stateCode: travellerInfo.stateCode || getGstStateCode(travellerInfo.state, travellerInfo.gstNumber) || (travellerInfo.state?.trim()?.toLowerCase()?.includes("tamil") ? "33" : ""),
                 travellers: travellerInfo.travellers || [],
             },
             pricingDetails: {
                 originalAmount: 0,
                 discountAmount: 0,
                 gstAmount: 0,
-                gstPercentage: pkg.gstPercentage ?? 0,
+                gstPercentage: pkg.gstPercentage && pkg.gstPercentage > 0 ? pkg.gstPercentage : 5,
                 finalAmount: 0,
                 currency: "INR",
+                isTamilNadu: (travellerInfo.state?.trim() || "Tamil Nadu").toLowerCase().includes("tamil"),
+                cgstPercentage: 0,
+                cgstAmount: 0,
+                sgstPercentage: 0,
+                sgstAmount: 0,
+                igstPercentage: 0,
+                igstAmount: 0,
             },
             status: "ENQUIRY_RECEIVED",
         })
@@ -1193,6 +1207,61 @@ export const getMyBookingDetails = async (ctx: Context) => {
                     },
                 }
             )
+        }
+
+        // Self-heal: ensure customized booking GST breakdown is populated accurately
+        if (booking.bookingType === "CUSTOMIZED" && booking.pricingDetails && booking.pricingDetails.originalAmount > 0) {
+            const pricing = booking.pricingDetails
+            const state = booking.travellerInfo?.state?.trim() || "Tamil Nadu"
+            const isTamilNadu = state.toLowerCase().includes("tamil")
+
+            // If gstAmount is 0 but finalAmount > originalAmount, compute diff as gstAmount
+            let gstAmt = pricing.gstAmount || 0
+            if (gstAmt === 0 && pricing.finalAmount > pricing.originalAmount) {
+                gstAmt = pricing.finalAmount - pricing.originalAmount
+                pricing.gstAmount = gstAmt
+            }
+
+            // If gstAmount > 0 and breakdown is missing/zero, calculate CGST/SGST or IGST
+            if (gstAmt > 0 && (!pricing.cgstAmount || pricing.cgstAmount === 0) && (!pricing.igstAmount || pricing.igstAmount === 0)) {
+                pricing.isTamilNadu = isTamilNadu
+                const gstRate = pricing.gstPercentage && pricing.gstPercentage > 0 ? pricing.gstPercentage : 5
+                pricing.gstPercentage = gstRate
+
+                if (isTamilNadu) {
+                    pricing.cgstPercentage = Number((gstRate / 2).toFixed(2))
+                    pricing.sgstPercentage = Number((gstRate / 2).toFixed(2))
+                    pricing.cgstAmount = Math.round(gstAmt / 2)
+                    pricing.sgstAmount = gstAmt - pricing.cgstAmount
+                    pricing.igstPercentage = 0
+                    pricing.igstAmount = 0
+                } else {
+                    pricing.igstPercentage = gstRate
+                    pricing.igstAmount = gstAmt
+                    pricing.cgstPercentage = 0
+                    pricing.cgstAmount = 0
+                    pricing.sgstPercentage = 0
+                    pricing.sgstAmount = 0
+                }
+
+                // Persist repaired breakdown to MongoDB in background
+                BookingModel.updateOne(
+                    { _id: booking._id },
+                    {
+                        $set: {
+                            "pricingDetails.gstAmount": pricing.gstAmount,
+                            "pricingDetails.gstPercentage": pricing.gstPercentage,
+                            "pricingDetails.isTamilNadu": pricing.isTamilNadu,
+                            "pricingDetails.cgstPercentage": pricing.cgstPercentage,
+                            "pricingDetails.sgstPercentage": pricing.sgstPercentage,
+                            "pricingDetails.cgstAmount": pricing.cgstAmount,
+                            "pricingDetails.sgstAmount": pricing.sgstAmount,
+                            "pricingDetails.igstPercentage": pricing.igstPercentage,
+                            "pricingDetails.igstAmount": pricing.igstAmount,
+                        },
+                    }
+                ).catch((err) => console.error("Error healing booking GST breakdown:", err))
+            }
         }
 
         return {
@@ -1381,6 +1450,61 @@ export const getBookingDetails = async (ctx: Context<{ params: { id: string } }>
             )
         }
 
+        // Self-heal: ensure customized booking GST breakdown is populated accurately
+        if (booking.bookingType === "CUSTOMIZED" && booking.pricingDetails && booking.pricingDetails.originalAmount > 0) {
+            const pricing = booking.pricingDetails
+            const state = booking.travellerInfo?.state?.trim() || "Tamil Nadu"
+            const isTamilNadu = state.toLowerCase().includes("tamil")
+
+            // If gstAmount is 0 but finalAmount > originalAmount, compute diff as gstAmount
+            let gstAmt = pricing.gstAmount || 0
+            if (gstAmt === 0 && pricing.finalAmount > pricing.originalAmount) {
+                gstAmt = pricing.finalAmount - pricing.originalAmount
+                pricing.gstAmount = gstAmt
+            }
+
+            // If gstAmount > 0 and breakdown is missing/zero, calculate CGST/SGST or IGST
+            if (gstAmt > 0 && (!pricing.cgstAmount || pricing.cgstAmount === 0) && (!pricing.igstAmount || pricing.igstAmount === 0)) {
+                pricing.isTamilNadu = isTamilNadu
+                const gstRate = pricing.gstPercentage && pricing.gstPercentage > 0 ? pricing.gstPercentage : 5
+                pricing.gstPercentage = gstRate
+
+                if (isTamilNadu) {
+                    pricing.cgstPercentage = Number((gstRate / 2).toFixed(2))
+                    pricing.sgstPercentage = Number((gstRate / 2).toFixed(2))
+                    pricing.cgstAmount = Math.round(gstAmt / 2)
+                    pricing.sgstAmount = gstAmt - pricing.cgstAmount
+                    pricing.igstPercentage = 0
+                    pricing.igstAmount = 0
+                } else {
+                    pricing.igstPercentage = gstRate
+                    pricing.igstAmount = gstAmt
+                    pricing.cgstPercentage = 0
+                    pricing.cgstAmount = 0
+                    pricing.sgstPercentage = 0
+                    pricing.sgstAmount = 0
+                }
+
+                // Persist repaired breakdown to MongoDB in background
+                BookingModel.updateOne(
+                    { _id: booking._id },
+                    {
+                        $set: {
+                            "pricingDetails.gstAmount": pricing.gstAmount,
+                            "pricingDetails.gstPercentage": pricing.gstPercentage,
+                            "pricingDetails.isTamilNadu": pricing.isTamilNadu,
+                            "pricingDetails.cgstPercentage": pricing.cgstPercentage,
+                            "pricingDetails.sgstPercentage": pricing.sgstPercentage,
+                            "pricingDetails.cgstAmount": pricing.cgstAmount,
+                            "pricingDetails.sgstAmount": pricing.sgstAmount,
+                            "pricingDetails.igstPercentage": pricing.igstPercentage,
+                            "pricingDetails.igstAmount": pricing.igstAmount,
+                        },
+                    }
+                ).catch((err) => console.error("Error healing booking GST breakdown:", err))
+            }
+        }
+
         return {
             status: true,
             data: {
@@ -1404,7 +1528,7 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
     const adminId = store.id
 
     try {
-        const { amount, notes, status } = body
+        const { amount, gstPercentage: reqGst, notes, status } = body
         if (amount === undefined || amount <= 0) {
             set.status = 400
             return { status: false, error: "Valid quotation amount is required" }
@@ -1444,20 +1568,65 @@ export const updateCustomizedQuotation = async (ctx: Context<{ params: { id: str
         const nextStatus = status || "QUOTATION_SHARED"
 
         const pkg = await TourismModel.findById(booking.packageId)
-        const gstPercentage = pkg?.gstPercentage ?? 0
+        
+        // Priority for GST Percentage:
+        // 1. Explicitly passed in body (if provided and >= 0)
+        // 2. Package gstPercentage (if > 0)
+        // 3. Existing booking pricingDetails gstPercentage (if > 0)
+        // 4. Default standard 5%
+        let gstPercentage = 5
+        if (reqGst !== undefined && reqGst !== "" && !isNaN(Number(reqGst)) && Number(reqGst) >= 0) {
+            gstPercentage = Number(reqGst)
+        } else if (pkg?.gstPercentage && pkg.gstPercentage > 0) {
+            gstPercentage = pkg.gstPercentage
+        } else if (booking.pricingDetails?.gstPercentage && booking.pricingDetails.gstPercentage > 0) {
+            gstPercentage = booking.pricingDetails.gstPercentage
+        }
+
         const baseAmount = Number(amount)
         const gstAmount = Math.round((baseAmount * gstPercentage) / 100)
         const finalAmount = baseAmount + gstAmount
+
+        // ── Determine GST Breakdown based on Traveller State (Tamil Nadu vs Other States) ──
+        const selectedState = booking.travellerInfo?.state?.trim() || "Tamil Nadu"
+        const isTamilNadu = selectedState.toLowerCase().includes("tamil")
+
+        let cgstAmount = 0
+        let cgstPercentage = 0
+        let sgstAmount = 0
+        let sgstPercentage = 0
+        let igstAmount = 0
+        let igstPercentage = 0
+
+        if (isTamilNadu) {
+            cgstPercentage = Number((gstPercentage / 2).toFixed(2))
+            sgstPercentage = Number((gstPercentage / 2).toFixed(2))
+            cgstAmount = Math.round(gstAmount / 2)
+            sgstAmount = gstAmount - cgstAmount
+        } else {
+            igstPercentage = gstPercentage
+            igstAmount = gstAmount
+        }
 
         booking.quotation = {
             amount: baseAmount,
             notes,
             sharedAt: new Date(),
         }
+        if (!booking.pricingDetails) {
+            booking.pricingDetails = {} as any
+        }
         booking.pricingDetails.originalAmount = baseAmount
         booking.pricingDetails.gstPercentage = gstPercentage
         booking.pricingDetails.gstAmount = gstAmount
         booking.pricingDetails.finalAmount = finalAmount
+        booking.pricingDetails.isTamilNadu = isTamilNadu
+        booking.pricingDetails.cgstPercentage = cgstPercentage
+        booking.pricingDetails.cgstAmount = cgstAmount
+        booking.pricingDetails.sgstPercentage = sgstPercentage
+        booking.pricingDetails.sgstAmount = sgstAmount
+        booking.pricingDetails.igstPercentage = igstPercentage
+        booking.pricingDetails.igstAmount = igstAmount
         booking.status = nextStatus
 
         await booking.save()
@@ -1796,7 +1965,10 @@ export const requestBookingCancellation = async (ctx: Context<{ params: { id: st
         const totalBookingAmount = booking.pricingDetails?.finalAmount || 0
         const previousBookingStatus = booking.status
 
+        const cancellationNumber = await generateCancellationNumber()
+
         const cancellationRequest = await BookingCancellationRequestModel.create({
+            cancellationNumber,
             bookingId: booking._id,
             userId: booking.userId,
             bookingNumber: booking.bookingNumber,
@@ -1813,6 +1985,7 @@ export const requestBookingCancellation = async (ctx: Context<{ params: { id: st
 
         booking.status = "CANCELLATION_REQUESTED"
         booking.cancellationRequestId = cancellationRequest._id
+        booking.cancellationNumber = cancellationNumber
         await booking.save()
 
         await BookingStatusHistoryModel.create({
@@ -1820,12 +1993,12 @@ export const requestBookingCancellation = async (ctx: Context<{ params: { id: st
             fromStatus: previousBookingStatus,
             toStatus: "CANCELLATION_REQUESTED",
             changedBy: new Types.ObjectId(userId),
-            notes: `Customer requested cancellation (${reasonCategory || "Personal Emergency"}). Reason: ${reason.trim()}`,
+            notes: `Customer requested cancellation (${cancellationNumber}) (${reasonCategory || "Personal Emergency"}). Reason: ${reason.trim()}`,
         })
 
         return {
             status: true,
-            message: "Cancellation request submitted successfully. Our team will review your request.",
+            message: `Cancellation request (${cancellationNumber}) submitted successfully. Our team will review your request.`,
             data: cancellationRequest,
         }
     } catch (error: any) {
@@ -1892,6 +2065,8 @@ export const getAdminCancellationRequests = async (ctx: Context) => {
             const searchRegex = new RegExp(search, "i")
             filter.$or = [
                 { bookingNumber: searchRegex },
+                { cancellationNumber: searchRegex },
+                { "adminRefundDetails.refundNumber": searchRegex },
                 { reason: searchRegex },
             ]
         }
@@ -2068,6 +2243,9 @@ export const processCancellationRequest = async (ctx: Context<{ params: { id: st
             const selectedMode = validModes.includes(paymentMode) ? paymentMode : "BANK_TRANSFER"
             const deductionAmount = Math.max(0, request.totalPaidAmount - numericRefund)
 
+            // Generate official Refund ID
+            const refundNumber = await generateRefundNumber(refundDate ? new Date(refundDate) : new Date())
+
             // 1. Update booking status to CANCELLED and payment status first
             const oldBookingStatus = booking.status
             booking.status = "CANCELLED"
@@ -2083,6 +2261,7 @@ export const processCancellationRequest = async (ctx: Context<{ params: { id: st
             // 2. Mark request as COMPLETED
             request.status = "COMPLETED"
             request.adminRefundDetails = {
+                refundNumber,
                 refundAmount: numericRefund,
                 deductionAmount,
                 paymentMode: selectedMode as any,
@@ -2095,19 +2274,18 @@ export const processCancellationRequest = async (ctx: Context<{ params: { id: st
             }
             await request.save()
 
-            // Create Refund document for audit
-            if (numericRefund > 0) {
-                await RefundModel.create({
-                    bookingId: booking._id,
-                    cancellationRequestId: request._id,
-                    amount: numericRefund,
-                    reason: adminNotes?.trim() || `Refund for cancelled booking ${booking.bookingNumber}`,
-                    status: "SUCCESS",
-                    refundMode: selectedMode,
-                    transactionReference: transactionReference?.trim() || undefined,
-                    processedBy: new Types.ObjectId(adminId),
-                })
-            }
+            // Create Refund document for audit and record
+            await RefundModel.create({
+                refundNumber,
+                bookingId: booking._id,
+                cancellationRequestId: request._id,
+                amount: numericRefund,
+                reason: adminNotes?.trim() || `Refund for cancelled booking ${booking.bookingNumber}`,
+                status: "SUCCESS",
+                refundMode: selectedMode,
+                transactionReference: transactionReference?.trim() || undefined,
+                processedBy: new Types.ObjectId(adminId),
+            })
 
             // Record status history
             await BookingStatusHistoryModel.create({
@@ -2115,7 +2293,7 @@ export const processCancellationRequest = async (ctx: Context<{ params: { id: st
                 fromStatus: "CANCELLATION_REQUESTED",
                 toStatus: "CANCELLED",
                 changedBy: new Types.ObjectId(adminId),
-                notes: `Cancellation approved & refund completed: ₹${numericRefund.toLocaleString("en-IN")} via ${selectedMode}.${transactionReference ? ` Ref: ${transactionReference}.` : ""}${adminNotes ? ` Notes: ${adminNotes}` : ""}`,
+                notes: `Cancellation approved & refund processed (${refundNumber}): ₹${numericRefund.toLocaleString("en-IN")} via ${selectedMode}.${transactionReference ? ` Ref: ${transactionReference}.` : ""}${adminNotes ? ` Notes: ${adminNotes}` : ""}`,
             })
 
             // Record staff activity
@@ -2129,17 +2307,18 @@ export const processCancellationRequest = async (ctx: Context<{ params: { id: st
                 updatedData: {
                     status: "COMPLETED",
                     bookingStatus: "CANCELLED",
+                    refundNumber,
                     refundAmount: numericRefund,
                     deductionAmount,
                     paymentMode: selectedMode,
                     transactionReference,
                 },
-                details: `Approved cancellation & processed refund of ₹${numericRefund.toLocaleString("en-IN")} (${selectedMode}) for ${booking.bookingNumber}`,
+                details: `Approved cancellation & processed refund (${refundNumber}) of ₹${numericRefund.toLocaleString("en-IN")} (${selectedMode}) for ${booking.bookingNumber}`,
             })
 
             return {
                 status: true,
-                message: "Cancellation request approved and refund recorded successfully",
+                message: `Cancellation request approved and refund (${refundNumber}) recorded successfully`,
                 data: request,
             }
         } else {

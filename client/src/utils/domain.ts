@@ -16,6 +16,31 @@ export function isTourismDomain(hostname?: string): boolean {
     return false
   }
 
+  // Allow local dev/preview testing via query parameter ?domain=tourism or ?domain=main
+  if (typeof window !== "undefined" && !hostname) {
+    try {
+      const searchParams = new URLSearchParams(window.location.search)
+      const domainParam = searchParams.get("domain")?.toLowerCase()
+      if (domainParam === "tourism" || domainParam === "uvholidays") {
+        sessionStorage.setItem("agy_domain", "tourism")
+        return true
+      }
+      if (
+        domainParam === "parent" ||
+        domainParam === "udayam" ||
+        domainParam === "main"
+      ) {
+        sessionStorage.setItem("agy_domain", "main")
+        return false
+      }
+      const saved = sessionStorage.getItem("agy_domain")
+      if (saved === "tourism") return true
+      if (saved === "main") return false
+    } catch {
+      // fallback
+    }
+  }
+
   const raw = hostname ?? window.location.hostname
   if (!raw) return false
 
@@ -32,10 +57,20 @@ export function isTourismDomain(hostname?: string): boolean {
     .trim()
     .toLowerCase()
 
-  return (
+  if (
     TOURISM_DOMAINS.includes(cleanHost) ||
     cleanHost === "uvholidays.travel" ||
     cleanHost === "www.uvholidays.travel" ||
-    cleanHost.endsWith(".uvholidays.travel")
-  )
+    cleanHost.endsWith(".uvholidays.travel") ||
+    cleanHost.includes("uvholidays")
+  ) {
+    return true
+  }
+
+  // Default to tourism mode during local development unless explicitly switched to main domain
+  if (cleanHost === "localhost" || cleanHost === "127.0.0.1") {
+    return true
+  }
+
+  return false
 }

@@ -31,6 +31,11 @@ const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
   const { openLogin } = useLoginModal()
 
+  // Make sure parent navbar never renders on tourism domain
+  if (isTourism) {
+    return null
+  }
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
