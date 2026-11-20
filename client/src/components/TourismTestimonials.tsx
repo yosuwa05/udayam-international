@@ -93,9 +93,11 @@ export const TourismTestimonials: React.FC = () => {
 
   return (
     <section
+      id="traveller-stories"
       className="border-t border-[#E8E4DC] py-16 md:py-20"
       style={{
         background: "linear-gradient(180deg, #FAF8F4 0%, #F5F2EB 100%)",
+        scrollMarginTop: 90,
       }}
     >
       <div className="mx-auto max-w-[1280px] px-5 md:px-8 lg:px-10">

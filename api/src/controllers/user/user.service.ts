@@ -17,8 +17,8 @@ const setUserCookie = (set: any, token: string) => {
         [COOKIE_NAME]: {
             value: token,
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
             path: "/",
             maxAge: COOKIE_MAX_AGE,
             expires: new Date(Date.now() + COOKIE_MAX_AGE * 1000),
@@ -276,8 +276,8 @@ export const logoutUser = async (ctx: Context) => {
         [COOKIE_NAME]: {
             value: "",
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
             path: "/",
             maxAge: 0,
             expires: new Date(0),

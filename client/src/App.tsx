@@ -8,7 +8,7 @@ import {
 } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import TourismNavbar from "./components/TourismNavbar"
-import TourismHome from "./components/TourismHome"
+import TourismAboutUs from "./components/TourismAboutUs"
 import Home from "./components/Home/Home"
 import AboutUs from "./components/Aboutus"
 import Tourism from "./components/Tourism"
@@ -33,14 +33,16 @@ import CancellationRefundPolicy from "./components/CancellationRefundPolicy"
 import { isTourismDomain } from "./utils"
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    })
-  }, [pathname])
+    if (!hash) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      })
+    }
+  }, [pathname, hash])
 
   return null
 }
@@ -92,9 +94,15 @@ function AppShell() {
       {isTourism ? <TourismNavbar /> : <Navbar />}
       <main>
         <Routes>
-          <Route path="/" element={isTourism ? <TourismHome /> : <Home />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/tourism" element={<Tourism />} />
+          <Route path="/" element={isTourism ? <Tourism /> : <Home />} />
+          <Route
+            path="/about"
+            element={isTourism ? <TourismAboutUs /> : <AboutUs />}
+          />
+          <Route
+            path="/tourism"
+            element={isTourism ? <Navigate to="/" replace /> : <Tourism />}
+          />
           <Route path="/medical" element={<MedicalTourism />} />
           <Route path="/travel" element={<TravelService />} />
           <Route path="/trade" element={<Trade />} />

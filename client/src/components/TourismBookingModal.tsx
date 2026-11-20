@@ -16,6 +16,8 @@ import {
   ArrowRight,
   Receipt,
   Users,
+  Phone,
+  MessageCircle,
 } from "lucide-react"
 
 export type ApiPackage = {
@@ -78,6 +80,50 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
     emptyTraveller(),
   ])
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+
+  // Today's date in YYYY-MM-DD
+  const todayDateStr = useMemo(() => {
+    const d = new Date()
+    return d.toISOString().slice(0, 10)
+  }, [])
+
+  // Calculate days until departure
+  const daysUntilDeparture = useMemo(() => {
+    if (!travelDate) return null
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const [y, m, d] = travelDate.split("-").map(Number)
+    if (!y || !m || !d) return null
+    const departure = new Date(y, m - 1, d)
+    departure.setHours(0, 0, 0, 0)
+    const diffTime = departure.getTime() - today.getTime()
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }, [travelDate])
+
+  // Flag if booking is within 45 days of departure (strictly before 45 days: 44 days or less)
+  const isWithin45Days =
+    daysUntilDeparture !== null &&
+    daysUntilDeparture >= 0 &&
+    daysUntilDeparture < 45
+
+  const handleTravelDateChange = (newDate: string) => {
+    setTravelDate(newDate)
+    if (newDate) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const [y, m, d] = newDate.split("-").map(Number)
+      if (y && m && d) {
+        const departure = new Date(y, m - 1, d)
+        departure.setHours(0, 0, 0, 0)
+        const diffDays = Math.ceil(
+          (departure.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        )
+        if (diffDays < 0) {
+          toast.error("Travel date cannot be in the past")
+        }
+      }
+    }
+  }
 
   // Address & State Form state
   const [address, setAddress] = useState("")
@@ -391,14 +437,21 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
     }
     if (gstNumber.trim()) {
       const cleanGst = gstNumber.trim().toUpperCase()
-      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+      const gstRegex =
+        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
       if (!gstRegex.test(cleanGst)) {
-        toast.error("Please enter a valid 15-character GSTIN (e.g. 33AAAAA0000A1Z5)")
+        toast.error(
+          "Please enter a valid 15-character GSTIN (e.g. 33AAAAA0000A1Z5)"
+        )
         return
       }
     }
     if (!travelDate) {
       toast.error("Please select a travel date")
+      return
+    }
+    if (daysUntilDeparture !== null && daysUntilDeparture < 0) {
+      toast.error("Travel date cannot be in the past")
       return
     }
     if (!travelType) {
@@ -482,7 +535,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
         fullName: fullName.trim(),
         mobileNumber: mobileNumber.trim(),
         email: email.trim(),
-        gstNumber: gstNumber.trim() ? gstNumber.trim().toUpperCase() : undefined,
+        gstNumber: gstNumber.trim()
+          ? gstNumber.trim().toUpperCase()
+          : undefined,
         address: address.trim(),
         landmark: landmark.trim(),
         pincode: pincode.trim(),
@@ -1229,7 +1284,6 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       >
                         GST Number (Optional)
                       </label>
-                      
                     </div>
                     <input
                       type="text"
@@ -1469,8 +1523,9 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     <input
                       type="date"
                       required
+                      min={todayDateStr}
                       value={travelDate}
-                      onChange={(e) => setTravelDate(e.target.value)}
+                      onChange={(e) => handleTravelDateChange(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "9px 12px",
@@ -1520,6 +1575,152 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                     </select>
                   </div>
                 </div>
+
+                {/* 45 Days Departure Alert Notice */}
+                {isWithin45Days && (
+                  <div
+                    style={{
+                      marginTop: 12,
+                      background: "#FFFBEB",
+                      border: "1.5px solid #FCD34D",
+                      borderRadius: 12,
+                      padding: "12px 14px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                      }}
+                    >
+                      <AlertCircle
+                        size={18}
+                        color="#D97706"
+                        style={{ flexShrink: 0, marginTop: 2 }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            fontFamily: f,
+                            fontSize: ".78rem",
+                            fontWeight: 700,
+                            color: "#92400E",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span>Notice for Departures within 45 Days</span>
+                          {daysUntilDeparture !== null && (
+                            <span
+                              style={{
+                                fontSize: ".68rem",
+                                fontWeight: 600,
+                                background: "#FEF3C7",
+                                color: "#B45309",
+                                border: "1px solid #FDE68A",
+                                padding: "1px 7px",
+                                borderRadius: 999,
+                              }}
+                            >
+                              {daysUntilDeparture === 0
+                                ? "Departing today"
+                                : `${daysUntilDeparture} ${daysUntilDeparture === 1 ? "day" : "days"} away`}
+                            </span>
+                          )}
+                        </div>
+                        <p
+                          style={{
+                            fontFamily: f,
+                            fontSize: ".76rem",
+                            color: "#B45309",
+                            lineHeight: 1.45,
+                            marginTop: 4,
+                            marginBottom: 0,
+                          }}
+                        >
+                          For bookings made within 45 days of departure, the
+                          amount payable will be as communicated before
+                          commencement of the tour. You can still proceed to
+                          complete your booking, but we encourage reaching out
+                          to our support team for better assistance and swift
+                          confirmation.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: 8,
+                        paddingTop: 6,
+                        borderTop: "1px dashed #FDE68A",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".7rem",
+                          fontWeight: 600,
+                          color: "#92400E",
+                        }}
+                      >
+                        Contact Support for Better Assistance:
+                      </span>
+                      <a
+                        href="tel:+917299771111"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          fontFamily: f,
+                          fontSize: ".72rem",
+                          fontWeight: 600,
+                          color: "#1B2B6B",
+                          background: "#fff",
+                          border: "1px solid #E8E4DC",
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          textDecoration: "none",
+                        }}
+                      >
+                        <Phone size={12} color="#1B2B6B" />
+                        +91 72997 71111
+                      </a>
+                      <a
+                        href={`https://wa.me/917299771111?text=${encodeURIComponent(
+                          `Hi UV Holidays, I am booking the "${pkg.title}" tour for ${travelDate} (within 45 days of departure). Please assist with tour confirmation and payment details.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          fontFamily: f,
+                          fontSize: ".72rem",
+                          fontWeight: 600,
+                          color: "#166534",
+                          background: "#DCFCE7",
+                          border: "1px solid #BBF7D0",
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          textDecoration: "none",
+                        }}
+                      >
+                        <MessageCircle size={12} color="#166534" />
+                        Chat on WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 4. Dynamic Travellers List */}
@@ -2036,6 +2237,40 @@ export const TourismBookingModal: React.FC<TourismBookingModalProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* 45-day departure payment reminder */}
+                  {isWithin45Days && (
+                    <div
+                      style={{
+                        background: "#FFFBEB",
+                        border: "1px solid #FCD34D",
+                        borderRadius: 10,
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <AlertCircle
+                        size={15}
+                        color="#D97706"
+                        style={{ flexShrink: 0 }}
+                      />
+                      <span
+                        style={{
+                          fontFamily: f,
+                          fontSize: ".74rem",
+                          color: "#92400E",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <strong>Notice:</strong> For bookings made within 45
+                        days of departure ({daysUntilDeparture} days away), the
+                        amount payable will be as communicated before
+                        commencement of the tour.
+                      </span>
+                    </div>
+                  )}
 
                   {/* Payment Choices Cards */}
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">

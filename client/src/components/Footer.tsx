@@ -18,12 +18,15 @@ const Footer = ({ isTourism: isTourismProp }: FooterProps = {}) => {
 
   return (
     <footer
+      id="contact-section"
       style={{
         background: "#0f1a42",
         paddingTop: 68,
         paddingBottom: 28,
+        scrollMarginTop: 90,
       }}
     >
+      <div id="contact-us" style={{ scrollMarginTop: 90 }} />
       <div className="mx-auto max-w-[1280px] px-5 md:px-8 lg:px-10">
         <div
           className="grid grid-cols-1 gap-10 pb-11 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"

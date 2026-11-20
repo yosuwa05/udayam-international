@@ -1,5 +1,6 @@
 // Dynamic
 import React, { useState, useEffect, useRef, useCallback } from "react"
+import { useLocation } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { _axios } from "@/lib/axios"
 import { useAuth } from "@/lib/useAuth"
@@ -94,6 +95,7 @@ interface FetchParams {
   page: number
   search: string
   packageType: string
+  bookingType: string
   destinationRegions: string[]
   tripTypes: string[]
   durationCategory: string
@@ -112,6 +114,8 @@ const fetchPackages = async (p: FetchParams): Promise<ApiResponse> => {
   if (p.sortBy === "featured") params.isFeatured = "true"
   if (p.search) params.search = p.search
   if (p.packageType !== "all") params.packageType = p.packageType.toUpperCase()
+  if (p.bookingType && p.bookingType !== "all")
+    params.bookingType = p.bookingType.toUpperCase()
   if (p.destinationRegions.length)
     params.destinationRegions = p.destinationRegions.join(",")
   if (p.tripTypes.length) params.tripTypes = p.tripTypes.join(",")
@@ -199,6 +203,8 @@ interface SidebarProps {
   setSearch: (v: string) => void
   activeType: string
   setActiveType: (v: string) => void
+  activeBookingType: string
+  setActiveBookingType: (v: string) => void
   maxPrice: number
   setMaxPrice: (v: number) => void
   activeDur: string
@@ -220,6 +226,8 @@ const SidebarContent: React.FC<SidebarProps> = ({
   setSearch,
   activeType,
   setActiveType,
+  activeBookingType,
+  setActiveBookingType,
   maxPrice,
   setMaxPrice,
   activeDur,
@@ -303,7 +311,7 @@ const SidebarContent: React.FC<SidebarProps> = ({
           borderRadius: 12,
           padding: 4,
           gap: 4,
-          marginBottom: 32,
+          marginBottom: 24,
         }}
       >
         {(["all", "domestic", "international"] as const).map((t) => (
@@ -328,6 +336,46 @@ const SidebarContent: React.FC<SidebarProps> = ({
             }}
           >
             {t === "all" ? "All" : t === "domestic" ? "Domestic" : "Intl"}
+          </button>
+        ))}
+      </div>
+
+      {/* Tour Style / Booking Type toggle */}
+      {lbl("Tour Style")}
+      <div
+        style={{
+          display: "flex",
+          background: "#F7F5F0",
+          borderRadius: 12,
+          padding: 4,
+          gap: 4,
+          marginBottom: 32,
+        }}
+      >
+        {(["all", "standard", "customized"] as const).map((b) => (
+          <button
+            key={b}
+            onClick={() => setActiveBookingType(b)}
+            style={{
+              flex: 1,
+              padding: "10px 4px",
+              borderRadius: 9,
+              border: "none",
+              fontFamily: f,
+              fontSize: ".74rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all .25s",
+              background: activeBookingType === b ? "#1B2B6B" : "transparent",
+              color: activeBookingType === b ? "#fff" : "#9494b0",
+              boxShadow:
+                activeBookingType === b
+                  ? "0 4px 14px rgba(27,43,107,.2)"
+                  : "none",
+              letterSpacing: ".03em",
+            }}
+          >
+            {b === "all" ? "All" : b === "standard" ? "Standard" : "Customized"}
           </button>
         ))}
       </div>
@@ -1915,10 +1963,13 @@ const Tourism = () => {
     setBookingPackage(pkg)
   }
 
+  const location = useLocation()
+
   // Filter state
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [activeType, setActiveType] = useState<string>("all")
+  const [activeBookingType, setActiveBookingType] = useState<string>("all")
   const [maxPrice, setMaxPrice] = useState(200000)
   const [debouncedPrice, setDebouncedPrice] = useState(200000)
   const [activeDur, setActiveDur] = useState("")
@@ -1928,6 +1979,67 @@ const Tourism = () => {
   const [selectedPackage, setSelectedPackage] = useState<ApiPackage | null>(
     null
   )
+
+  // Listen to URL search params (?type=domestic, ?bookingType=standard) and location.hash
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const destParam =
+      searchParams.get("type") || searchParams.get("destination")
+    const packParam =
+      searchParams.get("bookingType") || searchParams.get("package")
+
+    if (
+      destParam &&
+      ["domestic", "international", "all"].includes(destParam.toLowerCase())
+    ) {
+      setActiveType(destParam.toLowerCase())
+    }
+    if (
+      packParam &&
+      ["standard", "customized", "all"].includes(packParam.toLowerCase())
+    ) {
+      setActiveBookingType(packParam.toLowerCase())
+    }
+
+    if (location.hash) {
+      const targetId = location.hash.replace("#", "")
+      const timer = setTimeout(() => {
+        const el = document.getElementById(targetId)
+        if (el) {
+          const yOffset = -90 // fixed navbar offset
+          const y =
+            el.getBoundingClientRect().top + window.pageYOffset + yOffset
+          window.scrollTo({ top: Math.max(0, y), behavior: "smooth" })
+        }
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [location.search, location.hash])
+
+  // Listen to custom navbar events when on the same page
+  useEffect(() => {
+    const handleFilterEvent = (e: any) => {
+      if (e.detail?.type === "dest" && e.detail?.value) {
+        setActiveType(e.detail.value)
+      } else if (e.detail?.type === "package" && e.detail?.value) {
+        setActiveBookingType(e.detail.value)
+      }
+      if (e.detail?.target) {
+        setTimeout(() => {
+          const el = document.getElementById(e.detail.target)
+          if (el) {
+            const yOffset = -90
+            const y =
+              el.getBoundingClientRect().top + window.pageYOffset + yOffset
+            window.scrollTo({ top: Math.max(0, y), behavior: "smooth" })
+          }
+        }, 100)
+      }
+    }
+
+    window.addEventListener("tourism_filter", handleFilterEvent)
+    return () => window.removeEventListener("tourism_filter", handleFilterEvent)
+  }, [])
 
   // UI state
   const [gridView, setGridView] = useState<"grid" | "list">("grid")
@@ -1986,6 +2098,7 @@ const Tourism = () => {
   }, [
     debouncedSearch,
     activeType,
+    activeBookingType,
     debouncedPrice,
     activeDur,
     activeDestRegions,
@@ -2044,6 +2157,7 @@ const Tourism = () => {
     page,
     search: debouncedSearch,
     packageType: activeType,
+    bookingType: activeBookingType,
     destinationRegions: activeDestRegions,
     tripTypes: activeTripTypes,
     durationCategory: activeDur,
@@ -2120,6 +2234,7 @@ const Tourism = () => {
   const onReset = () => {
     setSearch("")
     setActiveType("all")
+    setActiveBookingType("all")
     setMaxPrice(200000)
     setActiveDur("")
     setActiveDestRegions([])
@@ -2154,6 +2269,8 @@ const Tourism = () => {
     setSearch,
     activeType,
     setActiveType,
+    activeBookingType,
+    setActiveBookingType,
     maxPrice,
     setMaxPrice,
     activeDur,
@@ -2456,7 +2573,9 @@ const Tourism = () => {
         {/* ─── Page Layout ───────────────────────────────────────────────────── */}
         <div
           ref={pageWrapRef}
+          id="destinations"
           style={{
+            scrollMarginTop: 90,
             display: "grid",
             gridTemplateColumns: isMobile
               ? "1fr"
@@ -3047,11 +3166,164 @@ const Tourism = () => {
             <CouponShowcase />
 
             {/* ─── Dynamic Packages Grid ─────────────────────────────────────── */}
-            <SecHeader
-              eyebrow="Explore Packages"
-              title="All Packages"
-              count={total}
-            />
+            <div id="holiday-packages" style={{ scrollMarginTop: 90 }}>
+              <SecHeader
+                eyebrow={
+                  activeType === "domestic"
+                    ? "Domestic Tours"
+                    : activeType === "international"
+                      ? "International Tours"
+                      : activeBookingType === "standard"
+                        ? "Standard Tours"
+                        : activeBookingType === "customized"
+                          ? "Customised Tours"
+                          : "Explore Packages"
+                }
+                title={
+                  activeType === "domestic" && activeBookingType === "standard"
+                    ? "Domestic Standard Packages"
+                    : activeType === "domestic" &&
+                        activeBookingType === "customized"
+                      ? "Domestic Customised Packages"
+                      : activeType === "international" &&
+                          activeBookingType === "standard"
+                        ? "International Standard Packages"
+                        : activeType === "international" &&
+                            activeBookingType === "customized"
+                          ? "International Customised Packages"
+                          : activeType === "domestic"
+                            ? "Domestic Destinations"
+                            : activeType === "international"
+                              ? "International Destinations"
+                              : activeBookingType === "standard"
+                                ? "Standard Holiday Packages"
+                                : activeBookingType === "customized"
+                                  ? "Customised Holiday Packages"
+                                  : "All Packages"
+                }
+                count={total}
+              />
+            </div>
+
+            {/* Quick Filter Pills (Destination Type + Tour Style) */}
+            {/* <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                marginBottom: 24,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: f,
+                    fontSize: ".72rem",
+                    fontWeight: 700,
+                    color: "#6B7280",
+                    textTransform: "uppercase",
+                    letterSpacing: ".05em",
+                    minWidth: 80,
+                  }}
+                >
+                  Destination:
+                </span>
+                {[
+                  { label: "All", value: "all" },
+                  { label: "Domestic", value: "domestic" },
+                  { label: "International", value: "international" },
+                ].map((pill) => {
+                  const isActive = activeType === pill.value
+                  return (
+                    <button
+                      key={pill.value}
+                      onClick={() => setActiveType(pill.value)}
+                      style={{
+                        padding: "6px 16px",
+                        borderRadius: 999,
+                        border: isActive
+                          ? "1.5px solid #2E7D32"
+                          : "1.5px solid #E8E4DC",
+                        background: isActive ? "#2E7D32" : "#fff",
+                        color: isActive ? "#fff" : "#4B5563",
+                        fontFamily: f,
+                        fontSize: ".76rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all .2s ease",
+                        boxShadow: isActive
+                          ? "0 3px 10px rgba(46,125,50,0.2)"
+                          : "none",
+                      }}
+                    >
+                      {pill.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: f,
+                    fontSize: ".72rem",
+                    fontWeight: 700,
+                    color: "#6B7280",
+                    textTransform: "uppercase",
+                    letterSpacing: ".05em",
+                    minWidth: 80,
+                  }}
+                >
+                  Tour Style:
+                </span>
+                {[
+                  { label: "All", value: "all" },
+                  { label: "Standard", value: "standard" },
+                  { label: "Customised", value: "customized" },
+                ].map((tab) => {
+                  const isActive = activeBookingType === tab.value
+                  return (
+                    <button
+                      key={tab.value}
+                      onClick={() => setActiveBookingType(tab.value)}
+                      style={{
+                        padding: "6px 16px",
+                        borderRadius: 999,
+                        border: isActive
+                          ? "1.5px solid #1B2B6B"
+                          : "1.5px solid #E8E4DC",
+                        background: isActive ? "#1B2B6B" : "#fff",
+                        color: isActive ? "#fff" : "#4B5563",
+                        fontFamily: f,
+                        fontSize: ".76rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all .2s ease",
+                        boxShadow: isActive
+                          ? "0 3px 10px rgba(27,43,107,0.18)"
+                          : "none",
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div> */}
 
             {/* Error state */}
             {isError && (
@@ -3188,7 +3460,9 @@ const Tourism = () => {
         </div>
 
         {/* ─── Tourism Testimonials Section ─── */}
-        <TourismTestimonials />
+        <div id="traveller-stories" style={{ scrollMarginTop: 90 }}>
+          <TourismTestimonials />
+        </div>
       </div>
       {/* Premium Package Details Drawer */}
       <TourismDetailsDrawer
